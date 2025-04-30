@@ -4,184 +4,46 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CARELAYタウン</title>
-  <style>
-    body { margin: 0; font-family: sans-serif; background-color: #f9f9f9; }
-    header {
-      position: fixed; top: 0; left: 0; width: 100%; height: 55px;
-      background-color: #003366; color: white;
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 0 20px; z-index: 1000;
-    }
-    #headerLeft {
-      font-weight: bold; font-size: 18px; cursor: pointer;
-      border: 1px solid white; border-radius: 5px;
-      padding: 4px 8px;
-    }
-    #headerRight {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 13px;
-    }
-    #layout { display: flex; min-height: 100vh; padding-top: 55px; }
-    #sidebar {
-      width: 200px; background-color: #ffe5b4; border-right: 1px solid #ccc;
-      display: none; flex-direction: column;
-    }
-    #main { flex-grow: 1; padding: 10px; background-color: #fff; }
-    #bottomNav {
-      display: flex; justify-content: space-around; background-color: #003366;
-      padding: 5px 0; position: fixed; bottom: 0; width: 100%; color: white;
-    }
-    #bottomNav button {
-      background: none; border: none; color: white; font-size: 14px;
-      flex-grow: 1; cursor: pointer;
-    }
-    .accordion {
-      background-color: #fff; border: 1px solid #ccc; border-radius: 6px;
-      margin: 5px; padding: 10px; font-weight: bold; cursor: pointer;
-    }
-    .panel {
-      display: none; background-color: #fff7e6; padding: 10px;
-    }
-    .panel button {
-      width: 100%; margin: 5px 0; padding: 6px;
-      background-color: #fff; border: 1px solid #ccc; border-radius: 4px;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
-  <header>
-    <div id="headerLeft" onclick="location.href='top.html'">🏘️ CARELAYタウン</div>
-    <div id="headerRight">
-      <span id="userEmail">ログイン中...</span>
-      <button onclick="toggleMenu()">設定</button>
-      <button onclick="logout()">ログアウト</button>
-    </div>
-  </header>
-  <div id="layout">
-    <div id="sidebar">
-      <div id="accordionMenu"></div>
-    </div>
-    <div id="main">読み込み中...</div>
-  </div>
-  <div id="bottomNav">
-    <button onclick="loadMain('map')">🌏地図</button>
-    <button onclick="toggleMenu()">≡メニュー</button>
-  </div>
+  <p>読み込み中...</p>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
     const supabaseUrl = 'https://udcrfwejohzmhfojnwha.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    async function checkSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        const { data, error } = await supabase.auth.getSessionFromUrl();
-        if (data?.session) {
-          window.history.replaceState({}, document.title, window.location.pathname);
-          location.reload();
-        } else {
-          window.location.href = 'index.html';
-          return;
-        }
-      }
+    const { data: { session } } = await supabase.auth.getSession();
 
+    // セッションが存在しないなら、MagicLink URLから取得を試みる
+    if (!session) {
+      const { data, error } = await supabase.auth.getSessionFromUrl();
+      if (data?.session) {
+        // URL整形してリロード（#access_token 等を除去）
+        window.history.replaceState({}, document.title, window.location.pathname);
+        location.reload();
+        return;
+      }
+      // 取得できなければ index に戻す
+      window.location.href = "index.html";
+    } else {
       const userEmail = session.user.email.toLowerCase();
-      document.getElementById("userEmail").textContent = userEmail;
-      
-      const { data: approved } = await supabase
+      const { data, error } = await supabase
         .from("approved_users")
         .select("email")
         .eq("email", userEmail)
         .single();
-      
-      if (!approved) {
+
+      if (data) {
+        // 承認済ならメイン表示
+        window.location.href = "main.html";
+      } else {
         alert("まだ承認されていません。");
-        await supabase.auth.signOut();
         window.location.href = "index.html";
       }
     }
-
-    function initTopPage() {
-      loadMain('map');
-      setupAccordionMenu();
-    }
-
-    function toggleMenu() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.style.display = sidebar.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function setupAccordionMenu() {
-      const menuData = [
-        { id: 'office', title: "🏢 データ管理" },
-        { id: 'work', title: "🛠️ 実務ツール" },
-        { id: 'tools', title: "🏪 便利ツール" },
-        { id: 'bank', title: "🏦 金銭管理" },
-        { id: 'post', title: "📨 メッセージ便" },
-        { id: 'mall', title: "🛍️ 商材紹介" },
-        { id: 'material', title: "🖼️ 素材集" },
-        { id: 'taxi', title: "🚕 介護タクシー" },
-        { id: 'admin', title: "🏛️ 運営連絡" }
-      ];
-      const container = document.getElementById('accordionMenu');
-      container.innerHTML = "";
-
-      menuData.forEach(section => {
-        const acc = document.createElement('div');
-        acc.className = "accordion";
-        acc.textContent = section.title;
-        acc.onclick = function () {
-          const panel = this.nextElementSibling;
-          panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
-        };
-
-        const panel = document.createElement('div');
-        panel.className = "panel";
-
-        const btn = document.createElement('button');
-        btn.textContent = "📋 アプリ一覧";
-        btn.onclick = function () { loadMain(section.id); };
-        panel.appendChild(btn);
-
-        container.appendChild(acc);
-        container.appendChild(panel);
-      });
-    }
-
-    function loadMain(page) {
-      const main = document.getElementById('main');
-      main.innerHTML = "<p>読み込み中...</p>";
-      fetch(`${page}.html`).then(res => res.text()).then(html => {
-        main.innerHTML = html;
-        const scripts = main.querySelectorAll('script');
-        scripts.forEach(oldScript => {
-          const newScript = document.createElement('script');
-          if (oldScript.src) {
-            newScript.src = oldScript.src;
-          } else {
-            newScript.textContent = oldScript.textContent;
-          }
-          oldScript.parentNode.replaceChild(newScript, oldScript);
-        });
-      });
-    }
-
-    function logout() {
-      localStorage.clear();
-      supabase.auth.signOut().then(() => {
-        window.location.href = "index.html";
-      });
-    }
-
-    document.addEventListener("DOMContentLoaded", async () => {
-      await checkSession();
-      initTopPage();
-    });
   </script>
 </body>
 </html>
