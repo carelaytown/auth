@@ -93,9 +93,14 @@
           window.location.href = 'index.html';
         }
       } else {
-        const userEmail = session.user.email;
+        const userEmail = session.user.email.toLowerCase();
         document.getElementById('userEmail').textContent = userEmail;
-        const { data } = await supabase.from('approved_users').select('email').eq('email', userEmail).single();
+
+        const { data } = await supabase
+          .from('approved_users')
+          .select('email')
+          .eq('email', userEmail)
+          .single();
         if (data) {
           setupAccordionMenu();
           loadMain('map');
