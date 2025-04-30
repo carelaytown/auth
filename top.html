@@ -97,8 +97,8 @@
         document.getElementById('userEmail').textContent = userEmail;
         const { data } = await supabase.from('approved_users').select('email').eq('email', userEmail).single();
         if (data) {
-          loadMain('map');
           setupAccordionMenu();
+          loadMain('map');
         } else {
           alert("まだ承認されていません。");
           logout();
