@@ -90,15 +90,15 @@
         }
       }
 
-      const userEmail = session.user.email;
+      const userEmail = session.user.email.toLowerCase();
       document.getElementById("userEmail").textContent = userEmail;
-
+      
       const { data: approved } = await supabase
         .from("approved_users")
         .select("email")
         .eq("email", userEmail)
         .single();
-
+      
       if (!approved) {
         alert("まだ承認されていません。");
         await supabase.auth.signOut();
