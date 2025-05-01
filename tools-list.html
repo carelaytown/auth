@@ -2,102 +2,206 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>🏪 ホームセンター - アプリ一覧</title>
+  <title>ホームセンター | CARELAYタウン</title>
   <style>
     body {
       margin: 0;
-      padding: 30px;
-      background-color: #f0f6ff;
       font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f0f6ff;
     }
-    h1 {
-      font-size: 20px;
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .intro {
+      display: flex;
+      align-items: center;
       margin-bottom: 10px;
-      color: #2a6ebb;
     }
-    p {
-      margin-bottom: 20px;
+    .intro img {
+      width: 100px;
+      margin-right: 20px;
+      border-radius: 10px;
+    }
+    .intro h2 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    .intro p {
+      font-size: 14px;
       color: #333;
     }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
     .app-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      display: flex;
+      flex-wrap: wrap;
       gap: 20px;
+      justify-content: flex-start;
     }
-    .card {
-      background: #fff;
-      padding: 16px;
+    .app-card {
+      width: calc(33% - 20px);
+      background-color: #fffdf5;
+      border: 1px solid #ccc;
       border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
-    .card h2 {
+    .app-card h3 {
+      margin: 0 0 10px;
       font-size: 16px;
-      margin: 0 0 8px;
-      color: #2a6ebb;
     }
-    .card p {
-      font-size: 14px;
-      margin: 0 0 12px;
-      color: #666;
+    .app-card p {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 12px;
     }
-    .card button {
+    .app-card button {
       padding: 6px 12px;
-      font-size: 14px;
-      background-color: #2a6ebb;
-      color: white;
+      font-size: 13px;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      background-color: #2a6ebb;
+      color: white;
     }
-    .card button:hover {
-      background-color: #1e5393;
+    .app-card button.remove {
+      background-color: #c0392b;
+    }
+    /* モーダル */
+    .modal-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+    }
+    .modal-box p {
+      margin-bottom: 20px;
+    }
+    .modal-box button {
+      margin: 0 10px;
+      padding: 6px 14px;
     }
   </style>
 </head>
 <body>
-  <h1>🏪 ホームセンター</h1>
-  <p>この施設では、日常業務に役立つ便利なアプリをまとめています。必要なアプリを選んでメニューに追加しましょう。</p>
+  <div class="container">
+    <div class="intro">
+      <img src="img/toolcenter.jpg" alt="ホームセンター">
+      <div>
+        <h2>🏪 ホームセンター</h2>
+        <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
+      </div>
+    </div>
+    <hr>
+    <div class="app-grid">
+      <div class="app-card" data-key="toolcalc">
+        <h3>🧮 電卓</h3>
+        <p>シンプルで使いやすい計算機です。</p>
+        <button onclick="toggleApp(this, 'toolcalc')">追加する</button>
+      </div>
+      <div class="app-card" data-key="tooldays">
+        <h3>📅 日数計算</h3>
+        <p>開始日と終了日から日数を自動計算します。</p>
+        <button onclick="toggleApp(this, 'tooldays')">追加する</button>
+      </div>
+      <div class="app-card" data-key="toolcheck">
+        <h3>📋 チェック表</h3>
+        <p>日々の作業を確認できるチェックリストです。</p>
+        <button onclick="toggleApp(this, 'toolcheck')">追加する</button>
+      </div>
+      <div class="app-card" data-key="toolmemo">
+        <h3>📝 メモ帳</h3>
+        <p>ちょっとしたメモを取るための簡易ノート。</p>
+        <button onclick="toggleApp(this, 'toolmemo')">追加する</button>
+      </div>
+      <div class="app-card" data-key="toolcalendar">
+        <h3>📅 カレンダー</h3>
+        <p>予定の確認や管理ができるカレンダーです。</p>
+        <button onclick="toggleApp(this, 'toolcalendar')">追加する</button>
+      </div>
+    </div>
+  </div>
 
-  <div class="app-grid">
-    <div class="card">
-      <h2>🧮 電卓</h2>
-      <p>シンプルで使いやすい計算機です。</p>
-      <button onclick="addTool('toolcalc')">追加する</button>
-    </div>
-    <div class="card">
-      <h2>📅 日数計算</h2>
-      <p>開始日と終了日から日数を自動計算します。</p>
-      <button onclick="addTool('tooldays')">追加する</button>
-    </div>
-    <div class="card">
-      <h2>📋 チェック表</h2>
-      <p>日々の作業を確認できるチェックリストです。</p>
-      <button onclick="addTool('toolcheck')">追加する</button>
-    </div>
-    <div class="card">
-      <h2>📝 メモ帳</h2>
-      <p>ちょっとしたメモを取るための簡易ノート。</p>
-      <button onclick="addTool('toolmemo')">追加する</button>
-    </div>
-    <div class="card">
-      <h2>📆 カレンダー</h2>
-      <p>予定の確認や管理ができるカレンダーです。</p>
-      <button onclick="addTool('toolcalendar')">追加する</button>
+  <!-- モーダル -->
+  <div class="modal-bg" id="confirmModal">
+    <div class="modal-box">
+      <p id="modalMessage">このアプリを追加しますか？</p>
+      <button id="modalOk">OK</button>
+      <button onclick="closeModal()">キャンセル</button>
     </div>
   </div>
 
   <script>
-    function addTool(id) {
-      const key = "carelayTools";
-      const list = JSON.parse(localStorage.getItem(key) || "[]");
-      if (!list.includes(id)) {
-        list.unshift(id);
-        localStorage.setItem(key, JSON.stringify(list));
-        alert("追加されました。");
+    let targetKey = "";
+    let targetBtn = null;
+
+    function toggleApp(btn, key) {
+      targetKey = key;
+      targetBtn = btn;
+      const current = getAppList();
+      const exists = current.includes(key);
+      document.getElementById("modalMessage").textContent = exists ? "このアプリを解除しますか？" : "このアプリを追加しますか？";
+      document.getElementById("confirmModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("confirmModal").style.display = "none";
+      targetKey = "";
+      targetBtn = null;
+    }
+
+    document.getElementById("modalOk").onclick = function() {
+      const list = getAppList();
+      const idx = list.indexOf(targetKey);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        targetBtn.textContent = "追加する";
+        targetBtn.classList.remove("remove");
       } else {
-        alert("すでに追加されています。");
+        list.push(targetKey);
+        targetBtn.textContent = "解除する";
+        targetBtn.classList.add("remove");
+      }
+      localStorage.setItem("carelayTools", JSON.stringify(list));
+      closeModal();
+    };
+
+    function getAppList() {
+      try {
+        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      } catch {
+        return [];
       }
     }
+
+    // 初期化
+    window.onload = function() {
+      const list = getAppList();
+      document.querySelectorAll(".app-card").forEach(card => {
+        const key = card.getAttribute("data-key");
+        const btn = card.querySelector("button");
+        if (list.includes(key)) {
+          btn.textContent = "解除する";
+          btn.classList.add("remove");
+        }
+      });
+    };
   </script>
 </body>
 </html>
