@@ -2,26 +2,18 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>マイページ - CARELAYタウン</title>
+  <title>マイページ</title>
   <style>
     body {
       font-family: 'Noto Sans JP', sans-serif;
       margin: 0;
-      padding: 0;
+      padding: 20px;
       background-color: #f0f6ff;
     }
-
-    main {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 30px 20px;
-    }
-
     h1 {
       color: #2a6ebb;
       margin-bottom: 20px;
     }
-
     .box {
       background-color: white;
       border-radius: 10px;
@@ -29,32 +21,26 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-
     .highlight {
       background-color: #e6f0ff;
     }
-
     .input-area {
       background-color: #f4f4f4;
     }
-
     .warning {
       background-color: #fff8e1;
     }
-
     label {
       display: block;
       margin-bottom: 6px;
       font-weight: bold;
     }
-
     input[type="email"] {
       width: 100%;
       padding: 8px;
       font-size: 14px;
       margin-bottom: 10px;
     }
-
     button {
       padding: 8px 16px;
       background-color: #2a6ebb;
@@ -63,21 +49,17 @@
       border-radius: 6px;
       cursor: pointer;
     }
-
     button:hover {
       background-color: #1e5393;
     }
-
     .email {
       font-size: 14px;
       color: #555;
     }
-
     .org {
       font-weight: bold;
     }
 
-    /* モーダル */
     .modal-bg {
       display: none;
       position: fixed;
@@ -88,7 +70,6 @@
       align-items: center;
       z-index: 9999;
     }
-
     .modal-box {
       background: white;
       padding: 20px;
@@ -96,115 +77,133 @@
       width: 300px;
       text-align: center;
     }
-
     .modal-box p {
       margin-bottom: 20px;
     }
-
     .modal-box button {
       margin: 0 10px;
     }
   </style>
 </head>
-<body>
-<main>
+<body onload="loadMyPage()">
   <h1>👤 マイページ</h1>
 
   <div class="box highlight">
-    <strong>ログイン中のアカウント</strong><br>
-    <span class="org" id="orgDisplay">(取得中…)</span><br>
-    <span class="email" id="emailDisplay">-</span>
+    <p><strong>ログイン中のアカウント</strong><br>
+    <span id="orgName">(取得中…)</span><br>
+    <span class="email" id="currentEmail">-</span></p>
   </div>
 
   <div class="box input-area">
-    <strong>アカウント切替・追加</strong>
+    <p><strong>アカウント切替・追加</strong></p>
     <input type="email" id="newEmail" placeholder="メールアドレスを入力">
-    <button onclick="confirmAdd()">追加して切り替え</button>
+    <button onclick="confirmAddAccount()">追加して切り替え</button>
   </div>
 
   <div class="box warning">
-    <button style="background-color: #c0392b;" onclick="confirmLogout()">■ ログアウト</button>
+    <button style="background-color: #c0392b;" onclick="confirmLogout()">⛔ ログアウト</button>
   </div>
-</main>
 
-<!-- モーダル -->
-<div class="modal-bg" id="modal">
-  <div class="modal-box">
-    <p id="modalMessage">本当に実行しますか？</p>
-    <button onclick="handleModalOk()">OK</button>
-    <button onclick="closeModal()">キャンセル</button>
+  <!-- モーダル -->
+  <div id="modalBg" class="modal-bg">
+    <div class="modal-box">
+      <p id="modalMsg">本当に処理を実行しますか？</p>
+      <button onclick="handleModalConfirm()">OK</button>
+      <button onclick="closeModal()">キャンセル</button>
+    </div>
   </div>
-</div>
 
-<script>
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-  let pendingAction = null;
+    function loadMyPage() {
+      const email = localStorage.getItem("carelayUser") || "";
+      document.getElementById("currentEmail").textContent = email;
 
-  window.onload = async () => {
-    const email = localStorage.getItem("carelayUser") || "";
-    document.getElementById("emailDisplay").textContent = email;
+      if (!email) {
+        document.getElementById("orgName").textContent = "(未取得)";
+        return;
+      }
 
-    if (email) {
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`, {
+      fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
-      });
-      const data = await res.json();
-      document.getElementById("orgDisplay").textContent =
-        data.length > 0 && data[0].org_name ? data[0].org_name : "(未取得)";
+      })
+        .then(res => res.json())
+        .then(data => {
+          const org = (data && data.length > 0 && data[0].org_name) ? data[0].org_name : "(未取得)";
+          document.getElementById("orgName").textContent = org;
+        })
+        .catch(() => {
+          document.getElementById("orgName").textContent = "(取得失敗)";
+        });
     }
-  };
 
-  function confirmAdd() {
-    const email = document.getElementById("newEmail").value.trim().toLowerCase();
-    if (!email) return alert("メールアドレスを入力してください。");
-    pendingAction = () => trySwitch(email);
-    showModal("このメールアドレスを追加して切り替えますか？");
-  }
+    let modalAction = "";
 
-  async function trySwitch(email) {
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`, {
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
+    function confirmAddAccount() {
+      const email = document.getElementById("newEmail").value.trim().toLowerCase();
+      if (!email) {
+        showModal("メールアドレスを入力してください。", null);
+        return;
       }
-    });
-    const data = await res.json();
-    if (data.length > 0 && data[0].status === "approved") {
-      localStorage.setItem("carelayUser", email);
-      localStorage.setItem("carelayApproved", "ok");
-      location.reload();
-    } else {
-      alert("承認されていないアカウントです。");
+      modalAction = "add";
+      showModal(`「${email}」を追加して切り替えますか？`, () => switchAccount(email));
     }
-  }
 
-  function confirmLogout() {
-    pendingAction = () => {
-      localStorage.clear();
-      location.href = "index.html";
-    };
-    showModal("本当にログアウトしますか？");
-  }
+    function confirmLogout() {
+      modalAction = "logout";
+      showModal("本当にログアウトしますか？", logout);
+    }
 
-  function showModal(msg) {
-    document.getElementById("modalMessage").textContent = msg;
-    document.getElementById("modal").style.display = "flex";
-  }
+    function switchAccount(email) {
+      fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.length > 0 && data[0].status === "approved") {
+            localStorage.setItem("carelayUser", email);
+            localStorage.setItem("carelayApproved", "ok");
+            location.reload();
+          } else {
+            showModal("承認されていないアカウントです。", null);
+          }
+        })
+        .catch(() => {
+          showModal("エラーが発生しました。", null);
+        });
+    }
 
-  function closeModal() {
-    document.getElementById("modal").style.display = "none";
-    pendingAction = null;
-  }
+    function logout() {
+      localStorage.removeItem("carelayUser");
+      localStorage.removeItem("carelayApproved");
+      window.location.href = "index.html";
+    }
 
-  function handleModalOk() {
-    if (typeof pendingAction === "function") pendingAction();
-    closeModal();
-  }
-</script>
+    function showModal(msg, callback) {
+      document.getElementById("modalMsg").textContent = msg;
+      document.getElementById("modalBg").style.display = "flex";
+      window._modalCallback = callback;
+    }
+
+    function closeModal() {
+      document.getElementById("modalBg").style.display = "none";
+      window._modalCallback = null;
+    }
+
+    function handleModalConfirm() {
+      closeModal();
+      if (typeof window._modalCallback === "function") {
+        window._modalCallback();
+      }
+    }
+  </script>
 </body>
 </html>
