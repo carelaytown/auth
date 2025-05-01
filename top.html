@@ -5,13 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CARELAYタウン</title>
   <style>
-    body {
+    * {
       margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
       background-color: #f9f9f9;
+      font-family: 'Noto Sans JP', sans-serif;
       display: flex;
       flex-direction: column;
-      height: 100vh;
     }
 
     header {
@@ -59,7 +63,7 @@
     }
 
     #sidebar {
-      width: 160px;
+      width: 180px;
       background-color: #ffe5b4;
       border-right: 1px solid #ccc;
       overflow-y: auto;
