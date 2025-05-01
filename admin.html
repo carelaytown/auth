@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>管理者承認 - CARELAYタウン</title>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      padding: 30px;
+      background-color: #f9f9f9;
+    }
+
+    h1 {
+      color: #2a6ebb;
+    }
+
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #eef3ff;
+    }
+
+    .filter-group {
+      margin-bottom: 10px;
+    }
+
+    .status-approved { color: green; font-weight: bold; }
+    .status-pending { color: orange; font-weight: bold; }
+
+    .hidden { display: none; }
+
+    .login-box {
+      max-width: 400px;
+      margin: 80px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    input[type="password"] {
+      padding: 10px;
+      width: 80%;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #1f5aa0;
+    }
+  </style>
+</head>
+<body>
+  <div id="authSection" class="login-box">
+    <h2>管理者ログイン</h2>
+    <input type="password" id="adminPass" placeholder="パスワードを入力" />
+    <button onclick="checkPassword()">ログイン</button>
+    <div id="authStatus" style="margin-top:10px; color: red;"></div>
+  </div>
+
+  <div id="mainSection" class="section hidden">
+    <h1>🛡️ 承認パネル</h1>
+
+    <div class="filter-group">
+      <label><input type="radio" name="filter" value="all" checked onchange="loadData()"> すべて</label>
+      <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
+    </div>
+
+    <form onsubmit="approveSelected(); return false;">
+      <table>
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>ID</th>
+            <th>事業所名</th>
+            <th>メールアドレス</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="approvalTable"></tbody>
+      </table>
+
+      <button type="submit">✅ 承認する</button>
+    </form>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const adminPassword = "carelayadmin"; // 仮パスワード（必要に応じて変更可）
+
+    async function checkPassword() {
+      const input = document.getElementById("adminPass").value.trim();
+      if (input === adminPassword) {
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("mainSection").classList.remove("hidden");
+        loadData();
+      } else {
+        document.getElementById("authStatus").innerText = "パスワードが違います";
+      }
+    }
+
+    async function loadData() {
+      const filter = document.querySelector('input[name="filter"]:checked').value;
+      let query = "";
+      if (filter === "pending") query = "?status=eq.pending";
+      if (filter === "approved") query = "?status=eq.approved";
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications${query}`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const data = await res.json();
+
+      const tbody = document.getElementById("approvalTable");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" value="${row.id}" ${row.status === "approved" ? "disabled" : ""}></td>
+          <td>${row.id}</td>
+          <td>${row.org_name}</td>
+          <td>${row.email}</td>
+          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function approveSelected() {
+      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+      for (const checkbox of checkboxes) {
+        const id = checkbox.value;
+        await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({ status: "approved" })
+        });
+      }
+      alert("✅ 承認処理が完了しました");
+      loadData();
+    }
+  </script>
+</body>
+</html>
