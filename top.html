@@ -146,14 +146,14 @@
   <script>
     let userOrgName = "";
 
-    function initTopPage() {
+    async function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
       const email = localStorage.getItem("carelayUser");
       if (approved !== "ok" || !email) {
         window.location.href = "index.html";
         return;
       }
-      fetchOrgName(email).then(() => {
+      await fetchOrgName(email); // 完了するまで次に進まない
         document.getElementById("orgLabel").textContent = userOrgName;
       });
       loadMain('map');
