@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>マイページ - CARELAYタウン</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>マイページ</title>
   <style>
     html, body {
       margin: 0;
@@ -12,6 +13,8 @@
     }
     main {
       padding: 30px;
+      max-width: 600px;
+      margin: 0 auto;
     }
     h1 {
       color: #2a6ebb;
@@ -24,19 +27,27 @@
       margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
     }
-    .highlight {
-      background-color: #e6f0ff;
+    .highlight { background-color: #e6f0ff; }
+    .input-area { background-color: #f4f4f4; }
+    .warning { background-color: #fff8e1; }
+    .account-list button {
+      display: inline-flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      background: #eef4ff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      cursor: pointer;
     }
-    .input-area {
-      background-color: #f4f4f4;
-    }
-    .warning {
-      background-color: #fff8e1;
-    }
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
+    .account-list span { flex: 1; text-align: left; }
+    .account-list i {
+      color: #c00;
+      font-style: normal;
+      margin-left: 10px;
+      font-size: 14px;
     }
     input[type="email"] {
       width: 100%;
@@ -52,31 +63,9 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #1e5393;
-    }
-    .email {
-      font-size: 14px;
-      color: #555;
-    }
-    .org {
-      font-weight: bold;
-    }
-    .account-list {
-      margin-top: 10px;
-    }
-    .account-list div {
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .account-list span {
-      font-size: 14px;
-    }
-    .account-list button {
-      background-color: #d32f2f;
-    }
+    button:hover { background-color: #1e5393; }
+    .email { font-size: 14px; color: #555; }
+    .org { font-weight: bold; }
 
     .modal-bg {
       display: none;
@@ -95,12 +84,8 @@
       width: 300px;
       text-align: center;
     }
-    .modal-box p {
-      margin-bottom: 20px;
-    }
-    .modal-box button {
-      margin: 0 10px;
-    }
+    .modal-box p { margin-bottom: 20px; }
+    .modal-box button { margin: 0 10px; }
   </style>
 </head>
 <body>
@@ -108,63 +93,81 @@
     <h1>👤 マイページ</h1>
 
     <div class="box highlight">
-      <strong>ログイン中のアカウント</strong>
-      <div><span class="org" id="currentOrg">(取得中…)</span></div>
-      <div class="email" id="currentEmail">-</div>
+      <strong>ログイン中のアカウント</strong><br>
+      <div class="org" id="orgOutput">(取得中…)</div>
+      <div class="email" id="emailOutput">-</div>
     </div>
 
     <div class="box input-area">
       <strong>アカウント切替・追加</strong>
-      <input type="email" id="newAccount" placeholder="メールアドレスを入力">
+      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
       <button onclick="confirmAdd()">追加して切り替え</button>
       <div class="account-list" id="accountList"></div>
     </div>
 
     <div class="box warning">
-      <button onclick="confirmLogout()">🚫 ログアウト</button>
+      <button style="background-color:#d9534f;" onclick="confirmLogout()">⛔ ログアウト</button>
     </div>
   </main>
 
-  <div class="modal-bg" id="modal">
+  <div id="modal" class="modal-bg">
     <div class="modal-box">
-      <p id="modalMessage"></p>
+      <p id="modalMessage">メッセージ</p>
       <button onclick="modalOk()">OK</button>
       <button onclick="modalCancel()">キャンセル</button>
     </div>
   </div>
 
   <script>
+    const orgOutput = document.getElementById("orgOutput");
+    const emailOutput = document.getElementById("emailOutput");
     const modal = document.getElementById("modal");
     const modalMessage = document.getElementById("modalMessage");
-    let modalAction = null;
-    let modalTarget = null;
+    const accountList = document.getElementById("accountList");
+
+    let modalAction = "";
+    let modalTarget = "";
 
     const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    const current = localStorage.getItem("carelayUser") || "";
-    document.getElementById("currentEmail").textContent = current;
-    fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(current)}`, {
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
+    async function fetchCurrentOrg() {
+      const email = localStorage.getItem("carelayUser") || "";
+      emailOutput.textContent = email || "-";
+
+      if (!email) {
+        orgOutput.textContent = "(未ログイン)";
+        return;
       }
-    })
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("currentOrg").textContent =
-        (data.length > 0 && data[0].org_name) ? data[0].org_name : "(未取得)";
-    });
+
+      const url = `${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`;
+      const res = await fetch(url, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const data = await res.json();
+      orgOutput.textContent = (data[0]?.org_name) || "(未取得)";
+    }
 
     function confirmAdd() {
       const input = document.getElementById("newAccount").value.trim().toLowerCase();
       if (!input) {
-        alert("メールアドレスを入力してください。");
+        modalAction = "alert";
+        modalMessage.textContent = "メールアドレスを入力してください。";
+        modal.style.display = "flex";
         return;
       }
       modalAction = "add";
       modalTarget = input;
       modalMessage.textContent = `${input} を追加して切り替えますか？`;
+      modal.style.display = "flex";
+    }
+
+    function confirmLogout() {
+      modalAction = "logout";
+      modalMessage.textContent = "本当にログアウトしますか？";
       modal.style.display = "flex";
     }
 
@@ -175,67 +178,82 @@
       modal.style.display = "flex";
     }
 
-    function confirmLogout() {
-      modalAction = "logout";
-      modalMessage.textContent = "本当にログアウトしますか？";
-      modal.style.display = "flex";
+    function modalCancel() {
+      modal.style.display = "none";
+      modalAction = "";
     }
 
-    function modalOk() {
+    async function modalOk() {
       modal.style.display = "none";
+
+      if (modalAction === "alert") return;
+
       if (modalAction === "add") {
-        fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(modalTarget)}`, {
+        const url = `${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(modalTarget)}`;
+        const res = await fetch(url, {
           headers: {
             "apikey": supabaseKey,
             "Authorization": `Bearer ${supabaseKey}`
           }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.length > 0 && data[0].status === "approved") {
-            localStorage.setItem("carelayUser", modalTarget);
-            localStorage.setItem("carelayApproved", "ok");
-            let list = JSON.parse(localStorage.getItem("accountList") || "[]");
-            if (!list.includes(modalTarget)) list.push(modalTarget);
-            localStorage.setItem("accountList", JSON.stringify(list));
-            location.reload();
-          } else {
-            alert("このアカウントは承認されていません。");
-          }
         });
-      } else if (modalAction === "delete") {
-        let list = JSON.parse(localStorage.getItem("accountList") || "[]");
-        list = list.filter(x => x !== modalTarget);
-        localStorage.setItem("accountList", JSON.stringify(list));
-        renderAccountList();
+        const data = await res.json();
+
+        if (data.length > 0 && data[0].status === "approved") {
+          localStorage.setItem("carelayUser", modalTarget);
+          localStorage.setItem("carelayApproved", "ok");
+
+          let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
+          if (!list.includes(modalTarget)) {
+            list.push(modalTarget);
+            localStorage.setItem("carelayList", JSON.stringify(list));
+          }
+          location.reload();
+        } else {
+          modalAction = "alert";
+          modalMessage.textContent = "承認されていないアカウントです。";
+          modal.style.display = "flex";
+        }
       } else if (modalAction === "logout") {
         localStorage.clear();
         location.href = "index.html";
+      } else if (modalAction === "delete") {
+        let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
+        list = list.filter(e => e !== modalTarget);
+        localStorage.setItem("carelayList", JSON.stringify(list));
+        renderAccountList();
       }
     }
 
-    function modalCancel() {
-      modal.style.display = "none";
-      modalTarget = null;
-    }
-
     function renderAccountList() {
-      const wrap = document.getElementById("accountList");
-      wrap.innerHTML = "";
-      const list = JSON.parse(localStorage.getItem("accountList") || "[]");
+      const list = JSON.parse(localStorage.getItem("carelayList") || "[]");
+      const current = localStorage.getItem("carelayUser");
+      accountList.innerHTML = "";
+
       list.forEach(email => {
-        const row = document.createElement("div");
-        row.innerHTML = `<span>${email}</span> <div><button onclick="switchAccount('${email}')">切替</button> <button onclick="confirmDelete('${email}')">削除</button></div>`;
-        wrap.appendChild(row);
+        if (email === current) return;
+
+        const btn = document.createElement("button");
+        const span = document.createElement("span");
+        span.textContent = email;
+        const del = document.createElement("i");
+        del.textContent = "🗑️";
+        del.onclick = (e) => {
+          e.stopPropagation();
+          confirmDelete(email);
+        };
+
+        btn.appendChild(span);
+        btn.appendChild(del);
+        btn.onclick = () => {
+          localStorage.setItem("carelayUser", email);
+          localStorage.setItem("carelayApproved", "ok");
+          location.reload();
+        };
+        accountList.appendChild(btn);
       });
     }
 
-    function switchAccount(email) {
-      localStorage.setItem("carelayUser", email);
-      localStorage.setItem("carelayApproved", "ok");
-      location.reload();
-    }
-
+    fetchCurrentOrg();
     renderAccountList();
   </script>
 </body>
