@@ -72,7 +72,6 @@
     .app-card button.remove {
       background-color: #c0392b;
     }
-    /* モーダル */
     .modal-bg {
       display: none;
       position: fixed;
@@ -110,27 +109,27 @@
     </div>
     <hr>
     <div class="app-grid">
-      <div class="app-card" data-key="toolcalc">
+      <div class="app-card" data-id="toolcalc">
         <h3>🧮 電卓</h3>
         <p>シンプルで使いやすい計算機です。</p>
         <button onclick="toggleApp(this, 'toolcalc')">追加する</button>
       </div>
-      <div class="app-card" data-key="tooldays">
+      <div class="app-card" data-id="tooldays">
         <h3>📅 日数計算</h3>
         <p>開始日と終了日から日数を自動計算します。</p>
         <button onclick="toggleApp(this, 'tooldays')">追加する</button>
       </div>
-      <div class="app-card" data-key="toolcheck">
+      <div class="app-card" data-id="toolcheck">
         <h3>📋 チェック表</h3>
         <p>日々の作業を確認できるチェックリストです。</p>
         <button onclick="toggleApp(this, 'toolcheck')">追加する</button>
       </div>
-      <div class="app-card" data-key="toolmemo">
+      <div class="app-card" data-id="toolmemo">
         <h3>📝 メモ帳</h3>
         <p>ちょっとしたメモを取るための簡易ノート。</p>
         <button onclick="toggleApp(this, 'toolmemo')">追加する</button>
       </div>
-      <div class="app-card" data-key="toolcalendar">
+      <div class="app-card" data-id="toolcalendar">
         <h3>📅 カレンダー</h3>
         <p>予定の確認や管理ができるカレンダーです。</p>
         <button onclick="toggleApp(this, 'toolcalendar')">追加する</button>
@@ -139,64 +138,66 @@
   </div>
 
   <!-- モーダル -->
-  <div class="modal-bg" id="confirmModal">
+  <div class="modal-bg" id="modal">
     <div class="modal-box">
-      <p id="modalMessage">このアプリを追加しますか？</p>
-      <button id="modalOk">OK</button>
+      <p id="modalMessage"></p>
+      <button onclick="applyAction()">OK</button>
       <button onclick="closeModal()">キャンセル</button>
     </div>
   </div>
 
   <script>
-    let targetKey = "";
-    let targetBtn = null;
+    let targetId = "";
+    let actionType = "";
+    let targetButton = null;
 
-    function toggleApp(btn, key) {
-      targetKey = key;
-      targetBtn = btn;
-      const current = getAppList();
-      const exists = current.includes(key);
-      document.getElementById("modalMessage").textContent = exists ? "このアプリを解除しますか？" : "このアプリを追加しますか？";
-      document.getElementById("confirmModal").style.display = "flex";
+    function getToolList() {
+      return JSON.parse(localStorage.getItem("carelayTools") || "[]");
     }
 
-    function closeModal() {
-      document.getElementById("confirmModal").style.display = "none";
-      targetKey = "";
-      targetBtn = null;
-    }
-
-    document.getElementById("modalOk").onclick = function() {
-      const list = getAppList();
-      const idx = list.indexOf(targetKey);
-      if (idx >= 0) {
-        list.splice(idx, 1);
-        targetBtn.textContent = "追加する";
-        targetBtn.classList.remove("remove");
+    function toggleApp(btn, id) {
+      const list = getToolList();
+      targetId = id;
+      targetButton = btn;
+      if (list.includes(id)) {
+        actionType = "remove";
+        document.getElementById("modalMessage").textContent = "このアプリを解除しますか？";
       } else {
-        list.push(targetKey);
-        targetBtn.textContent = "解除する";
-        targetBtn.classList.add("remove");
+        actionType = "add";
+        document.getElementById("modalMessage").textContent = "このアプリを追加しますか？";
+      }
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function applyAction() {
+      const list = getToolList();
+      if (actionType === "add") {
+        if (!list.includes(targetId)) list.unshift(targetId);
+        targetButton.textContent = "解除する";
+        targetButton.classList.add("remove");
+      } else {
+        const idx = list.indexOf(targetId);
+        if (idx >= 0) list.splice(idx, 1);
+        targetButton.textContent = "追加する";
+        targetButton.classList.remove("remove");
       }
       localStorage.setItem("carelayTools", JSON.stringify(list));
       closeModal();
-    };
-
-    function getAppList() {
-      try {
-        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
-      } catch {
-        return [];
+      if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
+        window.parent.setupAccordionMenu();
       }
     }
 
-    // 初期化
-    window.onload = function() {
-      const list = getAppList();
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    window.onload = () => {
+      const list = getToolList();
       document.querySelectorAll(".app-card").forEach(card => {
-        const key = card.getAttribute("data-key");
+        const id = card.getAttribute("data-id");
         const btn = card.querySelector("button");
-        if (list.includes(key)) {
+        if (list.includes(id)) {
           btn.textContent = "解除する";
           btn.classList.add("remove");
         }
