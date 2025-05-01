@@ -207,45 +207,69 @@
     }
 
     function setupAccordionMenu() {
-      const menuData = [
-        { title: "🏢 データ管理", page: "office" },
-        { title: "🛠️ 実務ツール", page: "work" },
-        { title: "🏪 便利ツール", page: "tools" },
-        { title: "🏦 金銭管理", page: "bank" },
-        { title: "📨 メッセージ便", page: "post" },
-        { title: "🛍️ 商材紹介", page: "mall" },
-        { title: "🖼️ 素材集", page: "material" },
-        { title: "🚕 介護タクシー", page: "taxi" },
-        { title: "🏛️ 運営連絡", page: "admin" }
-      ];
-      const sidebar = document.getElementById('sidebar');
-      sidebar.innerHTML = "";
+  const menuData = [
+    { title: "🏢 データ管理", page: "office" },
+    { title: "🛠️ 実務ツール", page: "work" },
+    { title: "🏪 便利ツール", page: "tools" },
+    { title: "🏦 金銭管理", page: "bank" },
+    { title: "📨 メッセージ便", page: "post" },
+    { title: "🛍️ 商材紹介", page: "mall" },
+    { title: "🖼️ 素材集", page: "material" },
+    { title: "🚕 介護タクシー", page: "taxi" },
+    { title: "🏛️ 運営連絡", page: "admin" }
+  ];
 
-      menuData.forEach(section => {
-        const block = document.createElement('div');
-        block.className = "category-block";
+  const appNameMap = {
+    toolcalc: "🧮 電卓",
+    tooldays: "📅 日数計算",
+    toolcheck: "📋 チェック表",
+    toolmemo: "📝 メモ帳",
+    toolcalendar: "📅 カレンダー"
+  };
 
-        const title = document.createElement('div');
-        title.className = "category-title";
-        title.textContent = section.title;
-        title.onclick = () => {
-          const submenu = block.querySelector('.submenu');
-          submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
-        };
+  const sidebar = document.getElementById('sidebar');
+  sidebar.innerHTML = "";
 
-        const submenu = document.createElement('div');
-        submenu.className = "submenu";
+  menuData.forEach(section => {
+    const block = document.createElement('div');
+    block.className = "category-block";
 
-        const appListBtn = document.createElement('button');
-        appListBtn.textContent = "📋 アプリ一覧";
-        appListBtn.onclick = () => loadMain(`${section.page}-list`);
-        submenu.appendChild(appListBtn);
+    const title = document.createElement('div');
+    title.className = "category-title";
+    title.textContent = section.title;
+    title.onclick = () => {
+      const submenu = block.querySelector('.submenu');
+      submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+    };
 
-        block.appendChild(title);
-        block.appendChild(submenu);
-        sidebar.appendChild(block);
+    const submenu = document.createElement('div');
+    submenu.className = "submenu";
+
+    // 📋 アプリ一覧ボタン（共通）
+    const appListBtn = document.createElement('button');
+    appListBtn.textContent = "📋 アプリ一覧";
+    appListBtn.onclick = () => loadMain(`${section.page}-list`);
+    submenu.appendChild(appListBtn);
+
+    // ⭐ アプリ追加ボタン（便利ツールカテゴリのみ）
+    if (section.page === "tools") {
+      const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      toolList.forEach(id => {
+        if (appNameMap[id]) {
+          const toolBtn = document.createElement("button");
+          toolBtn.textContent = appNameMap[id];
+          toolBtn.onclick = () => loadMain(id);
+          submenu.appendChild(toolBtn);
+        }
       });
     }
+
+    block.appendChild(title);
+    block.appendChild(submenu);
+    sidebar.appendChild(block);
+  });
+}
+
   </script>
 </body>
 </html>
