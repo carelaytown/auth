@@ -2,127 +2,181 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CARELAYタウン 認証</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CARELAYタウン 利用開始</title>
   <style>
     body {
       margin: 0;
-      padding: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      background: #f0f2f5;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .card {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 400px;
-      text-align: center;
-    }
-    h1 {
-      margin-bottom: 1rem;
-      font-size: 1.5rem;
+      background: #f0f6ff;
       color: #333;
     }
-    .note {
-      margin-bottom: 1rem;
-      font-size: 13px;
-      color: #555;
+
+    .header {
+      background-color: #2a6ebb;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
     }
-    input[type="email"] {
-      padding: 0.75rem;
-      font-size: 1rem;
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 360px;
+      max-width: 90%;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #2a6ebb;
+    }
+
+    input[type="text"], input[type="email"] {
       width: 100%;
+      padding: 10px;
+      margin-top: 10px;
       border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-bottom: 1rem;
+      border-radius: 6px;
+      font-size: 14px;
     }
+
     button {
-      padding: 0.75rem;
-      font-size: 1rem;
-      width: 100%;
-      background-color: #0066cc;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #2a6ebb;
       color: white;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
+      font-size: 14px;
       cursor: pointer;
     }
+
     button:hover {
-      background-color: #004999;
+      background-color: #1f5aa0;
     }
-    .message {
-      margin-top: 1rem;
-      color: #cc0000;
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
+      font-size: 13px;
     }
+
+    .error { color: #c0392b; }
+    .success { color: #27ae60; }
+    .pending { color: #f39c12; }
   </style>
 </head>
 <body>
-  <div class="card">
-    <h1>CARELAYタウン 認証</h1>
-    <p class="note">
-      ※初回は、メールに届いたログインリンクを必ずクリックしてください。<br>
-      クリックしないとログインは完了しません。<br>
-      一度ログインすれば、次回からはこのページを開かずに自動的にCARELAYタウンへ入れます。
-    </p>
-    <input type="email" id="email" placeholder="メールアドレスを入力" />
-    <button id="loginBtn">Magic Linkでログイン</button>
-    <div class="message" id="message"></div>
+  <div class="header">CARELAY TOWN 利用開始</div>
+
+  <div class="container">
+    <!-- 利用申し込み -->
+    <div class="card">
+      <h2>📝 利用申し込み</h2>
+      <input type="text" id="orgName" placeholder="事業所名" />
+      <input type="email" id="regEmail" placeholder="メールアドレス" />
+      <button onclick="submitApplication()">申請する</button>
+      <div id="applyStatus" class="status"></div>
+    </div>
+
+    <!-- ログイン -->
+    <div class="card">
+      <h2>🔐 ログイン</h2>
+      <input type="email" id="loginEmail" placeholder="メールアドレス" />
+      <button onclick="login()">ログイン</button>
+      <div id="loginStatus" class="status"></div>
+    </div>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script>
+    const supabaseUrl = "https://udcrfwejohzmhfojnwha.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI";
 
-    const supabaseUrl = 'https://udcrfwejohzmhfojnwha.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    async function submitApplication() {
+      const orgName = document.getElementById("orgName").value.trim();
+      const email = document.getElementById("regEmail").value.trim().toLowerCase();
+      const statusDiv = document.getElementById("applyStatus");
+      statusDiv.innerText = "";
+      statusDiv.className = "status";
 
-    const msg = document.getElementById('message');
-
-    // すでにログイン済みなら自動遷移
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) {
-        const { data: approved } = await supabase
-          .from('approved_users')
-          .select('email')
-          .eq('email', session.user.email)
-          .single();
-
-        if (approved) {
-          window.location.href = 'top.html';
-        }
-      }
-    });
-
-    // Magic Link送信処理（動的 redirectTo）
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
-      msg.style.color = '#cc0000';
-
-      if (!email) {
-        msg.textContent = 'メールアドレスを入力してください。';
+      if (!orgName || !email) {
+        statusDiv.innerText = "事業所名とメールアドレスを入力してください。";
+        statusDiv.classList.add("error");
         return;
       }
 
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          emailRedirectTo: window.location.origin + '/auth/top.html'
-        }
-      });
+      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          org_name: orgName,
+          email: email,
+          status: "pending",
+          created_at: new Date().toISOString()
+        })
+      }).then(res => res.json());
 
-      if (error) {
-        msg.textContent = 'ログインリンクの送信に失敗しました。';
+      if (error || data.error) {
+        statusDiv.innerText = "申請に失敗しました。すでに申請済みの可能性があります。";
+        statusDiv.classList.add("error");
       } else {
-        msg.style.color = 'green';
-        msg.textContent = 'メールを確認してください。ログインリンクを送信しました。';
+        statusDiv.innerText = "申請が完了しました。承認までお待ちください。";
+        statusDiv.classList.add("success");
       }
-    });
+    }
+
+    async function login() {
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const statusDiv = document.getElementById("loginStatus");
+      statusDiv.innerText = "";
+      statusDiv.className = "status";
+
+      if (!email) {
+        statusDiv.innerText = "メールアドレスを入力してください。";
+        statusDiv.classList.add("error");
+        return;
+      }
+
+      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+        method: "GET",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      }).then(res => res.json());
+
+      if (data && data.length > 0) {
+        if (data[0].status === "approved") {
+          localStorage.setItem("carelayUser", email);
+          localStorage.setItem("carelayApproved", "ok");
+          window.location.href = "top.html";
+        } else {
+          statusDiv.innerText = "申請済みですが、まだ承認されていません。";
+          statusDiv.classList.add("pending");
+        }
+      } else {
+        statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+        statusDiv.classList.add("error");
+      }
+    }
   </script>
 </body>
 </html>
