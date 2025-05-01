@@ -88,7 +88,7 @@
       <h2>📝 利用申し込み</h2>
       <input type="text" id="orgName" placeholder="事業所名" />
       <input type="email" id="regEmail" placeholder="メールアドレス" />
-      <button onclick="submitApplication()">申請する</button>
+      <button onclick="submitApplication(event)">申請する</button>
       <div id="applyStatus" class="status"></div>
     </div>
 
@@ -105,41 +105,80 @@
     const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    async function submitApplication() {
+    async function submitApplication(event) {
       const orgName = document.getElementById("orgName").value.trim();
       const email = document.getElementById("regEmail").value.trim().toLowerCase();
       const statusDiv = document.getElementById("applyStatus");
+      const button = event.target;
+
       statusDiv.innerText = "";
       statusDiv.className = "status";
 
       if (!orgName || !email) {
-        statusDiv.innerText = "事業所名とメールアドレスを入力してください。";
+        statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
         statusDiv.classList.add("error");
         return;
       }
 
-      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({
-          org_name: orgName,
-          email: email,
-          status: "pending",
-          created_at: new Date().toISOString()
-        })
-      }).then(res => res.json());
+      // 表示：申請中
+      statusDiv.innerText = "⏳ 申請中です...";
+      button.disabled = true;
+      button.innerText = "申請中...";
+      button.style.backgroundColor = "#aaa";
 
-      if (error || data.error) {
-        statusDiv.innerText = "申請に失敗しました。すでに申請済みの可能性があります。";
-        statusDiv.classList.add("error");
-      } else {
-        statusDiv.innerText = "申請が完了しました。承認までお待ちください。";
+      try {
+        // 重複チェック
+        const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+          headers: {
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`
+          }
+        });
+        const existing = await checkRes.json();
+
+        if (existing.length > 0) {
+          statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
+          statusDiv.classList.add("error");
+          button.disabled = false;
+          button.innerText = "申請する";
+          button.style.backgroundColor = "#2a6ebb";
+          return;
+        }
+
+        // 登録処理
+        const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({
+            org_name: orgName,
+            email: email,
+            status: "pending",
+            created_at: new Date().toISOString()
+          })
+        });
+
+        if (!res.ok) throw new Error("申請失敗");
+
+        // 成功表示
+        statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
         statusDiv.classList.add("success");
+        document.getElementById("orgName").disabled = true;
+        document.getElementById("regEmail").disabled = true;
+        button.disabled = true;
+        button.innerText = "申請済み";
+        button.style.backgroundColor = "#aaa";
+
+      } catch (err) {
+        statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
+        statusDiv.classList.add("error");
+        button.disabled = false;
+        button.innerText = "申請する";
+        button.style.backgroundColor = "#2a6ebb";
       }
     }
 
@@ -155,13 +194,15 @@
         return;
       }
 
-      const { data, error } = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
         method: "GET",
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
-      }).then(res => res.json());
+      });
+
+      const data = await res.json();
 
       if (data && data.length > 0) {
         if (data[0].status === "approved") {
