@@ -161,7 +161,7 @@
 
     async function fetchOrgName(email) {
       const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-      const supabaseKey = "＜あなたのanonキーをここに＞";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
       const queryEmail = encodeURIComponent(email.trim().toLowerCase());
       const fetchUrl = `${supabaseUrl}/rest/v1/applications?email=eq.${queryEmail}`;
