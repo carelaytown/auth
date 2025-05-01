@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>🏪 ホームセンター - アプリ一覧</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 30px;
+      background-color: #f0f6ff;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    h1 {
+      font-size: 20px;
+      margin-bottom: 10px;
+      color: #2a6ebb;
+    }
+    p {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    .app-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .card h2 {
+      font-size: 16px;
+      margin: 0 0 8px;
+      color: #2a6ebb;
+    }
+    .card p {
+      font-size: 14px;
+      margin: 0 0 12px;
+      color: #666;
+    }
+    .card button {
+      padding: 6px 12px;
+      font-size: 14px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .card button:hover {
+      background-color: #1e5393;
+    }
+  </style>
+</head>
+<body>
+  <h1>🏪 ホームセンター</h1>
+  <p>この施設では、日常業務に役立つ便利なアプリをまとめています。必要なアプリを選んでメニューに追加しましょう。</p>
+
+  <div class="app-grid">
+    <div class="card">
+      <h2>🧮 電卓</h2>
+      <p>シンプルで使いやすい計算機です。</p>
+      <button onclick="addTool('toolcalc')">追加する</button>
+    </div>
+    <div class="card">
+      <h2>📅 日数計算</h2>
+      <p>開始日と終了日から日数を自動計算します。</p>
+      <button onclick="addTool('tooldays')">追加する</button>
+    </div>
+    <div class="card">
+      <h2>📋 チェック表</h2>
+      <p>日々の作業を確認できるチェックリストです。</p>
+      <button onclick="addTool('toolcheck')">追加する</button>
+    </div>
+    <div class="card">
+      <h2>📝 メモ帳</h2>
+      <p>ちょっとしたメモを取るための簡易ノート。</p>
+      <button onclick="addTool('toolmemo')">追加する</button>
+    </div>
+    <div class="card">
+      <h2>📆 カレンダー</h2>
+      <p>予定の確認や管理ができるカレンダーです。</p>
+      <button onclick="addTool('toolcalendar')">追加する</button>
+    </div>
+  </div>
+
+  <script>
+    function addTool(id) {
+      const key = "carelayTools";
+      const list = JSON.parse(localStorage.getItem(key) || "[]");
+      if (!list.includes(id)) {
+        list.unshift(id);
+        localStorage.setItem(key, JSON.stringify(list));
+        alert("追加されました。");
+      } else {
+        alert("すでに追加されています。");
+      }
+    }
+  </script>
+</body>
+</html>
