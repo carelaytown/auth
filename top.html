@@ -107,6 +107,7 @@
       overflow-y: auto;
       padding: 20px;
       background-color: #fff;
+      height: 100%;
     }
 
     footer {
@@ -152,7 +153,9 @@
         window.location.href = "index.html";
         return;
       }
-      fetchOrgName(email);
+      fetchOrgName(email).then(() => {
+        document.getElementById("orgLabel").textContent = userOrgName;
+      });
       loadMain('map');
       setupAccordionMenu();
     }
@@ -169,7 +172,6 @@
       const data = await res.json();
       if (data.length > 0) {
         userOrgName = data[0].org_name;
-        document.getElementById("orgLabel").textContent = userOrgName;
       }
     }
 
