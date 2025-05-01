@@ -1,48 +1,180 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CARELAYタウン</title>
+  <style>
+    body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background-color: #f9f9f9; }
+
+    header {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 55px;
+      background-color: #2a6ebb; color: white;
+      padding: 0 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      z-index: 1000;
+    }
+
+    #layout {
+      display: flex;
+      min-height: 100vh;
+      padding-top: 55px;
+    }
+
+    #sidebar {
+      width: 220px;
+      background-color: #ffe5b4;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      display: none;
+    }
+
+    #main {
+      flex-grow: 1;
+      padding: 10px;
+      background-color: #fff;
+    }
+
+    footer {
+      background-color: #2a6ebb;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+    }
+
+    @media (min-width: 768px) {
+      #sidebar { display: block; }
+    }
+
+    .accordion {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin: 10px;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .accordion:hover { background-color: #f0f0f0; }
+
+    #bottomNav {
+      display: flex;
+      justify-content: space-around;
+      background-color: #2a6ebb;
+      padding: 5px 0;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    #bottomNav button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 14px;
+      flex-grow: 1;
+      cursor: pointer;
+    }
+
+    @media (min-width: 768px) {
+      #bottomNav { display: none; }
+    }
+  </style>
 </head>
-<body>
-  <p>読み込み中...</p>
+<body onload="initTopPage()">
+  <header>
+    <div><strong>🏘 CARELAYタウン</strong></div>
+    <div>
+      <button onclick="openPage('mypage.html')">👤 マイページ</button>
+      <button onclick="openPage('howto.html')">❓ 使い方</button>
+      <button onclick="logout()">🚪 ログアウト</button>
+    </div>
+  </header>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <div id="layout">
+    <div id="sidebar"><div id="accordionMenu"></div></div>
+    <div id="main">読み込み中...</div>
+  </div>
 
-    const supabaseUrl = 'https://udcrfwejohzmhfojnwha.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+  <div id="bottomNav">
+    <button onclick="loadMain('map')">🌏 マップ</button>
+    <button onclick="toggleSidebar()">≡ メニュー</button>
+  </div>
 
-    const { data: { session } } = await supabase.auth.getSession();
+  <footer>© 2025 CARELAY TOWN</footer>
 
-    // セッションが存在しないなら、MagicLink URLから取得を試みる
-    if (!session) {
-      const { data, error } = await supabase.auth.getSessionFromUrl();
-      if (data?.session) {
-        // URL整形してリロード（#access_token 等を除去）
-        window.history.replaceState({}, document.title, window.location.pathname);
-        location.reload();
+  <script>
+    function initTopPage() {
+      const approved = localStorage.getItem("carelayApproved");
+      const userEmail = localStorage.getItem("carelayUser");
+      if (approved !== "ok" || !userEmail) {
+        window.location.href = "index.html";
         return;
       }
-      // 取得できなければ index に戻す
-      window.location.href = "index.html";
-    } else {
-      const userEmail = session.user.email.toLowerCase();
-      const { data, error } = await supabase
-        .from("approved_users")
-        .select("email")
-        .eq("email", userEmail)
-        .single();
 
-      if (data) {
-        // 承認済ならメイン表示
-        window.location.href = "main.html";
-      } else {
-        alert("まだ承認されていません。");
-        window.location.href = "index.html";
-      }
+      loadMain('map');
+      setupAccordionMenu();
+    }
+
+    function loadMain(pageName) {
+      document.getElementById('main').innerHTML = "<p>読み込み中...</p>";
+      fetch(`${pageName}.html`)
+        .then(res => res.text())
+        .then(html => {
+          const main = document.getElementById('main');
+          main.innerHTML = html;
+
+          const scripts = main.querySelectorAll('script');
+          scripts.forEach(oldScript => {
+            const newScript = document.createElement('script');
+            if (oldScript.src) {
+              newScript.src = oldScript.src;
+            } else {
+              newScript.textContent = oldScript.textContent;
+            }
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          });
+        });
+    }
+
+    function setupAccordionMenu() {
+      const menuData = [
+        { title: "🏢 データ管理", page: "office" },
+        { title: "🛠️ 実務ツール", page: "work" },
+        { title: "🏪 便利ツール", page: "tools" },
+        { title: "🏦 金銭管理", page: "bank" },
+        { title: "📨 メッセージ便", page: "post" },
+        { title: "🛍️ 商材紹介", page: "mall" },
+        { title: "🖼️ 素材集", page: "material" },
+        { title: "🚕 介護タクシー", page: "taxi" },
+        { title: "🏛️ 運営連絡", page: "admin" }
+      ];
+      const container = document.getElementById('accordionMenu');
+      container.innerHTML = "";
+      menuData.forEach(section => {
+        const acc = document.createElement('div');
+        acc.className = "accordion";
+        acc.innerText = section.title;
+        acc.onclick = () => loadMain(section.page);
+        container.appendChild(acc);
+      });
+    }
+
+    function openPage(url) {
+      window.open(url, '_blank');
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.style.display = sidebar.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
     }
   </script>
 </body>
