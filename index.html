@@ -102,122 +102,127 @@
   </div>
 
   <script>
-    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    async function submitApplication(event) {
-      const orgName = document.getElementById("orgName").value.trim();
-      const email = document.getElementById("regEmail").value.trim().toLowerCase();
-      const statusDiv = document.getElementById("applyStatus");
-      const button = event.target;
+  window.onload = () => {
+    const approved = localStorage.getItem("carelayApproved");
+    const email = localStorage.getItem("carelayUser");
+    if (approved === "ok" && email) {
+      window.location.href = "top.html";
+    }
+  };
 
-      statusDiv.innerText = "";
-      statusDiv.className = "status";
+  async function submitApplication(event) {
+    const orgName = document.getElementById("orgName").value.trim();
+    const email = document.getElementById("regEmail").value.trim().toLowerCase();
+    const statusDiv = document.getElementById("applyStatus");
+    const button = event.target;
 
-      if (!orgName || !email) {
-        statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
-        statusDiv.classList.add("error");
-        return;
-      }
+    statusDiv.innerText = "";
+    statusDiv.className = "status";
 
-      // 表示：申請中
-      statusDiv.innerText = "⏳ 申請中です...";
-      button.disabled = true;
-      button.innerText = "申請中...";
-      button.style.backgroundColor = "#aaa";
-
-      try {
-        // 重複チェック
-        const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-          headers: {
-            "apikey": supabaseKey,
-            "Authorization": `Bearer ${supabaseKey}`
-          }
-        });
-        const existing = await checkRes.json();
-
-        if (existing.length > 0) {
-          statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
-          statusDiv.classList.add("error");
-          button.disabled = false;
-          button.innerText = "申請する";
-          button.style.backgroundColor = "#2a6ebb";
-          return;
-        }
-
-        // 登録処理
-        const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": supabaseKey,
-            "Authorization": `Bearer ${supabaseKey}`,
-            "Prefer": "return=representation"
-          },
-          body: JSON.stringify({
-            org_name: orgName,
-            email: email,
-            status: "pending",
-            created_at: new Date().toISOString()
-          })
-        });
-
-        if (!res.ok) throw new Error("申請失敗");
-
-        // 成功表示
-        statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
-        statusDiv.classList.add("success");
-        document.getElementById("orgName").disabled = true;
-        document.getElementById("regEmail").disabled = true;
-        button.disabled = true;
-        button.innerText = "申請済み";
-        button.style.backgroundColor = "#aaa";
-
-      } catch (err) {
-        statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
-        statusDiv.classList.add("error");
-        button.disabled = false;
-        button.innerText = "申請する";
-        button.style.backgroundColor = "#2a6ebb";
-      }
+    if (!orgName || !email) {
+      statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
+      statusDiv.classList.add("error");
+      return;
     }
 
-    async function login() {
-      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-      const statusDiv = document.getElementById("loginStatus");
-      statusDiv.innerText = "";
-      statusDiv.className = "status";
+    statusDiv.innerText = "⏳ 申請中です...";
+    button.disabled = true;
+    button.innerText = "申請中...";
+    button.style.backgroundColor = "#aaa";
 
-      if (!email) {
-        statusDiv.innerText = "メールアドレスを入力してください。";
-        statusDiv.classList.add("error");
-        return;
-      }
-
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-        method: "GET",
+    try {
+      const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
       });
+      const existing = await checkRes.json();
 
-      const data = await res.json();
-
-      if (data && data.length > 0) {
-        if (data[0].status === "approved") {
-          localStorage.setItem("carelayUser", email);
-          localStorage.setItem("carelayApproved", "ok");
-          window.location.href = "top.html";
-        } else {
-          statusDiv.innerText = "申請済みですが、まだ承認されていません。";
-          statusDiv.classList.add("pending");
-        }
-      } else {
-        statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+      if (existing.length > 0) {
+        statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
         statusDiv.classList.add("error");
+        button.disabled = false;
+        button.innerText = "申請する";
+        button.style.backgroundColor = "#2a6ebb";
+        return;
       }
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          org_name: orgName,
+          email: email,
+          status: "pending",
+          created_at: new Date().toISOString()
+        })
+      });
+
+      if (!res.ok) throw new Error("申請失敗");
+
+      statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
+      statusDiv.classList.add("success");
+      document.getElementById("orgName").disabled = true;
+      document.getElementById("regEmail").disabled = true;
+      button.disabled = true;
+      button.innerText = "申請済み";
+      button.style.backgroundColor = "#aaa";
+
+    } catch (err) {
+      statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
+      statusDiv.classList.add("error");
+      button.disabled = false;
+      button.innerText = "申請する";
+      button.style.backgroundColor = "#2a6ebb";
     }
-  </script>
+  }
+
+  async function login() {
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const statusDiv = document.getElementById("loginStatus");
+    statusDiv.innerText = "";
+    statusDiv.className = "status";
+
+    if (!email) {
+      statusDiv.innerText = "メールアドレスを入力してください。";
+      statusDiv.classList.add("error");
+      return;
+    }
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+      method: "GET",
+      headers: {
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`
+      }
+    });
+
+    const data = await res.json();
+
+    if (data && data.length > 0) {
+      if (data[0].status === "approved") {
+        localStorage.setItem("carelayUser", email);
+        localStorage.setItem("carelayApproved", "ok");
+        window.location.href = "top.html";
+      } else {
+        statusDiv.innerText = "申請済みですが、まだ承認されていません。";
+        statusDiv.classList.add("pending");
+      }
+    } else {
+      statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+      statusDiv.classList.add("error");
+    }
+  }
+</script>
+
 </body>
 </html>
