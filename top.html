@@ -46,6 +46,34 @@
       display: none;
     }
 
+    .accordion {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      margin: 10px;
+      padding: 10px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .submenu {
+      margin-left: 20px;
+      margin-right: 10px;
+      margin-top: -5px;
+      margin-bottom: 10px;
+    }
+
+    .submenu button {
+      width: 100%;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 8px;
+      margin-top: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
     #main {
       flex-grow: 1;
       padding: 10px;
@@ -59,22 +87,6 @@
       padding: 10px;
       font-size: 12px;
     }
-
-    @media (min-width: 768px) {
-      #sidebar { display: block; }
-    }
-
-    .accordion {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      margin: 10px;
-      padding: 10px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .accordion:hover { background-color: #f0f0f0; }
 
     #bottomNav {
       display: flex;
@@ -96,6 +108,7 @@
     }
 
     @media (min-width: 768px) {
+      #sidebar { display: block; }
       #bottomNav { display: none; }
     }
   </style>
@@ -107,13 +120,13 @@
       <div id="orgLabel" class="label"></div>
     </div>
     <div class="header-buttons">
-      <button onclick="openPage('mypage.html')">👤 マイページ</button>
-      <button onclick="openPage('howto.html')">❓ 使い方</button>
+      <button onclick="loadMain('mypage')">👤 マイページ</button>
+      <button onclick="loadMain('howto')">❓ 使い方</button>
     </div>
   </header>
 
   <div id="layout">
-    <div id="sidebar"><div id="accordionMenu"></div></div>
+    <div id="sidebar"></div>
     <div id="main">読み込み中...</div>
   </div>
 
@@ -125,6 +138,8 @@
   <footer>© 2025 CARELAY TOWN</footer>
 
   <script>
+    let userOrgName = "";
+
     function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
       const email = localStorage.getItem("carelayUser");
@@ -132,9 +147,25 @@
         window.location.href = "index.html";
         return;
       }
-      document.getElementById("orgLabel").textContent = email;
+      fetchOrgName(email);
       loadMain('map');
       setupAccordionMenu();
+    }
+
+    async function fetchOrgName(email) {
+      const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // 実際のキーを使用
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const data = await res.json();
+      if (data.length > 0) {
+        userOrgName = data[0].org_name;
+        document.getElementById("orgLabel").textContent = userOrgName;
+      }
     }
 
     function loadMain(pageName) {
@@ -169,26 +200,33 @@
         { title: "🚕 介護タクシー", page: "taxi" },
         { title: "🏛️ 運営連絡", page: "admin" }
       ];
-      const container = document.getElementById('accordionMenu');
-      container.innerHTML = "";
+      const sidebar = document.getElementById('sidebar');
+      sidebar.innerHTML = "";
+
       menuData.forEach(section => {
+        const wrapper = document.createElement('div');
+
         const acc = document.createElement('div');
         acc.className = "accordion";
         acc.innerText = section.title;
-        acc.onclick = () => loadMain(section.page);
-        container.appendChild(acc);
+        acc.onclick = () => {
+          const submenu = wrapper.querySelector('.submenu');
+          submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
+        };
 
-        const sub = document.createElement('div');
-        sub.className = "accordion";
-        sub.innerText = "📋 アプリ一覧";
-        sub.style.marginLeft = "20px";
-        sub.onclick = () => loadMain(section.page + "-list");
-        container.appendChild(sub);
+        const submenu = document.createElement('div');
+        submenu.className = "submenu";
+        submenu.style.display = 'none';
+
+        const appListBtn = document.createElement('button');
+        appListBtn.textContent = "📋 アプリ一覧";
+        appListBtn.onclick = () => loadMain(`${section.page}-list`);
+        submenu.appendChild(appListBtn);
+
+        wrapper.appendChild(acc);
+        wrapper.appendChild(submenu);
+        sidebar.appendChild(wrapper);
       });
-    }
-
-    function openPage(url) {
-      window.open(url, '_blank');
     }
 
     function toggleSidebar() {
