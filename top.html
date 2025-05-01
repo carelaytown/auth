@@ -63,7 +63,7 @@
     }
 
     #sidebar {
-      width: 200px;
+      width: 180px;
       background-color: #ffe5b4;
       border-right: 1px solid #ccc;
       overflow-y: auto;
@@ -145,48 +145,46 @@
   <script>
     let userOrgName = "";
 
-    async function initTopPage() {
+    function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
       const email = localStorage.getItem("carelayUser");
       if (approved !== "ok" || !email) {
         window.location.href = "index.html";
         return;
       }
-
-      try {
-        await fetchOrgName(email);
-        document.getElementById("orgLabel").textContent = userOrgName || "(取得失敗)";
-      } catch (e) {
-        console.error("事業所名の取得に失敗しました", e);
-        document.getElementById("orgLabel").textContent = "(エラー)";
-      }
-
-      setupAccordionMenu();
-      loadMain('map');
+      fetchOrgName(email).then(() => {
+        document.getElementById("orgLabel").textContent = userOrgName;
+        loadMain('map');
+        setupAccordionMenu();
+      });
     }
 
     async function fetchOrgName(email) {
       const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // 実際のキーに置き換えてください
-    
+      const supabaseKey = "＜あなたのanonキーをここに＞";
+
       const queryEmail = encodeURIComponent(email.trim().toLowerCase());
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${queryEmail}`, {
+      const fetchUrl = `${supabaseUrl}/rest/v1/applications?email=eq.${queryEmail}`;
+
+      console.log("▶️ 使用メール:", email);
+      console.log("▶️ fetch URL:", fetchUrl);
+
+      const res = await fetch(fetchUrl, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
       });
-    
+
       const data = await res.json();
-      console.log("取得結果:", data); // デバッグ用
-    
+      console.log("📦 取得結果 data:", data);
+
       if (data.length > 0 && data[0].org_name) {
         userOrgName = data[0].org_name;
       } else {
         userOrgName = "(未登録)";
       }
     }
-
 
     function loadMain(pageName) {
       document.getElementById('main').innerHTML = "<p>読み込み中...</p>";
