@@ -107,7 +107,6 @@
       overflow-y: auto;
       padding: 20px;
       background-color: #fff;
-      height: 100%;
     }
 
     footer {
@@ -153,11 +152,17 @@
         window.location.href = "index.html";
         return;
       }
-      await fetchOrgName(email); // 完了するまで次に進まない
-        document.getElementById("orgLabel").textContent = userOrgName;
-      });
-      loadMain('map');
+
+      try {
+        await fetchOrgName(email);
+        document.getElementById("orgLabel").textContent = userOrgName || "(取得失敗)";
+      } catch (e) {
+        console.error("事業所名の取得に失敗しました", e);
+        document.getElementById("orgLabel").textContent = "(エラー)";
+      }
+
       setupAccordionMenu();
+      loadMain('map');
     }
 
     async function fetchOrgName(email) {
