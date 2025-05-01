@@ -10,10 +10,26 @@
     header {
       position: fixed;
       top: 0; left: 0; width: 100%; height: 55px;
-      background-color: #2a6ebb; color: white;
-      padding: 0 20px;
+      background-color: #1b355d; color: white;
       display: flex; justify-content: space-between; align-items: center;
-      z-index: 1000;
+      padding: 0 20px; z-index: 1000;
+    }
+
+    .logo-box {
+      display: flex; align-items: center; gap: 10px;
+    }
+
+    .logo-box .label {
+      background: white; color: #1b355d;
+      padding: 5px 10px; border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .header-buttons button {
+      background: white; color: #1b355d;
+      border: none; padding: 6px 12px;
+      border-radius: 8px; margin-left: 10px;
+      cursor: pointer; font-weight: bold;
     }
 
     #layout {
@@ -37,7 +53,7 @@
     }
 
     footer {
-      background-color: #2a6ebb;
+      background-color: #1b355d;
       color: white;
       text-align: center;
       padding: 10px;
@@ -63,7 +79,7 @@
     #bottomNav {
       display: flex;
       justify-content: space-around;
-      background-color: #2a6ebb;
+      background-color: #1b355d;
       padding: 5px 0;
       position: fixed;
       bottom: 0;
@@ -86,11 +102,13 @@
 </head>
 <body onload="initTopPage()">
   <header>
-    <div><strong>🏘 CARELAYタウン</strong></div>
-    <div>
+    <div class="logo-box">
+      <div class="label">🏘 CARELAYタウン</div>
+      <div id="orgLabel" class="label"></div>
+    </div>
+    <div class="header-buttons">
       <button onclick="openPage('mypage.html')">👤 マイページ</button>
       <button onclick="openPage('howto.html')">❓ 使い方</button>
-      <button onclick="logout()">🚪 ログアウト</button>
     </div>
   </header>
 
@@ -109,12 +127,12 @@
   <script>
     function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
-      const userEmail = localStorage.getItem("carelayUser");
-      if (approved !== "ok" || !userEmail) {
+      const email = localStorage.getItem("carelayUser");
+      if (approved !== "ok" || !email) {
         window.location.href = "index.html";
         return;
       }
-
+      document.getElementById("orgLabel").textContent = email;
       loadMain('map');
       setupAccordionMenu();
     }
@@ -126,7 +144,6 @@
         .then(html => {
           const main = document.getElementById('main');
           main.innerHTML = html;
-
           const scripts = main.querySelectorAll('script');
           scripts.forEach(oldScript => {
             const newScript = document.createElement('script');
@@ -160,6 +177,13 @@
         acc.innerText = section.title;
         acc.onclick = () => loadMain(section.page);
         container.appendChild(acc);
+
+        const sub = document.createElement('div');
+        sub.className = "accordion";
+        sub.innerText = "📋 アプリ一覧";
+        sub.style.marginLeft = "20px";
+        sub.onclick = () => loadMain(section.page + "-list");
+        container.appendChild(sub);
       });
     }
 
@@ -170,11 +194,6 @@
     function toggleSidebar() {
       const sidebar = document.getElementById('sidebar');
       sidebar.style.display = sidebar.style.display === 'block' ? 'none' : 'block';
-    }
-
-    function logout() {
-      localStorage.clear();
-      window.location.href = "index.html";
     }
   </script>
 </body>
