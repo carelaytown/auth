@@ -168,17 +168,25 @@
     async function fetchOrgName(email) {
       const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
       const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // 実際のキーに置き換えてください
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+    
+      const queryEmail = encodeURIComponent(email.trim().toLowerCase());
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${queryEmail}`, {
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
       });
+    
       const data = await res.json();
-      if (data.length > 0) {
+      console.log("取得結果:", data); // デバッグ用
+    
+      if (data.length > 0 && data[0].org_name) {
         userOrgName = data[0].org_name;
+      } else {
+        userOrgName = "(未登録)";
       }
     }
+
 
     function loadMain(pageName) {
       document.getElementById('main').innerHTML = "<p>読み込み中...</p>";
