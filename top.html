@@ -144,8 +144,8 @@
       }
       await fetchUserInfo(email);
       document.getElementById("orgLabel").textContent = userOrgName;
-      loadMain('map');
       setupAccordionMenu();
+      loadMain('map');
     }
 
     async function fetchUserInfo(email) {
@@ -160,7 +160,7 @@
         localStorage.removeItem("carelayAdmin");
       } else {
         userOrgName = data[0].org_name || "(不明)";
-        if (data[0].is_admin === true) {
+        if (data[0].is_admin === true || data[0].is_admin === 'TRUE') {
           localStorage.setItem("carelayAdmin", "true");
         } else {
           localStorage.removeItem("carelayAdmin");
