@@ -13,6 +13,18 @@
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
     }
+    #authSection {
+      margin-bottom: 2rem;
+    }
+    #authSection input[type="password"] {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-right: 0.5rem;
+    }
+    #authSection button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
     .tabs {
       margin-bottom: 1rem;
     }
@@ -37,17 +49,47 @@
       background: #fff;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
+    #iframeSection {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <h1>管理人室</h1>
-  <div class="tabs">
-    <span class="tab-button active" data-target="admin-account.html">アカウント承認・解除</span>
-    <span class="tab-button" data-target="admin-menu.html">カテゴリ表示設定</span>
+
+  <div id="authSection">
+    <input type="password" id="adminPassword" placeholder="管理者パスワード">
+    <button onclick="verifyPassword()">ログイン</button>
   </div>
-  <iframe id="adminFrame" src="admin-account.html"></iframe>
+
+  <div id="iframeSection">
+    <div class="tabs">
+      <span class="tab-button active" data-target="admin-account.html">アカウント承認・解除</span>
+      <span class="tab-button" data-target="admin-menu.html">カテゴリ表示設定</span>
+    </div>
+    <iframe id="adminFrame" src="admin-account.html"></iframe>
+  </div>
 
   <script>
+    const PASSWORD = 'adminpass'; // 仮のパスワード
+
+    function verifyPassword() {
+      const input = document.getElementById('adminPassword').value;
+      if (input === PASSWORD) {
+        localStorage.setItem('carelay_admin_auth', 'true');
+        document.getElementById('authSection').style.display = 'none';
+        document.getElementById('iframeSection').style.display = 'block';
+      } else {
+        alert('パスワードが違います');
+      }
+    }
+
+    // ページ読み込み時に認証済みなら自動表示
+    if (localStorage.getItem('carelay_admin_auth') === 'true') {
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('iframeSection').style.display = 'block';
+    }
+
     const tabs = document.querySelectorAll('.tab-button');
     const frame = document.getElementById('adminFrame');
 
