@@ -13,32 +13,51 @@
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
     }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
+    .tabs {
       margin-bottom: 1rem;
     }
-    a {
+    .tab-button {
       display: inline-block;
-      padding: 0.6rem 1.2rem;
-      background: #007acc;
-      color: white;
-      text-decoration: none;
+      margin-right: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #ccc;
+      color: #000;
       border-radius: 5px;
+      cursor: pointer;
       transition: background 0.2s ease-in-out;
     }
-    a:hover {
-      background: #005fa3;
+    .tab-button.active {
+      background: #007acc;
+      color: #fff;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
   </style>
 </head>
 <body>
   <h1>管理人室</h1>
-  <ul>
-    <li><a href="admin-account.html">アカウント承認・解除</a></li>
-    <li><a href="admin-menu.html">カテゴリ表示設定</a></li>
-  </ul>
+  <div class="tabs">
+    <span class="tab-button active" data-target="admin-account.html">アカウント承認・解除</span>
+    <span class="tab-button" data-target="admin-menu.html">カテゴリ表示設定</span>
+  </div>
+  <iframe id="adminFrame" src="admin-account.html"></iframe>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab-button');
+    const frame = document.getElementById('adminFrame');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        frame.src = tab.dataset.target;
+      });
+    });
+  </script>
 </body>
 </html>
