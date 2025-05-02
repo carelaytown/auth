@@ -135,33 +135,36 @@
 
     let userOrgName = "";
 
-    function initTopPage() {
+    async function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
       const email = localStorage.getItem("carelayUser");
       if (approved !== "ok" || !email) {
         window.location.href = "index.html";
         return;
       }
-      fetchOrgName(email).then(() => {
-        document.getElementById("orgLabel").textContent = userOrgName;
-        loadMain('map');
-        setupAccordionMenu();
-      });
+      await fetchUserInfo(email);
+      document.getElementById("orgLabel").textContent = userOrgName;
+      loadMain('map');
+      setupAccordionMenu();
     }
 
-    async function fetchOrgName(email) {
+    async function fetchUserInfo(email) {
       const queryEmail = encodeURIComponent(email.trim().toLowerCase());
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?email=eq.${queryEmail}`, {
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
-        }
-      });
-      const data = await res.json();
-      if (data.length > 0 && data[0].org_name) {
-        userOrgName = data[0].org_name;
-      } else {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("org_name, is_admin")
+        .eq("email", queryEmail);
+
+      if (error || !data || data.length === 0) {
         userOrgName = "(未登録)";
+        localStorage.removeItem("carelayAdmin");
+      } else {
+        userOrgName = data[0].org_name || "(不明)";
+        if (data[0].is_admin === true) {
+          localStorage.setItem("carelayAdmin", "true");
+        } else {
+          localStorage.removeItem("carelayAdmin");
+        }
       }
     }
 
@@ -195,7 +198,6 @@
         appListBtn.onclick = () => loadMain(`${row.page}-list`);
         submenu.appendChild(appListBtn);
 
-        // ⭐ 便利ツールカテゴリのみ追加アプリ表示
         if (row.page === "tools") {
           const appNameMap = {
             toolcalc: "🧮 電卓",
