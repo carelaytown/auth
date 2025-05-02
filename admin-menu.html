@@ -54,6 +54,9 @@
     .form-section button {
       padding: 0.5rem 1rem;
     }
+    .sort-buttons button {
+      margin: 0 2px;
+    }
   </style>
 </head>
 <body>
@@ -64,7 +67,7 @@
         <th>カテゴリ名</th>
         <th>表示</th>
         <th>管理者専用</th>
-        <th>削除</th>
+        <th>操作</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -84,20 +87,26 @@
       const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
       const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
       const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      let currentData = [];
 
       async function loadMenuConfig() {
-        const { data, error } = await client.from('menu_config').select('*').order('label');
+        const { data, error } = await client.from('menu_config').select('*').order('sort');
         if (error) {
           console.error('読み込みエラー:', error);
           return;
         }
+        currentData = data;
         const tbody = document.querySelector('#menuTable tbody');
         tbody.innerHTML = '';
-        data.forEach(row => {
+        data.forEach((row, index) => {
           const tr = document.createElement('tr');
 
           const labelCell = document.createElement('td');
-          labelCell.textContent = row.label;
+          const labelInput = document.createElement('input');
+          labelInput.type = 'text';
+          labelInput.value = row.label;
+          labelInput.addEventListener('blur', () => updateField(row.id, 'label', labelInput.value.trim()));
+          labelCell.appendChild(labelInput);
 
           const showCell = document.createElement('td');
           const showBox = document.createElement('input');
@@ -115,16 +124,25 @@
           adminBox.addEventListener('change', () => updateField(row.id, 'admin_only', adminBox.checked));
           adminCell.appendChild(adminBox);
 
-          const deleteCell = document.createElement('td');
+          const controlCell = document.createElement('td');
+          const upBtn = document.createElement('button');
+          upBtn.textContent = '↑';
+          upBtn.onclick = () => swapSort(index, index - 1);
+          const downBtn = document.createElement('button');
+          downBtn.textContent = '↓';
+          downBtn.onclick = () => swapSort(index, index + 1);
           const delBtn = document.createElement('button');
           delBtn.textContent = '削除';
           delBtn.onclick = () => deleteCategory(row.id);
-          deleteCell.appendChild(delBtn);
+
+          controlCell.appendChild(upBtn);
+          controlCell.appendChild(downBtn);
+          controlCell.appendChild(delBtn);
 
           tr.appendChild(labelCell);
           tr.appendChild(showCell);
           tr.appendChild(adminCell);
-          tr.appendChild(deleteCell);
+          tr.appendChild(controlCell);
 
           tbody.appendChild(tr);
         });
@@ -132,7 +150,23 @@
 
       async function updateField(id, field, value) {
         const { error } = await client.from('menu_config').update({ [field]: value }).eq('id', id);
-        if (error) alert('更新に失敗しました');
+        if (error) alert(`${field} の更新に失敗しました`);
+      }
+
+      async function swapSort(indexA, indexB) {
+        if (indexB < 0 || indexB >= currentData.length) return;
+        const itemA = currentData[indexA];
+        const itemB = currentData[indexB];
+        const temp = itemA.sort;
+        itemA.sort = itemB.sort;
+        itemB.sort = temp;
+
+        await Promise.all([
+          client.from('menu_config').update({ sort: itemA.sort }).eq('id', itemA.id),
+          client.from('menu_config').update({ sort: itemB.sort }).eq('id', itemB.id)
+        ]);
+
+        loadMenuConfig();
       }
 
       async function addCategory() {
@@ -143,7 +177,8 @@
           alert('カテゴリ名を入力してください');
           return;
         }
-        const { error } = await client.from('menu_config').insert([{ label, show, admin_only }]);
+        const maxSort = currentData.length > 0 ? Math.max(...currentData.map(r => r.sort || 0)) : 0;
+        const { error } = await client.from('menu_config').insert([{ label, show, admin_only, sort: maxSort + 1 }]);
         if (error) {
           console.error('追加エラー:', error);
           alert('追加に失敗しました');
@@ -166,7 +201,6 @@
       }
 
       document.getElementById('addBtn').addEventListener('click', addCategory);
-
       loadMenuConfig();
     });
   </script>
