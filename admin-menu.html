@@ -7,55 +7,73 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
-      font-family: sans-serif;
+      font-family: 'Noto Sans JP', sans-serif;
       padding: 2rem;
-      background: #f5f5f5;
+      background: #f0f2f5;
+      color: #333;
     }
     h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
+      font-size: 1.6rem;
+      margin-bottom: 1.5rem;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
     th, td {
-      padding: 0.75rem;
-      border: 1px solid #ccc;
-      text-align: left;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      text-align: center;
     }
     th {
-      background: #eee;
+      background: #2a6ebb;
+      color: white;
     }
-    .toggle {
+    input[type="text"] {
+      width: 90%;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input[type="checkbox"] {
       transform: scale(1.2);
+    }
+    button {
+      padding: 4px 10px;
+      margin: 0 2px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1e569c;
     }
     .form-section {
       margin-top: 2rem;
-      padding: 1rem;
+      padding: 1.5rem;
       background: #fff;
       border: 1px solid #ccc;
-      border-radius: 5px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .form-section label {
       display: block;
-      margin: 0.5rem 0 0.2rem;
+      margin-top: 1rem;
+      font-weight: bold;
     }
     .form-section input[type="text"] {
       width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-    }
-    .form-section input[type="checkbox"] {
-      transform: scale(1.2);
-      margin-right: 0.5rem;
+      padding: 8px;
+      margin-top: 0.3rem;
     }
     .form-section button {
-      padding: 0.5rem 1rem;
-    }
-    .sort-buttons button {
-      margin: 0 2px;
+      margin-top: 1rem;
+      width: 100%;
+      font-size: 1rem;
     }
   </style>
 </head>
@@ -65,6 +83,7 @@
     <thead>
       <tr>
         <th>カテゴリ名</th>
+        <th>ページ名</th>
         <th>表示</th>
         <th>管理者専用</th>
         <th>操作</th>
@@ -77,6 +96,8 @@
     <h2>新しいカテゴリを追加</h2>
     <label for="newLabel">カテゴリ名</label>
     <input type="text" id="newLabel" placeholder="例：便利ツール">
+    <label for="newPage">ページ名</label>
+    <input type="text" id="newPage" placeholder="例：tools">
     <label><input type="checkbox" id="newShow" checked> 表示する</label>
     <label><input type="checkbox" id="newAdmin"> 管理者専用</label>
     <button id="addBtn">追加する</button>
@@ -118,11 +139,17 @@
           labelInput.addEventListener('blur', () => updateField(row.id, 'label', labelInput.value.trim()));
           labelCell.appendChild(labelInput);
 
+          const pageCell = document.createElement('td');
+          const pageInput = document.createElement('input');
+          pageInput.type = 'text';
+          pageInput.value = row.page || '';
+          pageInput.addEventListener('blur', () => updateField(row.id, 'page', pageInput.value.trim()));
+          pageCell.appendChild(pageInput);
+
           const showCell = document.createElement('td');
           const showBox = document.createElement('input');
           showBox.type = 'checkbox';
           showBox.checked = row.show;
-          showBox.classList.add('toggle');
           showBox.addEventListener('change', () => updateField(row.id, 'show', showBox.checked));
           showCell.appendChild(showBox);
 
@@ -130,7 +157,6 @@
           const adminBox = document.createElement('input');
           adminBox.type = 'checkbox';
           adminBox.checked = row.admin_only;
-          adminBox.classList.add('toggle');
           adminBox.addEventListener('change', () => updateField(row.id, 'admin_only', adminBox.checked));
           adminCell.appendChild(adminBox);
 
@@ -150,6 +176,7 @@
           controlCell.appendChild(delBtn);
 
           tr.appendChild(labelCell);
+          tr.appendChild(pageCell);
           tr.appendChild(showCell);
           tr.appendChild(adminCell);
           tr.appendChild(controlCell);
@@ -175,19 +202,21 @@
 
       async function addCategory() {
         const label = document.getElementById('newLabel').value.trim();
+        const page = document.getElementById('newPage').value.trim();
         const show = document.getElementById('newShow').checked;
         const admin_only = document.getElementById('newAdmin').checked;
-        if (!label) {
-          alert('カテゴリ名を入力してください');
+        if (!label || !page) {
+          alert('カテゴリ名とページ名を入力してください');
           return;
         }
         const maxSort = currentData.length > 0 ? Math.max(...currentData.map(r => r.sort || 0)) : 0;
-        const { error } = await client.from('menu_config').insert([{ label, show, admin_only, sort: maxSort + 1 }]);
+        const { error } = await client.from('menu_config').insert([{ label, page, show, admin_only, sort: maxSort + 1 }]);
         if (error) {
           console.error('追加エラー:', error);
           alert('追加に失敗しました');
         } else {
           document.getElementById('newLabel').value = '';
+          document.getElementById('newPage').value = '';
           document.getElementById('newShow').checked = true;
           document.getElementById('newAdmin').checked = false;
           loadMenuConfig();
