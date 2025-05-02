@@ -71,7 +71,85 @@
       }
     }
 
-    // setupAccordionMenuとloadMainは変更なしで維持
+    function setupAccordionMenu() {
+  const isAdmin = localStorage.getItem("carelayAdmin") === "true";
+  supabase
+    .from("menu_config")
+    .select("label, page, show, admin_only")
+    .order("sort")
+    .then(({ data, error }) => {
+      const sidebar = document.getElementById("sidebar");
+      sidebar.innerHTML = "";
+
+      if (error || !data) {
+        console.error("カテゴリ取得エラー:", error);
+        return;
+      }
+
+      data.filter(row => row.show && (!row.admin_only || isAdmin)).forEach(row => {
+        const block = document.createElement("div");
+        block.className = "category-block";
+
+        const title = document.createElement("div");
+        title.className = "category-title";
+        title.textContent = row.label;
+        title.onclick = () => {
+          const submenu = block.querySelector(".submenu");
+          submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+        };
+
+        const submenu = document.createElement("div");
+        submenu.className = "submenu";
+
+        const appListBtn = document.createElement("button");
+        appListBtn.textContent = "📋 アプリ一覧";
+        appListBtn.onclick = () => loadMain(`${row.page}-list`);
+        submenu.appendChild(appListBtn);
+
+        if (row.page === "tools") {
+          const appNameMap = {
+            toolcalc: "🧮 電卓",
+            tooldays: "📅 日数計算",
+            toolcheck: "📋 チェック表",
+            toolmemo: "📝 メモ帳",
+            toolcalendar: "📅 カレンダー"
+          };
+          const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
+          toolList.forEach(id => {
+            if (appNameMap[id]) {
+              const toolBtn = document.createElement("button");
+              toolBtn.textContent = appNameMap[id];
+              toolBtn.onclick = () => loadMain(id);
+              submenu.appendChild(toolBtn);
+            }
+          });
+        }
+
+        block.appendChild(title);
+        block.appendChild(submenu);
+        sidebar.appendChild(block);
+      });
+    });
+}
+
+function loadMain(pageName) {
+  document.getElementById('main').innerHTML = "<p>読み込み中...</p>";
+  fetch(`${pageName}.html`)
+    .then(res => res.text())
+    .then(html => {
+      const main = document.getElementById('main');
+      main.innerHTML = html;
+      const scripts = main.querySelectorAll('script');
+      scripts.forEach(oldScript => {
+        const newScript = document.createElement('script');
+        if (oldScript.src) {
+          newScript.src = oldScript.src;
+        } else {
+          newScript.textContent = oldScript.textContent;
+        }
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+      });
+    });
   </script>
 </body>
 </html>
