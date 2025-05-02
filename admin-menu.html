@@ -145,6 +145,7 @@
       }
       const { error } = await supabase.from('menu_config').insert([{ label, show, admin_only }]);
       if (error) {
+        console.error('追加エラー:', error);
         alert('追加に失敗しました');
       } else {
         document.getElementById('newLabel').value = '';
