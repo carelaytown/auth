@@ -150,17 +150,24 @@
 
     async function fetchUserInfo(email) {
       const queryEmail = encodeURIComponent(email.trim().toLowerCase());
+      console.log("🔍 メールクエリ:", queryEmail);
+
       const { data, error } = await supabase
         .from("applications")
-        .select("org_name, is_admin")
+        .select("org_name, is_admin, email")
         .eq("email", queryEmail);
+
+      console.log("📦 Supabaseレスポンス:", { data, error });
 
       if (error || !data || data.length === 0) {
         userOrgName = "(未登録)";
         localStorage.removeItem("carelayAdmin");
       } else {
         userOrgName = data[0].org_name || "(不明)";
-        if (data[0].is_admin === true || data[0].is_admin === 'TRUE') {
+        const flag = data[0].is_admin;
+        console.log("👑 is_admin:", flag);
+
+        if (flag === true || flag === 'TRUE') {
           localStorage.setItem("carelayAdmin", "true");
         } else {
           localStorage.removeItem("carelayAdmin");
