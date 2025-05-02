@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CARELAYタウン</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     * {
       margin: 0;
@@ -17,7 +18,6 @@
       display: flex;
       flex-direction: column;
     }
-
     header {
       background-color: #1b355d;
       color: white;
@@ -27,7 +27,6 @@
       align-items: center;
       flex-shrink: 0;
     }
-
     .logo-button {
       background: none;
       border: 2px solid white;
@@ -38,13 +37,11 @@
       cursor: pointer;
       margin-right: 10px;
     }
-
     .account-name {
       color: white;
       font-weight: bold;
       font-size: 14px;
     }
-
     .header-buttons button {
       background: none;
       border: 2px solid white;
@@ -55,13 +52,11 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     #layout {
       display: flex;
       flex: 1;
       overflow: hidden;
     }
-
     #sidebar {
       width: 200px;
       background-color: #ffe5b4;
@@ -69,14 +64,12 @@
       overflow-y: auto;
       padding: 10px 0;
     }
-
     .category-block {
       margin: 10px;
       background: white;
       border: 2px solid #999;
       border-radius: 6px;
     }
-
     .category-title {
       background: #2a6ebb;
       color: white;
@@ -85,12 +78,10 @@
       cursor: pointer;
       border-radius: 6px 6px 0 0;
     }
-
     .submenu {
       display: none;
       padding: 5px 10px;
     }
-
     .submenu button {
       width: 100%;
       margin-top: 5px;
@@ -101,14 +92,12 @@
       font-weight: bold;
       cursor: pointer;
     }
-
     #main {
       flex-grow: 1;
       overflow-y: auto;
       padding: 20px;
       background-color: #fff;
     }
-
     footer {
       background-color: #1b355d;
       color: white;
@@ -117,7 +106,6 @@
       font-size: 12px;
       flex-shrink: 0;
     }
-
     #bottomNav {
       display: none;
     }
@@ -134,15 +122,17 @@
       <button onclick="loadMain('howto')">❓ 使い方</button>
     </div>
   </header>
-
   <div id="layout">
     <div id="sidebar"></div>
     <div id="main">読み込み中...</div>
   </div>
-
   <footer>© 2025 CARELAY TOWN</footer>
 
   <script>
+    const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     let userOrgName = "";
 
     function initTopPage() {
@@ -160,30 +150,75 @@
     }
 
     async function fetchOrgName(email) {
-      const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-
       const queryEmail = encodeURIComponent(email.trim().toLowerCase());
-      const fetchUrl = `${supabaseUrl}/rest/v1/applications?email=eq.${queryEmail}`;
-
-      console.log("▶️ 使用メール:", email);
-      console.log("▶️ fetch URL:", fetchUrl);
-
-      const res = await fetch(fetchUrl, {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?email=eq.${queryEmail}`, {
         headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
         }
       });
-
       const data = await res.json();
-      console.log("📦 取得結果 data:", data);
-
       if (data.length > 0 && data[0].org_name) {
         userOrgName = data[0].org_name;
       } else {
         userOrgName = "(未登録)";
       }
+    }
+
+    async function setupAccordionMenu() {
+      const isAdmin = localStorage.getItem("carelayAdmin") === "true";
+      const { data, error } = await supabase
+        .from("menu_config")
+        .select("label, page, show, admin_only")
+        .order("sort");
+
+      const sidebar = document.getElementById("sidebar");
+      sidebar.innerHTML = "";
+
+      data.filter(row => row.show && (!row.admin_only || isAdmin)).forEach(row => {
+        const block = document.createElement("div");
+        block.className = "category-block";
+
+        const title = document.createElement("div");
+        title.className = "category-title";
+        title.textContent = row.label;
+        title.onclick = () => {
+          const submenu = block.querySelector(".submenu");
+          submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+        };
+
+        const submenu = document.createElement("div");
+        submenu.className = "submenu";
+
+        const appListBtn = document.createElement("button");
+        appListBtn.textContent = "📋 アプリ一覧";
+        appListBtn.onclick = () => loadMain(`${row.page}-list`);
+        submenu.appendChild(appListBtn);
+
+        // ⭐ 便利ツールカテゴリのみ追加アプリ表示
+        if (row.page === "tools") {
+          const appNameMap = {
+            toolcalc: "🧮 電卓",
+            tooldays: "📅 日数計算",
+            toolcheck: "📋 チェック表",
+            toolmemo: "📝 メモ帳",
+            toolcalendar: "📅 カレンダー"
+          };
+          const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
+          toolList.forEach(id => {
+            if (appNameMap[id]) {
+              const toolBtn = document.createElement("button");
+              toolBtn.textContent = appNameMap[id];
+              toolBtn.onclick = () => loadMain(id);
+              submenu.appendChild(toolBtn);
+            }
+          });
+        }
+
+        block.appendChild(title);
+        block.appendChild(submenu);
+        sidebar.appendChild(block);
+      });
     }
 
     function loadMain(pageName) {
@@ -205,71 +240,6 @@
           });
         });
     }
-
-    window.setupAccordionMenu = function() {
-  const menuData = [
-    { title: "🏢 データ管理", page: "office" },
-    { title: "🛠️ 実務ツール", page: "work" },
-    { title: "🏪 便利ツール", page: "tools" },
-    { title: "🏦 金銭管理", page: "bank" },
-    { title: "📨 メッセージ便", page: "post" },
-    { title: "🛍️ 商材紹介", page: "mall" },
-    { title: "🖼️ 素材集", page: "material" },
-    { title: "🚕 介護タクシー", page: "taxi" },
-    { title: "🏛️ 運営連絡", page: "admin" }
-  ];
-
-  const appNameMap = {
-    toolcalc: "🧮 電卓",
-    tooldays: "📅 日数計算",
-    toolcheck: "📋 チェック表",
-    toolmemo: "📝 メモ帳",
-    toolcalendar: "📅 カレンダー"
-  };
-
-  const sidebar = document.getElementById('sidebar');
-  sidebar.innerHTML = "";
-
-  menuData.forEach(section => {
-    const block = document.createElement('div');
-    block.className = "category-block";
-
-    const title = document.createElement('div');
-    title.className = "category-title";
-    title.textContent = section.title;
-    title.onclick = () => {
-      const submenu = block.querySelector('.submenu');
-      submenu.style.display = submenu.style.display === 'block' ? 'none' : 'block';
-    };
-
-    const submenu = document.createElement('div');
-    submenu.className = "submenu";
-
-    // 📋 アプリ一覧ボタン（共通）
-    const appListBtn = document.createElement('button');
-    appListBtn.textContent = "📋 アプリ一覧";
-    appListBtn.onclick = () => loadMain(`${section.page}-list`);
-    submenu.appendChild(appListBtn);
-
-    // ⭐ アプリ追加ボタン（便利ツールカテゴリのみ）
-    if (section.page === "tools") {
-      const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
-      toolList.forEach(id => {
-        if (appNameMap[id]) {
-          const toolBtn = document.createElement("button");
-          toolBtn.textContent = appNameMap[id];
-          toolBtn.onclick = () => loadMain(id);
-          submenu.appendChild(toolBtn);
-        }
-      });
-    }
-
-    block.appendChild(title);
-    block.appendChild(submenu);
-    sidebar.appendChild(block);
-  });
-}
-
   </script>
 </body>
 </html>
