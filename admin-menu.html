@@ -31,6 +31,29 @@
     .toggle {
       transform: scale(1.2);
     }
+    .form-section {
+      margin-top: 2rem;
+      padding: 1rem;
+      background: #fff;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .form-section label {
+      display: block;
+      margin: 0.5rem 0 0.2rem;
+    }
+    .form-section input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .form-section input[type="checkbox"] {
+      transform: scale(1.2);
+      margin-right: 0.5rem;
+    }
+    .form-section button {
+      padding: 0.5rem 1rem;
+    }
   </style>
 </head>
 <body>
@@ -41,10 +64,20 @@
         <th>カテゴリ名</th>
         <th>表示</th>
         <th>管理者専用</th>
+        <th>削除</th>
       </tr>
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="form-section">
+    <h2>新しいカテゴリを追加</h2>
+    <label for="newLabel">カテゴリ名</label>
+    <input type="text" id="newLabel" placeholder="例：便利ツール">
+    <label><input type="checkbox" id="newShow" checked> 表示する</label>
+    <label><input type="checkbox" id="newAdmin"> 管理者専用</label>
+    <button onclick="addCategory()">追加する</button>
+  </div>
 
   <script>
     const SUPABASE_URL = 'https://udcrfwejohzmhfojnwha.supabase.co';
@@ -67,31 +100,67 @@
         labelCell.textContent = row.label;
 
         const showCell = document.createElement('td');
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = row.show;
-        checkbox.classList.add('toggle');
-        checkbox.addEventListener('change', () => {
-          updateShow(row.id, checkbox.checked);
-        });
-        showCell.appendChild(checkbox);
+        const showBox = document.createElement('input');
+        showBox.type = 'checkbox';
+        showBox.checked = row.show;
+        showBox.classList.add('toggle');
+        showBox.addEventListener('change', () => updateField(row.id, 'show', showBox.checked));
+        showCell.appendChild(showBox);
 
         const adminCell = document.createElement('td');
-        adminCell.textContent = row.admin_only ? '✔' : '';
+        const adminBox = document.createElement('input');
+        adminBox.type = 'checkbox';
+        adminBox.checked = row.admin_only;
+        adminBox.classList.add('toggle');
+        adminBox.addEventListener('change', () => updateField(row.id, 'admin_only', adminBox.checked));
+        adminCell.appendChild(adminBox);
+
+        const deleteCell = document.createElement('td');
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '削除';
+        delBtn.onclick = () => deleteCategory(row.id);
+        deleteCell.appendChild(delBtn);
 
         tr.appendChild(labelCell);
         tr.appendChild(showCell);
         tr.appendChild(adminCell);
+        tr.appendChild(deleteCell);
 
         tbody.appendChild(tr);
       });
     }
 
-    async function updateShow(id, newValue) {
-      const { error } = await supabase.from('menu_config').update({ show: newValue }).eq('id', id);
+    async function updateField(id, field, value) {
+      const { error } = await supabase.from('menu_config').update({ [field]: value }).eq('id', id);
+      if (error) alert('更新に失敗しました');
+    }
+
+    async function addCategory() {
+      const label = document.getElementById('newLabel').value.trim();
+      const show = document.getElementById('newShow').checked;
+      const admin_only = document.getElementById('newAdmin').checked;
+      if (!label) {
+        alert('カテゴリ名を入力してください');
+        return;
+      }
+      const { error } = await supabase.from('menu_config').insert([{ label, show, admin_only }]);
       if (error) {
-        alert('更新に失敗しました');
-        console.error(error);
+        alert('追加に失敗しました');
+      } else {
+        document.getElementById('newLabel').value = '';
+        document.getElementById('newShow').checked = true;
+        document.getElementById('newAdmin').checked = false;
+        loadMenuConfig();
+      }
+    }
+
+    async function deleteCategory(id) {
+      if (!confirm('本当にこのカテゴリを削除しますか？')) return;
+      const { error } = await supabase.from('menu_config').delete().eq('id', id);
+      if (error) {
+        alert('削除に失敗しました');
+      } else {
+        loadMenuConfig();
       }
     }
 
