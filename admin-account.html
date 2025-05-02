@@ -38,6 +38,12 @@
     .status-approved { color: green; font-weight: bold; }
     .status-pending { color: orange; font-weight: bold; }
     .hidden { display: none; }
+    .button-group {
+      margin-top: 15px;
+    }
+    .button-group button {
+      margin-right: 10px;
+    }
   </style>
 </head>
 <body>
@@ -48,7 +54,7 @@
       <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
       <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
     </div>
-    <form onsubmit="approveSelected(); return false;">
+    <form onsubmit="return false;">
       <table>
         <thead>
           <tr>
@@ -61,7 +67,10 @@
         </thead>
         <tbody id="approvalTable"></tbody>
       </table>
-      <button type="submit">✅ 承認する</button>
+      <div class="button-group">
+        <button onclick="approveSelected()">✅ 承認する</button>
+        <button onclick="revokeSelected()">🚫 解除する</button>
+      </div>
     </form>
   </div>
 
@@ -96,7 +105,7 @@
       data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><input type="checkbox" value="${row.id}" ${row.status === "approved" ? "disabled" : ""}></td>
+          <td><input type="checkbox" value="${row.id}"></td>
           <td>${row.id}</td>
           <td>${row.org_name}</td>
           <td>${row.email}</td>
@@ -107,6 +116,14 @@
     }
 
     async function approveSelected() {
+      await updateSelectedStatus("approved");
+    }
+
+    async function revokeSelected() {
+      await updateSelectedStatus("pending");
+    }
+
+    async function updateSelectedStatus(newStatus) {
       const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
       for (const checkbox of checkboxes) {
         const id = checkbox.value;
@@ -118,10 +135,10 @@
             "Authorization": `Bearer ${supabaseKey}`,
             "Prefer": "return=representation"
           },
-          body: JSON.stringify({ status: "approved" })
+          body: JSON.stringify({ status: newStatus })
         });
       }
-      alert("✅ 承認処理が完了しました");
+      alert(`✅ ステータスを '${newStatus}' に更新しました`);
       loadData();
     }
   </script>
