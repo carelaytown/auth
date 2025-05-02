@@ -157,7 +157,8 @@
         .select("org_name, is_admin, email")
         .eq("email", queryEmail);
 
-      console.log("📦 Supabaseレスポンス:", { data, error });
+      console.log("📦 Supabase data:", data);
+      console.log("❌ Supabase error:", error);
 
       if (error || !data || data.length === 0) {
         userOrgName = "(未登録)";
