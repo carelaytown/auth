@@ -1,102 +1,83 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CARELAYタウン - 管理者ダッシュボード</title>
+  <meta charset="UTF-8" />
+  <title>管理者ダッシュボード | CARELAYタウン</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: 'Noto Sans JP', sans-serif;
       margin: 0;
       padding: 0;
-      background: #f4f4f4;
     }
     header {
-      background: #2a6ebb;
+      background-color: #2a6ebb;
       color: white;
       padding: 1rem;
       text-align: center;
     }
-    .tabs {
+    nav {
+      background-color: #eef3ff;
       display: flex;
-      background: #ddd;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0.5rem 0;
     }
-    .tab-button {
-      flex: 1;
-      padding: 1rem;
-      text-align: center;
+    nav button {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 0.5rem 1rem;
       cursor: pointer;
-      background: #ddd;
+    }
+    nav button.active {
+      background-color: #2a6ebb;
+      color: white;
+    }
+    iframe {
+      width: 100%;
+      height: calc(100vh - 150px);
       border: none;
-      font-weight: bold;
     }
-    .tab-button.active {
-      background: white;
-      border-bottom: 2px solid #2a6ebb;
-    }
-    .tab-content {
-      display: none;
-      padding: 1rem;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>CARELAYタウン 管理者ダッシュボード</h1>
-  </header>
-  <div id="authError" class="hidden" style="color:red; padding:1rem; text-align:center">管理者認証されていません。</div>
-  <div id="dashboard" class="hidden">
-    <div class="tabs">
-      <button class="tab-button" onclick="switchTab('account')">アカウント管理</button>
-      <button class="tab-button" onclick="switchTab('menu')">カテゴリ管理</button>
-      <button class="tab-button" onclick="switchTab('apps')">アプリ管理</button>
-    </div>
-    <div id="tab-account" class="tab-content"></div>
-    <div id="tab-menu" class="tab-content"></div>
-    <div id="tab-apps" class="tab-content"></div>
-  </div>
+  <header><h1>CARELAYタウン 管理者ダッシュボード</h1></header>
+  <nav>
+    <button onclick="loadPage('admin-account.html')" id="tab-account">アカウント管理</button>
+    <button onclick="loadPage('admin-menu.html')" id="tab-menu">カテゴリ管理</button>
+    <button onclick="loadPage('admin-apps.html')" id="tab-apps">アプリ管理</button>
+  </nav>
+  <iframe id="mainFrame" src=""></iframe>
 
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
-    const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const supabase = supabase.createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
 
-    window.addEventListener("DOMContentLoaded", async () => {
+    window.onload = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data, error } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
-      if (data?.is_admin === true) {
-        document.getElementById("dashboard").classList.remove("hidden");
-        loadTabContents();
-      } else {
-        document.getElementById("authError").classList.remove("hidden");
+      if (!user) {
+        document.body.innerHTML = "<p style='color:red;text-align:center;margin-top:2rem;'>ログインされていません。</p>";
+        return;
       }
-    });
+      const { data } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
+      if (!data?.is_admin) {
+        document.body.innerHTML = "<p style='color:red;text-align:center;margin-top:2rem;'>管理者権限がありません。</p>";
+        return;
+      }
 
-    function switchTab(name) {
-      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
-      document.querySelectorAll(".tab-content").forEach(content => content.classList.remove("active"));
-      document.querySelector(`.tab-button[onclick*='${name}']`).classList.add("active");
-      document.getElementById(`tab-${name}`).classList.add("active");
-    }
+      // 初期表示ページ
+      loadPage('admin-account.html');
+      document.getElementById('tab-account').classList.add('active');
+    };
 
-    function loadTabContents() {
-      fetch("admin-account.html").then(r => r.text()).then(html => {
-        document.getElementById("tab-account").innerHTML = html;
-        if (typeof initAdminAccountPanel === 'function') initAdminAccountPanel();
-      });
-      fetch("admin-menu.html").then(r => r.text()).then(html => {
-        document.getElementById("tab-menu").innerHTML = html;
-      });
-      fetch("admin-apps.html").then(r => r.text()).then(html => {
-        document.getElementById("tab-apps").innerHTML = html;
-      });
-      switchTab("account");
+    function loadPage(page) {
+      document.getElementById('mainFrame').src = page;
+      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
+      if (page.includes('account')) document.getElementById('tab-account').classList.add('active');
+      if (page.includes('menu')) document.getElementById('tab-menu').classList.add('active');
+      if (page.includes('apps')) document.getElementById('tab-apps').classList.add('active');
     }
   </script>
 </body>
