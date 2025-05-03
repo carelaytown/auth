@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>管理人室 - CARELAY</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -12,18 +13,6 @@
     h1 {
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
-    }
-    #authSection {
-      margin-bottom: 2rem;
-    }
-    #authSection input[type="password"] {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
-    #authSection button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
     }
     .tabs {
       margin-bottom: 1rem;
@@ -52,43 +41,57 @@
     #iframeSection {
       display: none;
     }
+    #loginSection input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-right: 0.5rem;
+    }
+    #loginSection button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
   <h1>管理人室</h1>
 
-  <div id="authSection">
-    <input type="password" id="adminPassword" placeholder="管理者パスワード">
-    <button onclick="verifyPassword()">ログイン</button>
+  <div id="loginSection">
+    <input type="email" id="email" placeholder="メールアドレス">
+    <input type="password" id="password" placeholder="パスワード">
+    <button onclick="login()">ログイン</button>
   </div>
 
   <div id="iframeSection">
     <div class="tabs">
       <span class="tab-button active" data-target="admin-account.html">👥アカウント承認・解除</span>
       <span class="tab-button" data-target="admin-menu.html">🗂️カテゴリ表示設定</span>
-      <span class="tab-button" data-target="admin-apps.html">📱アプリ管理</span> <!-- ←これを追加 -->
+      <span class="tab-button" data-target="admin-apps.html">📱アプリ管理</span>
     </div>
     <iframe id="adminFrame" src="admin-account.html"></iframe>
   </div>
 
   <script>
-    const PASSWORD = 'adminpass'; // 仮のパスワード
+    const supabase = supabase.createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
 
-    function verifyPassword() {
-      const input = document.getElementById('adminPassword').value;
-      if (input === PASSWORD) {
-        localStorage.setItem('carelay_admin_auth', 'true');
-        document.getElementById('authSection').style.display = 'none';
-        document.getElementById('iframeSection').style.display = 'block';
-      } else {
-        alert('パスワードが違います');
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data: session, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('ログインに失敗しました');
+        return;
       }
-    }
 
-    // ページ読み込み時に認証済みなら自動表示
-    if (localStorage.getItem('carelay_admin_auth') === 'true') {
-      document.getElementById('authSection').style.display = 'none';
-      document.getElementById('iframeSection').style.display = 'block';
+      const { data: userData } = await supabase.from("applications").select("is_admin").eq("email", email).single();
+      if (userData?.is_admin) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("iframeSection").style.display = "block";
+      } else {
+        alert("管理者権限がありません");
+      }
     }
 
     const tabs = document.querySelectorAll('.tab-button');
