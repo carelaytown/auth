@@ -58,29 +58,28 @@
   <!-- ダッシュボード -->
 <section id="dashboardSection" style="display: none;">
 
-  <!-- タイトルヘッダー -->
-  <header style="background: #3f51b5; color: white; padding: 1rem; text-align: center; font-size: 1.4rem;">
+  <!-- ヘッダー風タイトル -->
+  <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
 
   <!-- コンテンツエリア -->
-  <div style="width: 80%; max-width: 1000px; margin: 1.5rem auto;">
-    
-    <!-- タブメニュー -->
-    <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
-      <button onclick="loadTab('admin-account.html')" style="min-width: 160px;">📋 アカウント管理</button>
-      <button onclick="loadTab('admin-menu.html')" style="min-width: 160px;">🗂 メニュー管理</button>
-      <button onclick="loadTab('admin-apps.html')" style="min-width: 160px;">🛠 アプリ管理</button>
+  <div style="width: 90%; max-width: 1200px; margin: 1rem auto;">
+
+    <!-- タブメニュー（小さめ） -->
+    <div style="display: flex; justify-content: flex-start; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem;">
+      <button onclick="loadTab('admin-account.html')" style="padding: 0.4rem 1rem; font-size: 0.9rem;">📋 アカウント管理</button>
+      <button onclick="loadTab('admin-menu.html')" style="padding: 0.4rem 1rem; font-size: 0.9rem;">🗂 メニュー管理</button>
+      <button onclick="loadTab('admin-apps.html')" style="padding: 0.4rem 1rem; font-size: 0.9rem;">🛠 アプリ管理</button>
     </div>
 
-    <!-- 各管理ページ表示エリア -->
+    <!-- 表示領域 -->
     <div id="tabContent" style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px;">
       <p>上のタブから管理ページを選んでください。</p>
     </div>
 
   </div>
 </section>
-
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
