@@ -1,136 +1,84 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>管理者承認 - CARELAYタウン</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      padding: 30px;
-      background-color: #f9f9f9;
-    }
-    h1 {
-      color: #2a6ebb;
-    }
-    .section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-top: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #eef3ff;
-    }
-    .filter-group {
-      margin-bottom: 10px;
-    }
-    .status-approved { color: green; font-weight: bold; }
-    .status-pending { color: orange; font-weight: bold; }
-    .hidden { display: none; }
-    .button-group {
-      margin-top: 15px;
-    }
-    .button-group button {
-      margin-right: 10px;
-    }
-  </style>
-</head>
-<body>
-  <div id="mainSection" class="section hidden">
-    <h1>🛡️ 承認パネル</h1>
-    <div class="filter-group">
-      <label><input type="radio" name="filter" value="all" checked onchange="loadData()"> すべて</label>
-      <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
-      <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
-    </div>
-    <form onsubmit="return false;">
-      <table>
-        <thead>
-          <tr>
-            <th>✔</th>
-            <th>ID</th>
-            <th>事業所名</th>
-            <th>メールアドレス</th>
-            <th>状態</th>
-          </tr>
-        </thead>
-        <tbody id="approvalTable"></tbody>
-      </table>
-      <div class="button-group">
-        <button onclick="approveSelected()">✅ 承認する</button>
-        <button onclick="revokeSelected()">🚫 解除する</button>
-      </div>
-    </form>
+<div id="admin-account-panel" class="section hidden">
+  <h1>🛡️ 承認パネル</h1>
+  <div class="filter-group">
+    <label><input type="radio" name="filter" value="all" checked onchange="loadAdminAccountData()"> すべて</label>
+    <label><input type="radio" name="filter" value="pending" onchange="loadAdminAccountData()"> 未承認のみ</label>
+    <label><input type="radio" name="filter" value="approved" onchange="loadAdminAccountData()"> 承認済のみ</label>
   </div>
+  <form onsubmit="return false;">
+    <table>
+      <thead>
+        <tr>
+          <th>✔</th>
+          <th>ID</th>
+          <th>事業所名</th>
+          <th>メールアドレス</th>
+          <th>状態</th>
+        </tr>
+      </thead>
+      <tbody id="adminApprovalTable"></tbody>
+    </table>
+    <div class="button-group">
+      <button onclick="approveAdminSelected()">✅ 承認する</button>
+      <button onclick="revokeAdminSelected()">🚫 解除する</button>
+    </div>
+  </form>
+</div>
 
-  <script>
-    const supabase = supabase.createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
+<script>
+const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+const adminClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) return;
-      const { data: profile } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
-      if (profile?.is_admin) {
-        document.getElementById("mainSection").classList.remove("hidden");
-        loadData();
-      } else {
-        document.body.innerHTML = "<p style='color:red'>管理者権限がありません。</p>";
-      }
-    });
+window.initAdminAccountPanel = async function () {
+  const { data: userInfo } = await adminClient.auth.getUser();
+  const user = userInfo?.user;
+  if (!user) return;
+  const { data: profile } = await adminClient.from("applications").select("is_admin").eq("email", user.email).single();
+  if (profile?.is_admin) {
+    document.getElementById("admin-account-panel").classList.remove("hidden");
+    loadAdminAccountData();
+  } else {
+    document.getElementById("admin-account-panel").innerHTML = "<p style='color:red'>管理者権限がありません。</p>";
+  }
+};
 
-    async function loadData() {
-      const filter = document.querySelector('input[name="filter"]:checked').value;
-      let query = supabase.from("applications").select("id, org_name, email, status");
-      if (filter === "pending") query = query.eq("status", "pending");
-      if (filter === "approved") query = query.eq("status", "approved");
+window.loadAdminAccountData = async function () {
+  const filter = document.querySelector('input[name="filter"]:checked').value;
+  let query = adminClient.from("applications").select("id, org_name, email, status");
+  if (filter === "pending") query = query.eq("status", "pending");
+  if (filter === "approved") query = query.eq("status", "approved");
+  const { data } = await query;
+  const tbody = document.getElementById("adminApprovalTable");
+  tbody.innerHTML = "";
+  data.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="checkbox" value="${row.id}"></td>
+      <td>${row.id}</td>
+      <td>${row.org_name}</td>
+      <td>${row.email}</td>
+      <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+};
 
-      const { data, error } = await query;
-      const tbody = document.getElementById("approvalTable");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" value="${row.id}"></td>
-          <td>${row.id}</td>
-          <td>${row.org_name}</td>
-          <td>${row.email}</td>
-          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
+window.approveAdminSelected = async function () {
+  await updateAdminStatus("approved");
+};
 
-    async function approveSelected() {
-      await updateSelectedStatus("approved");
-    }
+window.revokeAdminSelected = async function () {
+  await updateAdminStatus("pending");
+};
 
-    async function revokeSelected() {
-      await updateSelectedStatus("pending");
-    }
-
-    async function updateSelectedStatus(newStatus) {
-      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
-      for (const checkbox of checkboxes) {
-        const id = checkbox.value;
-        await supabase.from("applications").update({ status: newStatus }).eq("id", id);
-      }
-      alert(`✅ ステータスを '${newStatus}' に更新しました`);
-      loadData();
-    }
-  </script>
-</body>
-</html>
+async function updateAdminStatus(newStatus) {
+  const checkboxes = document.querySelectorAll('#adminApprovalTable input[type="checkbox"]:checked');
+  for (const checkbox of checkboxes) {
+    const id = checkbox.value;
+    await adminClient.from("applications").update({ status: newStatus }).eq("id", id);
+  }
+  alert(`✅ ステータスを '${newStatus}' に更新しました`);
+  loadAdminAccountData();
+}
+</script>
