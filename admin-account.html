@@ -1,4 +1,4 @@
-<section class="section">
+<section class="carelay-admin-account">
   <h1>🛡️ 承認パネル</h1>
 
   <div class="filter-group">
@@ -27,6 +27,52 @@
     </div>
   </form>
 </section>
+
+<style>
+  .carelay-admin-account {
+    padding: 1rem;
+    font-size: 0.95rem;
+  }
+  .carelay-admin-account .filter-group {
+    display: flex;
+    justify-content: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .carelay-admin-account table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+  }
+  .carelay-admin-account th, .carelay-admin-account td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+    text-align: left;
+  }
+  .carelay-admin-account .status-approved {
+    color: green;
+    font-weight: bold;
+  }
+  .carelay-admin-account .status-pending {
+    color: gray;
+  }
+  .carelay-admin-account .button-group {
+    display: flex;
+    gap: 1rem;
+  }
+  .carelay-admin-account .button-group button {
+    padding: 0.5rem 1.2rem;
+    background: #3f51b5;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .carelay-admin-account .button-group button:hover {
+    background: #2c3d99;
+  }
+</style>
 
 <script type="module">
   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
