@@ -143,13 +143,17 @@
     window.loadTab = async function (file) {
       const res = await fetch(file);
       const html = await res.text();
-      document.getElementById("tabContent").innerHTML = html;
+      const container = document.getElementById("tabContent");
+      container.innerHTML = html;
 
-      if (file === "admin-account.html" && window.adminAccount) {
-        window.adminAccount.init(supabase, {
-          supabaseUrl,
-          supabaseKey
-        });
+      // ページごとの初期化処理
+      if (file === "admin-account.html") {
+        const checkInterval = setInterval(() => {
+          if (window.adminAccount?.init) {
+            clearInterval(checkInterval);
+            window.adminAccount.init(supabase, { supabaseUrl, supabaseKey });
+          }
+        }, 100);
       }
     }
   </script>
