@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>CARELAYタウン 管理者ダッシュボード</title>
   <style>
     body {
@@ -106,7 +106,7 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略可）';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -147,21 +147,22 @@
       });
     });
 
-    // タブごとのHTML読み込みとJSモジュール実行
+    // 管理ページ読み込み
     window.loadTab = async function (file) {
       const container = document.getElementById("tabContent");
       const res = await fetch(file);
       container.innerHTML = await res.text();
 
-      // ファイル名に応じてJSを動的読み込み
       if (file === "admin-account.html") {
-        const init = (await import("./admin-account.js")).default;
-        init(supabase, { supabaseUrl, supabaseKey });
+        const module = await import("./admin-account.js");
+        module.adminAccount.init(supabase, { supabaseUrl, supabaseKey });
       }
-      // 以下同様に他ページもJS追加可能
-      // if (file === "admin-menu.html") { ... }
-      // if (file === "admin-apps.html") { ... }
-    }
+      // 今後は以下のように追加で拡張
+      // if (file === "admin-menu.html") {
+      //   const menuModule = await import("./admin-menu.js");
+      //   menuModule.adminMenu.init(supabase, { supabaseUrl, supabaseKey });
+      // }
+    };
   </script>
 </body>
 </html>
