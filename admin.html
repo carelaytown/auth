@@ -1,109 +1,155 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>管理人室 - CARELAY</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CARELAY 管理者ダッシュボード</title>
   <style>
     body {
-      font-family: sans-serif;
-      padding: 2rem;
-      background-color: #f9f9f9;
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      background-color: #f8f9fa;
     }
-    h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1.5rem;
+    header {
+      background-color: #2a6ebb;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      font-size: 20px;
     }
-    .tabs {
-      margin-bottom: 1rem;
-    }
-    .tab-button {
-      display: inline-block;
-      margin-right: 0.5rem;
-      padding: 0.5rem 1rem;
-      background: #ccc;
-      color: #000;
-      border-radius: 5px;
-      cursor: pointer;
-      transition: background 0.2s ease-in-out;
-    }
-    .tab-button.active {
-      background: #007acc;
-      color: #fff;
-    }
-    iframe {
-      width: 100%;
-      height: 600px;
-      border: none;
-      background: #fff;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    #iframeSection {
-      display: none;
-    }
-    #loginSection input {
+    nav {
+      display: flex;
+      background: #e0e0e0;
       padding: 0.5rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
+      justify-content: center;
     }
-    #loginSection button {
+    nav button {
+      margin: 0 10px;
       padding: 0.5rem 1rem;
-      font-size: 1rem;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background-color: #ffffff;
+    }
+    nav button.active {
+      background-color: #2a6ebb;
+      color: white;
+    }
+    .section {
+      display: none;
+      padding: 1rem;
+    }
+    .visible {
+      display: block;
+    }
+    .login {
+      max-width: 300px;
+      margin: 100px auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      width: 100%;
+      background: #2a6ebb;
+      color: white;
+      padding: 0.5rem;
+      border: none;
+      border-radius: 5px;
+    }
+    .error {
+      color: red;
+      text-align: center;
     }
   </style>
-</head>
-<body>
-  <h1>管理人室</h1>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  <div id="loginSection">
-    <input type="email" id="email" placeholder="メールアドレス">
-    <input type="password" id="password" placeholder="パスワード">
-    <button onclick="login()">ログイン</button>
-  </div>
-
-  <div id="iframeSection">
-    <div class="tabs">
-      <span class="tab-button active" data-target="admin-account.html">👥アカウント承認・解除</span>
-      <span class="tab-button" data-target="admin-menu.html">🗂️カテゴリ表示設定</span>
-      <span class="tab-button" data-target="admin-apps.html">📱アプリ管理</span>
-    </div>
-    <iframe id="adminFrame" src="admin-account.html"></iframe>
-  </div>
-
-  <script>
-    const supabase = supabase.createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    const supabase = createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
-    async function login() {
+    const loginForm = document.getElementById('login-form');
+    const dashboard = document.getElementById('dashboard');
+    const errorMsg = document.getElementById('error');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
       const email = document.getElementById('email').value;
       const password = document.getElementById('password').value;
-      const { data: session, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        alert('ログインに失敗しました');
+        errorMsg.textContent = 'ログインに失敗しました';
         return;
       }
-
-      const { data: userData } = await supabase.from("applications").select("is_admin").eq("email", email).single();
-      if (userData?.is_admin) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("iframeSection").style.display = "block";
+      const { data: profile } = await supabase.from('applications').select('is_admin').eq('email', email).single();
+      if (profile?.is_admin === true) {
+        localStorage.setItem('carelay_admin_auth', 'true');
+        loginForm.style.display = 'none';
+        dashboard.style.display = 'block';
+        document.querySelector('nav button').click();
       } else {
-        alert("管理者権限がありません");
+        errorMsg.textContent = '管理者権限がありません';
       }
-    }
+    });
 
-    const tabs = document.querySelectorAll('.tab-button');
-    const frame = document.getElementById('adminFrame');
-
-    tabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        tabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        frame.src = tab.dataset.target;
+    document.querySelectorAll('nav button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('visible'));
+        document.getElementById(btn.dataset.target).classList.add('visible');
       });
     });
+
+    const checkSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase.from('applications').select('is_admin').eq('email', user.email).single();
+      if (profile?.is_admin === true) {
+        loginForm.style.display = 'none';
+        dashboard.style.display = 'block';
+        document.querySelector('nav button').click();
+      }
+    };
+    checkSession();
   </script>
+</head>
+<body>
+  <div id="login-form" class="login">
+    <h2>管理者ログイン</h2>
+    <input id="email" type="email" placeholder="メールアドレス" required />
+    <input id="password" type="password" placeholder="パスワード" required />
+    <button>ログイン</button>
+    <p id="error" class="error"></p>
+  </div>
+
+  <div id="dashboard" style="display:none">
+    <header>CARELAY 管理者ダッシュボード</header>
+    <nav>
+      <button data-target="account" class="active">アカウント管理</button>
+      <button data-target="menu">カテゴリ管理</button>
+      <button data-target="apps">アプリ管理</button>
+    </nav>
+    <div id="account" class="section visible">
+      <iframe src="admin-account.html" width="100%" height="600" frameborder="0"></iframe>
+    </div>
+    <div id="menu" class="section">
+      <iframe src="admin-menu.html" width="100%" height="600" frameborder="0"></iframe>
+    </div>
+    <div id="apps" class="section">
+      <iframe src="admin-apps.html" width="100%" height="600" frameborder="0"></iframe>
+    </div>
+  </div>
 </body>
 </html>
