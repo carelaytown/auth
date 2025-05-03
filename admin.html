@@ -3,88 +3,86 @@
 <head>
   <meta charset="UTF-8">
   <title>管理人室 - CARELAYタウン</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: 'Noto Sans JP', sans-serif;
-      background: #f9f9f9;
       padding: 30px;
+      background-color: #f9f9f9;
     }
     h1 {
       color: #2a6ebb;
-      margin-bottom: 20px;
     }
     .tab-button {
       padding: 10px 20px;
-      margin-right: 10px;
-      background-color: #ddd;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
+      margin-right: 10px;
       cursor: pointer;
-      font-weight: bold;
+      background-color: #ccc;
     }
     .tab-button.active {
       background-color: #2a6ebb;
       color: white;
     }
-    .section {
+    .hidden {
       display: none;
-      margin-top: 20px;
-    }
-    .section.active {
-      display: block;
     }
   </style>
 </head>
 <body>
   <h1>管理人室</h1>
   <div>
-    <button id="tab-account" class="tab-button active" onclick="showTab('account')">👥 アカウント承認・解除</button>
-    <button id="tab-menu" class="tab-button" onclick="showTab('menu')">📁 カテゴリ表示設定</button>
-    <button id="tab-apps" class="tab-button" onclick="showTab('apps')">📱 アプリ管理</button>
+    <button class="tab-button active" onclick="loadTab('account')">👥 アカウント承認・解除</button>
+    <button class="tab-button" onclick="loadTab('menu')">📁 カテゴリ表示設定</button>
+    <button class="tab-button" onclick="loadTab('apps')">📱 アプリ管理</button>
   </div>
+  <div id="content"></div>
 
-  <div id="account" class="section active"></div>
-  <div id="menu" class="section"></div>
-  <div id="apps" class="section"></div>
-
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
     const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    async function checkAdmin() {
+    let isAdmin = false;
+
+    async function checkAuth() {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
-      const { data, error } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
-      return data?.is_admin === true;
-    }
-
-    function showTab(tab) {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(`tab-${tab}`).classList.add('active');
-      document.getElementById(tab).classList.add('active');
-    }
-
-    async function loadPanels() {
-      const ok = await checkAdmin();
-      if (!ok) {
+      if (!user) {
+        document.body.innerHTML = '<p style="color:red">ログインが必要です。</p>';
+        return;
+      }
+      const { data } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
+      if (!data?.is_admin) {
         document.body.innerHTML = '<p style="color:red">管理者認証されていません。</p>';
         return;
       }
-      Promise.all([
-        fetch('admin-account.html').then(r => r.text()).then(html => document.getElementById('account').innerHTML = html),
-        fetch('admin-menu.html').then(r => r.text()).then(html => document.getElementById('menu').innerHTML = html),
-        fetch('admin-apps.html').then(r => r.text()).then(html => document.getElementById('apps').innerHTML = html),
-      ]).then(() => {
-        if (window.initAdminAccountPanel) window.initAdminAccountPanel();
-        if (window.initAdminMenuPanel) window.initAdminMenuPanel();
-        if (window.initAdminAppsPanel) window.initAdminAppsPanel();
-      });
+      isAdmin = true;
+      loadTab("account");
     }
 
-    loadPanels();
+    async function loadTab(tab) {
+      if (!isAdmin) return;
+      const buttons = document.querySelectorAll('.tab-button');
+      buttons.forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`.tab-button[onclick*="${tab}"]`).classList.add('active');
+
+      let file = '';
+      if (tab === 'account') file = 'admin-account.html';
+      if (tab === 'menu') file = 'admin-menu.html';
+      if (tab === 'apps') file = 'admin-apps.html';
+
+      fetch(file)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("content").innerHTML = html;
+          if (tab === 'account') initAdminAccountPanel();
+          if (tab === 'menu') initMenuConfigPanel();
+          if (tab === 'apps') initAppsConfigPanel();
+        });
+    }
+
+    checkAuth();
   </script>
 </body>
 </html>
