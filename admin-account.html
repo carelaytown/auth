@@ -82,8 +82,11 @@
 
 <script type="module">
   window.adminAccount = {
-    async init(supabase) {
+    async init(supabase, config) {
       this.supabase = supabase;
+      this.supabaseUrl = config.supabaseUrl;
+      this.supabaseKey = config.supabaseKey;
+
       document.querySelectorAll("input[name='filter']").forEach(input => {
         input.addEventListener("change", () => this.loadData());
       });
@@ -99,13 +102,13 @@
       }
 
       const filter = document.querySelector("input[name='filter']:checked").value;
-      let url = `${this.supabase.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
+      let url = `${this.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
       if (filter === "pending") url += "&status=eq.pending";
       else if (filter === "approved") url += "&status=eq.approved";
 
       const res = await fetch(url, {
         headers: {
-          apikey: this.supabase.supabaseKey,
+          apikey: this.supabaseKey,
           Authorization: `Bearer ${accessToken}`
         }
       });
@@ -135,10 +138,10 @@
       if (checkboxes.length === 0) return alert("対象が選択されていません");
 
       const updates = Array.from(checkboxes).map(checkbox =>
-        fetch(`${this.supabase.supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
+        fetch(`${this.supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
           method: "PATCH",
           headers: {
-            apikey: this.supabase.supabaseKey,
+            apikey: this.supabaseKey,
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json"
           },
