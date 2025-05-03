@@ -1,5 +1,5 @@
 <section class="carelay-admin-account">
-  <h1>🛡️ 承認パネル</h1>
+  <h1>🔡️ 承認パネル</h1>
 
   <div class="filter-group">
     <label><input type="radio" name="filter" value="all" checked>すべて</label>
@@ -22,8 +22,8 @@
     </table>
 
     <div class="button-group">
-      <button type="button" onclick="window.adminAccount.updateStatus('approved')">✅ 承認する</button>
-      <button type="button" onclick="window.adminAccount.updateStatus('pending')">🛑 解除する</button>
+      <button type="button" data-action="approve">✅ 承認する</button>
+      <button type="button" data-action="revert">🛑 解除する</button>
     </div>
   </form>
 </section>
