@@ -146,7 +146,6 @@
       const container = document.getElementById("tabContent");
       container.innerHTML = html;
 
-      // ページごとの初期化処理
       if (file === "admin-account.html") {
         const checkInterval = setInterval(() => {
           if (window.adminAccount?.init) {
