@@ -80,7 +80,6 @@
 </head>
 <body>
 
-  <!-- ログイン画面 -->
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス"><br>
@@ -88,23 +87,18 @@
     <button id="loginBtn">ログイン</button>
   </section>
 
-  <!-- ヘッダー -->
   <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
 
-  <!-- ダッシュボード -->
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
-      <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
-        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
-        <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
+        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂️ メニュー管理</button>
+        <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠️ アプリ管理</button>
       </div>
-
-      <!-- 表示エリア -->
-      <iframe id="tabContent" srcdoc="<p>上のタブから管理ページを選んでください。</p>"></iframe>
+      <iframe id="tabContent" src="" loading="lazy"></iframe>
     </div>
   </section>
 
@@ -115,13 +109,22 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      const loginSection = document.getElementById("loginSection");
-      const dashboardSection = document.getElementById("dashboardSection");
+    const loginSection = document.getElementById("loginSection");
+    const dashboardSection = document.getElementById("dashboardSection");
+    const iframe = document.getElementById("tabContent");
 
+    window.loadTab = function (file) {
+      iframe.src = `${file}?auth=true`;
+    }
+
+    window.addEventListener('DOMContentLoaded', async () => {
       if (localStorage.getItem("carelay_admin_auth") === "true") {
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
+        const { data } = await supabase.auth.getSession();
+        const token = data.session?.access_token;
+        if (token) localStorage.setItem("carelay_admin_token", token);
+        loadTab('admin-account.html');
         return;
       }
 
@@ -130,7 +133,7 @@
         const password = document.getElementById('password').value.trim();
 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error || !data.session) return alert("ログインに失敗しました");
+        if (error) return alert("ログインに失敗しました");
 
         const { data: profile, error: profileError } = await supabase
           .from("applications")
@@ -140,18 +143,15 @@
 
         if (profileError || !profile?.is_admin) return alert("管理者権限がありません");
 
+        const token = data.session?.access_token;
+        if (token) localStorage.setItem("carelay_admin_token", token);
+
         localStorage.setItem("carelay_admin_auth", "true");
-        localStorage.setItem("carelay_admin_token", data.session.access_token);
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
+        loadTab('admin-account.html');
       });
     });
-
-    // iframeに管理ページを表示（localStorage連携）
-    window.loadTab = function (file) {
-      const iframe = document.getElementById("tabContent");
-      iframe.src = `${file}?auth=true`;
-    }
   </script>
 </body>
 </html>
