@@ -71,6 +71,8 @@
   </style>
 </head>
 <body>
+
+  <!-- ログイン画面 -->
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス"><br>
@@ -78,17 +80,22 @@
     <button id="loginBtn">ログイン</button>
   </section>
 
+  <!-- ヘッダー -->
   <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
 
+  <!-- ダッシュボード -->
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
+      <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
         <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
         <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
+
+      <!-- 表示エリア -->
       <div id="tabContent" style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px;">
         <p>上のタブから管理ページを選んでください。</p>
       </div>
@@ -140,20 +147,20 @@
       });
     });
 
+    // タブごとのHTML読み込みとJSモジュール実行
     window.loadTab = async function (file) {
-      const res = await fetch(file);
-      const html = await res.text();
       const container = document.getElementById("tabContent");
-      container.innerHTML = html;
+      const res = await fetch(file);
+      container.innerHTML = await res.text();
 
+      // ファイル名に応じてJSを動的読み込み
       if (file === "admin-account.html") {
-        const checkInterval = setInterval(() => {
-          if (window.adminAccount?.init) {
-            clearInterval(checkInterval);
-            window.adminAccount.init(supabase, { supabaseUrl, supabaseKey });
-          }
-        }, 100);
+        const init = (await import("./admin-account.js")).default;
+        init(supabase, { supabaseUrl, supabaseKey });
       }
+      // 以下同様に他ページもJS追加可能
+      // if (file === "admin-menu.html") { ... }
+      // if (file === "admin-apps.html") { ... }
     }
   </script>
 </body>
