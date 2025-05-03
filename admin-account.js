@@ -1,38 +1,49 @@
-export default async function init(supabase, config) {
-  const token = config.token;
-  if (!token) {
-    document.getElementById("approvalTable").innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
-    return;
-  }
+// admin-account.js
+export const adminAccount = {
+  async init(supabase, config) {
+    this.supabase = supabase;
+    this.supabaseUrl = config.supabaseUrl;
+    this.supabaseKey = config.supabaseKey;
 
-  const filterInputs = document.querySelectorAll("input[name='filter']");
-  filterInputs.forEach(input => input.addEventListener("change", loadData));
-  document.querySelectorAll("[data-action]").forEach(btn => {
-    btn.addEventListener("click", () => updateStatus(btn.dataset.action));
-  });
+    // ラジオボタン切替時にデータ読み込み
+    document.querySelectorAll("input[name='filter']").forEach(input => {
+      input.addEventListener("change", () => this.loadData());
+    });
 
-  await loadData();
+    // ボタンにイベント追加
+    document.querySelector("button[data-action='approve']")?.addEventListener("click", () => this.updateStatus("approved"));
+    document.querySelector("button[data-action='revert']")?.addEventListener("click", () => this.updateStatus("pending"));
 
-  async function loadData() {
-    let url = `${config.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
+    await this.loadData();
+  },
+
+  async loadData() {
+    const session = (await this.supabase.auth.getSession()).data.session;
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      document.getElementById("approvalTable").innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
+      return;
+    }
+
     const filter = document.querySelector("input[name='filter']:checked").value;
+    let url = `${this.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
     if (filter === "pending") url += "&status=eq.pending";
-    if (filter === "approved") url += "&status=eq.approved";
+    else if (filter === "approved") url += "&status=eq.approved";
 
     const res = await fetch(url, {
       headers: {
-        apikey: config.supabaseKey,
-        Authorization: `Bearer ${token}`
+        apikey: this.supabaseKey,
+        Authorization: `Bearer ${accessToken}`
       }
     });
+
     const data = await res.json();
     const tbody = document.getElementById("approvalTable");
     tbody.innerHTML = "";
-
     data.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input type="checkbox" value="${row.id}" /></td>
+        <td><input type="checkbox" value="${row.id}"></td>
         <td>${row.id}</td>
         <td>${row.org_name}</td>
         <td>${row.email}</td>
@@ -40,26 +51,30 @@ export default async function init(supabase, config) {
       `;
       tbody.appendChild(tr);
     });
-  }
+  },
 
-  async function updateStatus(newStatus) {
-    const checked = document.querySelectorAll("#approvalTable input[type='checkbox']:checked");
-    if (!checked.length) return alert("対象が選択されていません");
+  async updateStatus(newStatus) {
+    const session = (await this.supabase.auth.getSession()).data.session;
+    const accessToken = session?.access_token;
+    if (!accessToken) return alert("ログインが必要です");
 
-    const promises = Array.from(checked).map(cb =>
-      fetch(`${config.supabaseUrl}/rest/v1/applications?id=eq.${cb.value}`, {
+    const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) return alert("対象が選択されていません");
+
+    const updates = Array.from(checkboxes).map(checkbox =>
+      fetch(`${this.supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
         method: "PATCH",
         headers: {
-          apikey: config.supabaseKey,
-          Authorization: `Bearer ${token}`,
+          apikey: this.supabaseKey,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ status: newStatus })
       })
     );
 
-    await Promise.all(promises);
-    alert("ステータスを更新しました");
-    await loadData();
+    await Promise.all(updates);
+    alert(`✅ ステータスを '${newStatus}' に更新しました`);
+    await this.loadData();
   }
-}
+};
