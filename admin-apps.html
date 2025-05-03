@@ -78,14 +78,15 @@
   </style>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
-    const supabase = supabase.createClient(
+    const { createClient } = supabase;
+    const supabaseClient = createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
     );
 
     async function loadApps() {
       const filter = document.getElementById("filter").value;
-      let query = supabase.from("apps").select("*").order("sort", { ascending: true });
+      let query = supabaseClient.from("apps").select("*").order("sort", { ascending: true });
       if (filter) query = query.eq("category", filter);
       const { data, error } = await query;
 
@@ -108,7 +109,7 @@
           <td>${app.category}</td>
           <td><button class="toggle-btn" onclick="togglePublic('${app.id}', ${app.is_public})">${app.is_public ? "✅" : "❌"}</button></td>
           <td class="action-buttons">
-            <button class="edit-btn" onclick="editApp(${JSON.stringify(app).replace(/"/g, '&quot;')})">編集</button>
+            <button class="edit-btn" onclick='editApp(${JSON.stringify(app).replace(/"/g, "&quot;")})'>編集</button>
             <button class="delete-btn" onclick="deleteApp('${app.id}')">削除</button>
           </td>`;
         tbody.appendChild(row);
@@ -133,20 +134,20 @@
       const sort = parseInt(document.getElementById("sort").value, 10);
       if (!label || !page || !category) return alert("必須項目が未入力です");
 
-      await supabase.from("apps").insert([{ label, icon, page, category, description, sort, is_public: false }]);
+      await supabaseClient.from("apps").insert([{ label, icon, page, category, description, sort, is_public: false }]);
       document.querySelectorAll("input").forEach(el => el.value = "");
       loadApps();
     }
 
     async function deleteApp(id) {
       if (confirm("削除しますか？")) {
-        await supabase.from("apps").delete().eq("id", id);
+        await supabaseClient.from("apps").delete().eq("id", id);
         loadApps();
       }
     }
 
     async function togglePublic(id, current) {
-      await supabase.from("apps").update({ is_public: !current }).eq("id", id);
+      await supabaseClient.from("apps").update({ is_public: !current }).eq("id", id);
       loadApps();
     }
 
@@ -159,7 +160,7 @@
       const sort = parseInt(prompt("表示順", app.sort), 10);
       if (!label || !page || !category) return alert("必須項目が未入力です");
 
-      await supabase.from("apps").update({ label, icon, page, category, description, sort }).eq("id", app.id);
+      await supabaseClient.from("apps").update({ label, icon, page, category, description, sort }).eq("id", app.id);
       loadApps();
     }
 
