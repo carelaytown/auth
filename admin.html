@@ -13,106 +13,78 @@
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
     }
-    #authSection input[type="email"],
-    #authSection input[type="password"] {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
-    #authSection button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-    }
     .tabs {
-      display: flex;
-      gap: 1rem;
       margin-bottom: 1rem;
     }
     .tab-button {
+      display: inline-block;
+      margin-right: 0.5rem;
       padding: 0.5rem 1rem;
       background: #ccc;
+      color: #000;
       border-radius: 5px;
       cursor: pointer;
+      transition: background 0.2s ease-in-out;
     }
     .tab-button.active {
       background: #007acc;
       color: #fff;
     }
-    .tab-content {
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
+    #content {
+      padding: 1rem;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
   </style>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 <body>
   <h1>管理人室</h1>
 
-  <div id="authSection">
-    <input type="email" id="adminEmail" placeholder="メールアドレス">
-    <input type="password" id="adminPassword" placeholder="パスワード">
-    <button onclick="login()">ログイン</button>
+  <div class="tabs">
+    <span class="tab-button active" data-page="admin-account.html">👥アカウント承認・解除</span>
+    <span class="tab-button" data-page="admin-menu.html">🗂️カテゴリ表示設定</span>
+    <span class="tab-button" data-page="admin-apps.html">📱アプリ管理</span>
   </div>
 
-  <div id="dashboard" style="display:none">
-    <div class="tabs">
-      <div class="tab-button active" data-target="account">👥アカウント</div>
-      <div class="tab-button" data-target="menu">🗂️カテゴリ</div>
-      <div class="tab-button" data-target="apps">📱アプリ</div>
-    </div>
-    <div class="tab-content active" id="account"></div>
-    <div class="tab-content" id="menu"></div>
-    <div class="tab-content" id="apps"></div>
-  </div>
+  <div id="content"></div>
 
   <script>
-    let client;
-    window.addEventListener('DOMContentLoaded', () => {
-      client = window.supabase.createClient(
-        "https://viihcgkjzzhkdiwdzdex.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-      );
+    const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function checkAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
+      return data?.is_admin === true;
+    }
+
+    async function loadPage(page) {
+      const res = await fetch(page);
+      const html = await res.text();
+      document.getElementById("content").innerHTML = html;
+      if (typeof initAdminAccountPanel === "function") initAdminAccountPanel();
+      if (typeof init === "function") init();
+      if (typeof initAppAdmin === "function") initAppAdmin();
+    }
+
+    document.querySelectorAll(".tab-button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-button").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        loadPage(btn.dataset.page);
+      });
     });
 
-    async function login() {
-      const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminPassword').value.trim();
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) return alert('ログイン失敗: ' + error.message);
-
-      const { data, error: fetchError } = await client.from("applications").select("is_admin").eq("email", email).single();
-      if (fetchError || !data?.is_admin) return alert("管理者権限なし");
-
-      localStorage.setItem("carelay_admin_auth", "true");
-      document.getElementById("authSection").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-      loadTabs();
-    }
-
-    const buttons = document.querySelectorAll('.tab-button');
-    const contents = document.querySelectorAll('.tab-content');
-    buttons.forEach(btn => {
-      btn.onclick = () => {
-        buttons.forEach(b => b.classList.remove('active'));
-        contents.forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById(btn.dataset.target).classList.add('active');
-      };
+    checkAdmin().then(isAdmin => {
+      if (isAdmin) {
+        loadPage("admin-account.html");
+      } else {
+        document.body.innerHTML = "<p style='color:red'>アクセス権限がありません。</p>";
+      }
     });
-
-    function loadTabs() {
-      fetch('admin-account.html').then(res => res.text()).then(html => document.getElementById('account').innerHTML = html);
-      fetch('admin-menu.html').then(res => res.text()).then(html => document.getElementById('menu').innerHTML = html);
-      fetch('admin-apps.html').then(res => res.text()).then(html => document.getElementById('apps').innerHTML = html);
-    }
-
-    if (localStorage.getItem("carelay_admin_auth") === "true") {
-      document.getElementById("authSection").style.display = "none";
-      document.getElementById("dashboard").style.display = "block";
-      loadTabs();
-    }
   </script>
 </body>
 </html>
