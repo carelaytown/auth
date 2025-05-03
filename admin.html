@@ -1,106 +1,68 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>CARELAYタウン 管理者ダッシュボード</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #f2f4f8;
-    }
-    .centered-box {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: #fff;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      width: 320px;
-      text-align: center;
-    }
-    input {
-      width: 90%;
-      padding: 0.6rem;
-      margin: 0.5rem 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    button {
-      width: 100%;
-      padding: 0.7rem;
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
-    button:hover {
-      background-color: #303f9f;
-    }
-    #dashboardSection {
-      padding: 2rem;
-    }
-  </style>
-</head>
-<body>
-  <!-- ログイン -->
-  <section id="loginSection" class="centered-box">
-    <h2>管理者ログイン</h2>
-    <input type="email" id="email" placeholder="メールアドレス"><br>
-    <input type="password" id="password" placeholder="パスワード"><br>
-    <button id="loginBtn">ログイン</button>
-  </section>
-
-  <!-- ダッシュボード -->
-  <section id="dashboardSection" style="display: none;">
+<!-- ダッシュボード（ログイン後に表示） -->
+<section id="dashboardSection" style="display: none;">
+  <div style="max-width: 800px; margin: 2rem auto; padding: 1rem;">
     <h2>CARELAYタウン 管理者ダッシュボード</h2>
-    <p>ログイン成功＆管理者認証済みです。</p>
-  </section>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    <!-- タブメニュー -->
+    <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+      <button onclick="loadTab('admin-account.html')" style="flex: 1;">📋 アカウント管理</button>
+      <button onclick="loadTab('admin-menu.html')" style="flex: 1;">🗂 メニュー管理</button>
+      <button onclick="loadTab('admin-apps.html')" style="flex: 1;">🛠 アプリ管理</button>
+    </div>
 
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+    <!-- 読み込み先 -->
+    <div id="tabContent" style="background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+      <p>上のタブから管理ページを選んでください。</p>
+    </div>
+  </div>
+</section>
 
-    document.getElementById('loginBtn').addEventListener('click', async () => {
-      const email = document.getElementById('email').value.trim();
-      const password = document.getElementById('password').value.trim();
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const supabase = createClient(
+    'https://viihcgkjzzhkdiwdzdex.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+  );
 
-      if (error) {
-        alert("ログインに失敗しました");
-        return;
-      }
+  document.getElementById('loginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
 
-      const { data: profile, error: profileError } = await supabase
-        .from("applications")
-        .select("is_admin")
-        .eq("email", email)
-        .single();
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-      if (profileError || !profile || !profile.is_admin) {
-        alert("管理者権限がありません");
-        return;
-      }
+    if (error) {
+      alert("ログインに失敗しました");
+      return;
+    }
 
-      localStorage.setItem("carelay_admin_auth", "true");
+    const { data: profile, error: profileError } = await supabase
+      .from("applications")
+      .select("is_admin")
+      .eq("email", email)
+      .single();
+
+    if (profileError || !profile?.is_admin) {
+      alert("管理者権限がありません");
+      return;
+    }
+
+    localStorage.setItem("carelay_admin_auth", "true");
+    document.getElementById("loginSection").style.display = "none";
+    document.getElementById("dashboardSection").style.display = "block";
+  });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
       document.getElementById("loginSection").style.display = "none";
       document.getElementById("dashboardSection").style.display = "block";
-    });
+    }
+  });
 
-    window.addEventListener('DOMContentLoaded', () => {
-      if (localStorage.getItem("carelay_admin_auth") === "true") {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("dashboardSection").style.display = "block";
-      }
-    });
-  </script>
-</body>
-</html>
+  // タブ読み込み処理
+  async function loadTab(file) {
+    const res = await fetch(file);
+    const html = await res.text();
+    document.getElementById("tabContent").innerHTML = html;
+  }
+</script>
