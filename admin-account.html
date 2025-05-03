@@ -21,10 +21,15 @@
     }
     .filter-group {
       margin-bottom: 15px;
-      text-align: right;
+      display: flex;
+      justify-content: flex-end;
+      gap: 1.5rem;
     }
     .filter-group label {
-      margin-left: 1rem;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
     }
     table {
       width: 100%;
@@ -51,17 +56,18 @@
       margin-top: 20px;
       display: flex;
       gap: 1rem;
+      justify-content: center;
     }
     .button-group button {
-      flex: 1;
       background-color: #3f51b5;
       color: white;
       border: none;
       border-radius: 6px;
-      padding: 0.6rem;
+      padding: 0.6rem 1.2rem;
       font-size: 0.95rem;
       cursor: pointer;
       transition: background-color 0.2s;
+      flex: initial;
     }
     .button-group button:hover {
       background-color: #32449a;
@@ -74,9 +80,9 @@
     <h1>🛡️ 承認パネル</h1>
 
     <div class="filter-group">
-      <label><input type="radio" name="filter" value="all" checked> すべて</label>
-      <label><input type="radio" name="filter" value="pending"> 未承認のみ</label>
-      <label><input type="radio" name="filter" value="approved"> 承認済のみ</label>
+      <label><input type="radio" name="filter" value="all" checked>すべて</label>
+      <label><input type="radio" name="filter" value="pending">未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved">承認済のみ</label>
     </div>
 
     <form onsubmit="return false;">
@@ -108,7 +114,7 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
     );
 
-    document.addEventListener("DOMContentLoaded", async () => {
+    window.addEventListener("DOMContentLoaded", async () => {
       if (localStorage.getItem("carelay_admin_auth") !== "true") {
         document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
         return;
@@ -120,17 +126,19 @@
         input.addEventListener("change", loadData);
       });
 
-      loadData();
+      await loadData();
     });
 
     async function loadData() {
       const filter = document.querySelector("input[name='filter']:checked").value;
-      const statusFilter = filter === "all" ? "" : `?status=eq.${filter}`;
+      const match =
+        filter === "pending" ? { status: "pending" } :
+        filter === "approved" ? { status: "approved" } : {};
 
       const { data, error } = await supabase
         .from("applications")
-        .select("*")
-        .match(filter !== "all" ? { status: filter } : {});
+        .select("id, email, org_name, status")
+        .match(match);
 
       const tbody = document.getElementById("approvalTable");
       tbody.innerHTML = "";
@@ -148,18 +156,17 @@
       });
     }
 
-    async function updateStatus(newStatus) {
+    window.updateStatus = async function(newStatus) {
       const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+      if (checkboxes.length === 0) return alert("対象が選択されていません");
+
       const updates = Array.from(checkboxes).map(checkbox =>
-        supabase
-          .from("applications")
-          .update({ status: newStatus })
-          .eq("id", checkbox.value)
+        supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
       );
 
       await Promise.all(updates);
       alert(`✅ ステータスを '${newStatus}' に更新しました`);
-      loadData();
+      await loadData();
     }
   </script>
 </body>
