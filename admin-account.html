@@ -1,9 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>管理者承認 - CARELAYタウン</title>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      padding: 30px;
+      background-color: #f9f9f9;
+    }
+    h1 { color: #2a6ebb; }
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th { background-color: #eef3ff; }
+    .filter-group {
+      margin-bottom: 10px;
+    }
+    .status-approved { color: green; font-weight: bold; }
+    .status-pending  { color: orange; font-weight: bold; }
+    .hidden { display: none; }
+    .button-group {
+      margin-top: 15px;
+    }
+    .button-group button {
+      margin-right: 10px;
+    }
+  </style>
+</head>
+<body>
   <div id="mainSection" class="section hidden">
     <h1>🛡️ 承認パネル</h1>
     <div class="filter-group">
-      <label><input type="radio" name="filter" value="all" checked onchange="loadData()"> すべて</label>
-      <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
-      <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
+      <label><input type="radio" name="filter" value="all" checked> すべて</label>
+      <label><input type="radio" name="filter" value="pending"> 未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved"> 承認済のみ</label>
     </div>
     <form onsubmit="return false;">
       <table>
@@ -19,21 +64,39 @@
         <tbody id="approvalTable"></tbody>
       </table>
       <div class="button-group">
-        <button onclick="approveSelected()">✅ 承認する</button>
-        <button onclick="revokeSelected()">🚫 解除する</button>
+        <button type="button" onclick="updateSelectedStatus('approved')">✅ 承認する</button>
+        <button type="button" onclick="updateSelectedStatus('pending')">🚫 解除する</button>
       </div>
     </form>
   </div>
 
-  <script>
-    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    if (localStorage.getItem("carelay_admin_auth") === "true") {
+    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    let accessToken = "";
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      accessToken = sessionData?.session?.access_token;
+
+      if (!accessToken || localStorage.getItem("carelay_admin_auth") !== "true") {
+        document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
+        return;
+      }
+
       document.getElementById("mainSection").classList.remove("hidden");
+      addEventListeners();
       loadData();
-    } else {
-      document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
+    });
+
+    function addEventListeners() {
+      document.querySelectorAll("input[name='filter']").forEach(input => {
+        input.addEventListener("change", loadData);
+      });
     }
 
     async function loadData() {
@@ -42,14 +105,14 @@
       if (filter === "pending") query = "?status=eq.pending";
       if (filter === "approved") query = "?status=eq.approved";
 
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications${query}`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications${query}&select=id,email,org_name,status`, {
         headers: {
           "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`
+          "Authorization": `Bearer ${accessToken}`
         }
       });
-      const data = await res.json();
 
+      const data = await res.json();
       const tbody = document.getElementById("approvalTable");
       tbody.innerHTML = "";
 
@@ -66,16 +129,10 @@
       });
     }
 
-    async function approveSelected() {
-      await updateSelectedStatus("approved");
-    }
-
-    async function revokeSelected() {
-      await updateSelectedStatus("pending");
-    }
-
     async function updateSelectedStatus(newStatus) {
       const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+      if (checkboxes.length === 0) return alert("対象が選択されていません");
+
       for (const checkbox of checkboxes) {
         const id = checkbox.value;
         await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
@@ -83,13 +140,16 @@
           headers: {
             "Content-Type": "application/json",
             "apikey": supabaseKey,
-            "Authorization": `Bearer ${supabaseKey}`,
+            "Authorization": `Bearer ${accessToken}`,
             "Prefer": "return=representation"
           },
           body: JSON.stringify({ status: newStatus })
         });
       }
+
       alert(`✅ ステータスを '${newStatus}' に更新しました`);
       loadData();
     }
   </script>
+</body>
+</html>
