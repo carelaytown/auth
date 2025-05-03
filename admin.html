@@ -1,76 +1,25 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAY 管理者ダッシュボード</title>
-  <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      margin: 0;
-      background-color: #f8f9fa;
-    }
-    header {
-      background-color: #2a6ebb;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 20px;
-    }
-    nav {
-      display: flex;
-      background: #e0e0e0;
-      padding: 0.5rem;
-      justify-content: center;
-    }
-    nav button {
-      margin: 0 10px;
-      padding: 0.5rem 1rem;
-      font-size: 16px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background-color: #ffffff;
-    }
-    nav button.active {
-      background-color: #2a6ebb;
-      color: white;
-    }
-    .section {
-      display: none;
-      padding: 1rem;
-    }
-    .visible {
-      display: block;
-    }
-    .login {
-      max-width: 300px;
-      margin: 100px auto;
-      background: white;
-      padding: 2rem;
-      border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    input {
-      width: 100%;
-      padding: 0.5rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      width: 100%;
-      background: #2a6ebb;
-      color: white;
-      padding: 0.5rem;
-      border: none;
-      border-radius: 5px;
-    }
-    .error {
-      color: red;
-      text-align: center;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>CARELAYタウン 管理者ダッシュボード</title>
+</head>
+<body>
+  <!-- ログインセクション -->
+  <section id="loginSection">
+    <h2>ログイン</h2>
+    <input type="email" id="email" placeholder="メールアドレス"><br>
+    <input type="password" id="password" placeholder="パスワード"><br>
+    <button id="loginBtn">ログイン</button>
+  </section>
+
+  <!-- ダッシュボードセクション -->
+  <section id="dashboardSection" class="hidden" style="display: none;">
+    <h2>ダッシュボードへようこそ</h2>
+    <p>ログイン成功＆管理者認証済み</p>
+    <!-- 今後タブやページ読み込みはここに追加 -->
+  </section>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -79,77 +28,45 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
-    const loginForm = document.getElementById('login-form');
-    const dashboard = document.getElementById('dashboard');
-    const errorMsg = document.getElementById('error');
+    // ログインボタン押下
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
 
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
       if (error) {
-        errorMsg.textContent = 'ログインに失敗しました';
+        alert("ログインに失敗しました");
         return;
       }
-      const { data: profile } = await supabase.from('applications').select('is_admin').eq('email', email).single();
-      if (profile?.is_admin === true) {
-        localStorage.setItem('carelay_admin_auth', 'true');
-        loginForm.style.display = 'none';
-        dashboard.style.display = 'block';
-        document.querySelector('nav button').click();
-      } else {
-        errorMsg.textContent = '管理者権限がありません';
+
+      const { data: profile, error: profileError } = await supabase
+        .from("applications")
+        .select("is_admin")
+        .eq("email", email)
+        .single();
+
+      if (profileError || !profile || !profile.is_admin) {
+        alert("管理者権限がありません");
+        return;
       }
+
+      // 管理者認証成功
+      localStorage.setItem("carelay_admin_auth", "true");
+      document.getElementById("loginSection").style.display = "none";
+      document.getElementById("dashboardSection").style.display = "block";
     });
 
-    document.querySelectorAll('nav button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('.section').forEach(sec => sec.classList.remove('visible'));
-        document.getElementById(btn.dataset.target).classList.add('visible');
-      });
-    });
-
-    const checkSession = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase.from('applications').select('is_admin').eq('email', user.email).single();
-      if (profile?.is_admin === true) {
-        loginForm.style.display = 'none';
-        dashboard.style.display = 'block';
-        document.querySelector('nav button').click();
+    // 既にログイン済みでlocalStorageにある場合
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem("carelay_admin_auth") === "true") {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("dashboardSection").style.display = "block";
       }
-    };
-    checkSession();
+    });
   </script>
-</head>
-<body>
-  <div id="login-form" class="login">
-    <h2>管理者ログイン</h2>
-    <input id="email" type="email" placeholder="メールアドレス" required />
-    <input id="password" type="password" placeholder="パスワード" required />
-    <button>ログイン</button>
-    <p id="error" class="error"></p>
-  </div>
-
-  <div id="dashboard" style="display:none">
-    <header>CARELAY 管理者ダッシュボード</header>
-    <nav>
-      <button data-target="account" class="active">アカウント管理</button>
-      <button data-target="menu">カテゴリ管理</button>
-      <button data-target="apps">アプリ管理</button>
-    </nav>
-    <div id="account" class="section visible">
-      <iframe src="admin-account.html" width="100%" height="600" frameborder="0"></iframe>
-    </div>
-    <div id="menu" class="section">
-      <iframe src="admin-menu.html" width="100%" height="600" frameborder="0"></iframe>
-    </div>
-    <div id="apps" class="section">
-      <iframe src="admin-apps.html" width="100%" height="600" frameborder="0"></iframe>
-    </div>
-  </div>
 </body>
 </html>
