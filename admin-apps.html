@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アプリ管理 | CARELAYタウン</title>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #2a6ebb;
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+      margin-bottom: 30px;
+    }
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    .form-row input {
+      flex: 1;
+      padding: 8px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .primary-button {
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .primary-button:hover {
+      background-color: #1e5393;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    th {
+      background-color: #2a6ebb;
+      color: white;
+      padding: 10px;
+      text-align: left;
+    }
+    td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      font-size: 14px;
+    }
+    .action-buttons button {
+      margin-right: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+      border: none;
+      cursor: pointer;
+    }
+    .edit-btn {
+      background-color: #f39c12;
+      color: white;
+    }
+    .delete-btn {
+      background-color: #c0392b;
+      color: white;
+    }
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+</head>
+<body>
+  <h1>📱 アプリ管理</h1>
+
+  <div class="card">
+    <div class="form-row">
+      <input id="label" placeholder="表示名（例：電卓）">
+      <input id="icon" placeholder="アイコン（例：🧮）">
+      <input id="page" placeholder="ページID（例：toolcalc）">
+      <input id="category" placeholder="カテゴリ（例：tools）">
+    </div>
+    <div class="form-row">
+      <input id="description" placeholder="アプリ説明">
+      <input id="sort" placeholder="表示順（数字）" type="number" style="max-width:120px">
+      <button class="primary-button" onclick="addApp()">＋追加</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>表示名</th>
+          <th>アイコン</th>
+          <th>ページ</th>
+          <th>カテゴリ</th>
+          <th>公開</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="appTableBody">
+        <tr><td colspan="6">読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    async function loadApps() {
+      const { data, error } = await supabase
+        .from("apps")
+        .select("*")
+        .order("sort", { ascending: true });
+
+      const tbody = document.getElementById("appTableBody");
+      tbody.innerHTML = "";
+
+      if (error || !data || data.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6'>アプリが見つかりません。</td></tr>";
+        return;
+      }
+
+      data.forEach(app => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${app.label}</td>
+          <td>${app.icon}</td>
+          <td>${app.page}</td>
+          <td>${app.category}</td>
+          <td>${app.is_public ? "✅" : "❌"}</td>
+          <td class="action-buttons">
+            <button class="delete-btn" onclick="deleteApp('${app.id}')">削除</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    async function addApp() {
+      const label = document.getElementById("label").value.trim();
+      const icon = document.getElementById("icon").value.trim();
+      const page = document.getElementById("page").value.trim();
+      const category = document.getElementById("category").value.trim();
+      const description = document.getElementById("description").value.trim();
+      const sort = parseInt(document.getElementById("sort").value.trim(), 10);
+
+      if (!label || !page || !category) {
+        alert("表示名・ページ・カテゴリは必須です。");
+        return;
+      }
+
+      const { error } = await supabase.from("apps").insert([{
+        label, icon, page, category, description, sort, is_public: false
+      }]);
+
+      if (error) {
+        alert("追加に失敗しました。");
+        return;
+      }
+
+      alert("アプリを追加しました。");
+      document.querySelectorAll("input").forEach(el => el.value = "");
+      loadApps();
+    }
+
+    async function deleteApp(id) {
+      if (!confirm("このアプリを削除しますか？")) return;
+      const { error } = await supabase.from("apps").delete().eq("id", id);
+      if (error) {
+        alert("削除に失敗しました。");
+        return;
+      }
+      loadApps();
+    }
+
+    window.onload = loadApps;
+  </script>
+</body>
+</html>
