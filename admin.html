@@ -77,9 +77,11 @@
     <input type="password" id="password" placeholder="パスワード"><br>
     <button id="loginBtn">ログイン</button>
   </section>
+
   <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
+
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
       <div class="tab-menu">
@@ -92,13 +94,13 @@
       </div>
     </div>
   </section>
+
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     window.addEventListener('DOMContentLoaded', () => {
       const loginSection = document.getElementById("loginSection");
@@ -143,14 +145,13 @@
       const html = await res.text();
       document.getElementById("tabContent").innerHTML = html;
 
-      // admin-account 初期化（JS定義があれば）
-      if (file === "admin-account.html" && window.adminAccount?.init) {
-        await window.adminAccount.init(supabase, {
-          supabaseUrl: 'https://viihcgkjzzhkdiwdzdex.supabase.co',
-          supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+      if (file === "admin-account.html" && window.adminAccount) {
+        window.adminAccount.init(supabase, {
+          supabaseUrl,
+          supabaseKey
         });
       }
-    };
+    }
   </script>
 </body>
 </html>
