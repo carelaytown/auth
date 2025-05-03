@@ -1,55 +1,74 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAYタウン 管理者ダッシュボード</title>
+  <meta charset="UTF-8">
+  <title>管理人室 - CARELAY</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #f7f9fb;
-    }
-    header {
-      background: #2266bb;
-      color: white;
-      padding: 1rem;
-      font-size: 1.5rem;
-      text-align: center;
-    }
-    nav {
-      background: #eaf0ff;
-      padding: 0.5rem;
-      display: flex;
-      justify-content: center;
-      gap: 1rem;
-    }
-    nav button {
-      padding: 0.5rem 1rem;
-      border: none;
-      border-radius: 4px;
-      background-color: #ddd;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    nav button.active {
-      background-color: #2266bb;
-      color: white;
-    }
-    #content {
+      font-family: sans-serif;
       padding: 2rem;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .tabs {
+      margin-bottom: 1rem;
+    }
+    .tab-button {
+      display: inline-block;
+      margin-right: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: #ccc;
+      color: #000;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+    }
+    .tab-button.active {
+      background: #007acc;
+      color: #fff;
+    }
+    iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      background: #fff;
+      box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    }
+    #iframeSection {
+      display: none;
+    }
+    #loginSection input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-right: 0.5rem;
+    }
+    #loginSection button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
     }
   </style>
 </head>
 <body>
-  <header>CARELAYタウン 管理者ダッシュボード</header>
-  <nav>
-    <button id="tab-account" class="active">アカウント管理</button>
-    <button id="tab-menu">カテゴリ管理</button>
-    <button id="tab-apps">アプリ管理</button>
-  </nav>
-  <div id="content">読み込み中...</div>
+  <h1>管理人室</h1>
+
+  <div id="loginSection">
+    <input type="email" id="email" placeholder="メールアドレス">
+    <input type="password" id="password" placeholder="パスワード">
+    <button onclick="login()">ログイン</button>
+  </div>
+
+  <div id="iframeSection">
+    <div class="tabs">
+      <span class="tab-button active" data-target="admin-account.html">👥アカウント承認・解除</span>
+      <span class="tab-button" data-target="admin-menu.html">🗂️カテゴリ表示設定</span>
+      <span class="tab-button" data-target="admin-apps.html">📱アプリ管理</span>
+    </div>
+    <iframe id="adminFrame" src="admin-account.html"></iframe>
+  </div>
 
   <script>
     const supabase = supabase.createClient(
@@ -57,55 +76,33 @@
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
     );
 
-    async function checkAdmin() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        document.body.innerHTML = '<p style="padding:2rem;color:red;">ログインしていません。</p>';
-        return false;
+    async function login() {
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const { data: session, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('ログインに失敗しました');
+        return;
       }
-      const { data, error } = await supabase
-        .from("applications")
-        .select("is_admin")
-        .eq("email", user.email)
-        .single();
-      if (data?.is_admin === true || data?.is_admin === "TRUE") {
-        return true;
+
+      const { data: userData } = await supabase.from("applications").select("is_admin").eq("email", email).single();
+      if (userData?.is_admin) {
+        document.getElementById("loginSection").style.display = "none";
+        document.getElementById("iframeSection").style.display = "block";
       } else {
-        document.body.innerHTML = '<p style="padding:2rem;color:red;">管理者権限がありません。</p>';
-        return false;
+        alert("管理者権限がありません");
       }
     }
 
-    async function loadTab(tab) {
-      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
-      document.getElementById(`tab-${tab}`).classList.add("active");
+    const tabs = document.querySelectorAll('.tab-button');
+    const frame = document.getElementById('adminFrame');
 
-      const res = await fetch(`admin-${tab}.html`);
-      const html = await res.text();
-      const container = document.getElementById("content");
-      container.innerHTML = html;
-
-      const scripts = container.querySelectorAll("script");
-      scripts.forEach(script => {
-        const s = document.createElement("script");
-        if (script.src) {
-          s.src = script.src;
-        } else {
-          s.textContent = script.textContent;
-        }
-        document.body.appendChild(s);
-        script.remove();
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        frame.src = tab.dataset.target;
       });
-    }
-
-    document.getElementById("tab-account").onclick = () => loadTab("account");
-    document.getElementById("tab-menu").onclick = () => loadTab("menu");
-    document.getElementById("tab-apps").onclick = () => loadTab("apps");
-
-    checkAdmin().then(isAdmin => {
-      if (isAdmin) {
-        loadTab("account");
-      }
     });
   </script>
 </body>
