@@ -98,11 +98,11 @@
       <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
-        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
+        <button class="tab-button" onclick="loadTab('admin-menu.html')">📂 メニュー管理</button>
         <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
       <!-- 表示エリア -->
-      <iframe id="tabContent" src="admin-account.html?auth=true"></iframe>
+      <iframe id="tabContent"></iframe>
     </div>
   </section>
 
@@ -113,16 +113,18 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    window.addEventListener('DOMContentLoaded', () => {
+    async function initialize() {
       const loginSection = document.getElementById("loginSection");
       const dashboardSection = document.getElementById("dashboardSection");
 
-      const token = localStorage.getItem("carelay_admin_token");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
       const isAuthed = localStorage.getItem("carelay_admin_auth") === "true";
 
-      if (token && isAuthed) {
+      if (accessToken && isAuthed) {
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
+        loadTab('admin-account.html');
         return;
       }
 
@@ -131,9 +133,9 @@
         const password = document.getElementById('password').value.trim();
 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error || !data.session) return alert("ログインに失敗しました");
+        const session = data?.session;
+        if (error || !session) return alert("ログインに失敗しました");
 
-        const { session } = data;
         const { data: profile, error: profileError } = await supabase
           .from("applications")
           .select("is_admin")
@@ -147,17 +149,16 @@
 
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
-
-        // 初期表示：アカウント管理
         loadTab('admin-account.html');
       });
-    });
-
-    // iframeに管理ページを表示
-    window.loadTab = function (file) {
-      const iframe = document.getElementById("tabContent");
-      iframe.src = `${file}?auth=true&v=${Date.now()}`; // キャッシュ防止
     }
+
+    function loadTab(file) {
+      const iframe = document.getElementById("tabContent");
+      iframe.src = `${file}?auth=true&v=${Date.now()}`;
+    }
+
+    initialize();
   </script>
 </body>
 </html>
