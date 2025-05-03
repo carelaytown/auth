@@ -75,167 +75,188 @@
       width: 100%;
       font-size: 1rem;
     }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
-  <h1>カテゴリ表示設定</h1>
-  <table id="menuTable">
-    <thead>
-      <tr>
-        <th>カテゴリ名</th>
-        <th>ページ名</th>
-        <th>表示</th>
-        <th>管理者専用</th>
-        <th>操作</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div id="mainSection" class="hidden">
+    <h1>カテゴリ表示設定</h1>
+    <table id="menuTable">
+      <thead>
+        <tr>
+          <th>カテゴリ名</th>
+          <th>ページ名</th>
+          <th>表示</th>
+          <th>管理者専用</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
 
-  <div class="form-section">
-    <h2>新しいカテゴリを追加</h2>
-    <label for="newLabel">カテゴリ名</label>
-    <input type="text" id="newLabel" placeholder="例：便利ツール">
-    <label for="newPage">ページ名</label>
-    <input type="text" id="newPage" placeholder="例：tools">
-    <label><input type="checkbox" id="newShow" checked> 表示する</label>
-    <label><input type="checkbox" id="newAdmin"> 管理者専用</label>
-    <button id="addBtn">追加する</button>
+    <div class="form-section">
+      <h2>新しいカテゴリを追加</h2>
+      <label for="newLabel">カテゴリ名</label>
+      <input type="text" id="newLabel" placeholder="例：便利ツール">
+      <label for="newPage">ページ名</label>
+      <input type="text" id="newPage" placeholder="例：tools">
+      <label><input type="checkbox" id="newShow" checked> 表示する</label>
+      <label><input type="checkbox" id="newAdmin"> 管理者専用</label>
+      <button id="addBtn">追加する</button>
+    </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-      const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-      const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-      let currentData = [];
+    const supabase = supabase.createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
 
-      async function normalizeSort() {
-        for (let i = 0; i < currentData.length; i++) {
-          await client.from('menu_config').update({ sort: i }).eq('id', currentData[i].id);
-          currentData[i].sort = i;
-        }
+    async function checkAdmin() {
+      const {
+        data: { user }
+      } = await supabase.auth.getUser();
+      if (!user) return false;
+      const { data, error } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
+      return data?.is_admin === true;
+    }
+
+    async function init() {
+      if (await checkAdmin()) {
+        document.getElementById("mainSection").classList.remove("hidden");
+        loadMenuConfig();
+      } else {
+        document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
       }
+    }
 
-      async function loadMenuConfig() {
-        const { data, error } = await client.from('menu_config').select('*').order('sort');
-        if (error) {
-          console.error('読み込みエラー:', error);
-          return;
-        }
-        currentData = data;
-        await normalizeSort();
-        currentData.sort((a, b) => a.sort - b.sort);
+    let currentData = [];
 
-        const tbody = document.querySelector('#menuTable tbody');
-        tbody.innerHTML = '';
-        currentData.forEach((row, index) => {
-          const tr = document.createElement('tr');
-
-          const labelCell = document.createElement('td');
-          const labelInput = document.createElement('input');
-          labelInput.type = 'text';
-          labelInput.value = row.label;
-          labelInput.addEventListener('blur', () => updateField(row.id, 'label', labelInput.value.trim()));
-          labelCell.appendChild(labelInput);
-
-          const pageCell = document.createElement('td');
-          const pageInput = document.createElement('input');
-          pageInput.type = 'text';
-          pageInput.value = row.page || '';
-          pageInput.addEventListener('blur', () => updateField(row.id, 'page', pageInput.value.trim()));
-          pageCell.appendChild(pageInput);
-
-          const showCell = document.createElement('td');
-          const showBox = document.createElement('input');
-          showBox.type = 'checkbox';
-          showBox.checked = row.show;
-          showBox.addEventListener('change', () => updateField(row.id, 'show', showBox.checked));
-          showCell.appendChild(showBox);
-
-          const adminCell = document.createElement('td');
-          const adminBox = document.createElement('input');
-          adminBox.type = 'checkbox';
-          adminBox.checked = row.admin_only;
-          adminBox.addEventListener('change', () => updateField(row.id, 'admin_only', adminBox.checked));
-          adminCell.appendChild(adminBox);
-
-          const controlCell = document.createElement('td');
-          const upBtn = document.createElement('button');
-          upBtn.textContent = '↑';
-          upBtn.onclick = () => moveItem(index, -1);
-          const downBtn = document.createElement('button');
-          downBtn.textContent = '↓';
-          downBtn.onclick = () => moveItem(index, 1);
-          const delBtn = document.createElement('button');
-          delBtn.textContent = '削除';
-          delBtn.onclick = () => deleteCategory(row.id);
-
-          controlCell.appendChild(upBtn);
-          controlCell.appendChild(downBtn);
-          controlCell.appendChild(delBtn);
-
-          tr.appendChild(labelCell);
-          tr.appendChild(pageCell);
-          tr.appendChild(showCell);
-          tr.appendChild(adminCell);
-          tr.appendChild(controlCell);
-
-          tbody.appendChild(tr);
-        });
+    async function normalizeSort() {
+      for (let i = 0; i < currentData.length; i++) {
+        await supabase.from('menu_config').update({ sort: i }).eq('id', currentData[i].id);
+        currentData[i].sort = i;
       }
+    }
 
-      async function updateField(id, field, value) {
-        const { error } = await client.from('menu_config').update({ [field]: value }).eq('id', id);
-        if (error) alert(`${field} の更新に失敗しました`);
+    async function loadMenuConfig() {
+      const { data, error } = await supabase.from('menu_config').select('*').order('sort');
+      if (error) {
+        console.error('読み込みエラー:', error);
+        return;
       }
+      currentData = data;
+      await normalizeSort();
+      currentData.sort((a, b) => a.sort - b.sort);
 
-      async function moveItem(index, delta) {
-        const newIndex = index + delta;
-        if (newIndex < 0 || newIndex >= currentData.length) return;
-        const temp = currentData[index];
-        currentData[index] = currentData[newIndex];
-        currentData[newIndex] = temp;
-        await normalizeSort();
+      const tbody = document.querySelector('#menuTable tbody');
+      tbody.innerHTML = '';
+      currentData.forEach((row, index) => {
+        const tr = document.createElement('tr');
+
+        const labelCell = document.createElement('td');
+        const labelInput = document.createElement('input');
+        labelInput.type = 'text';
+        labelInput.value = row.label;
+        labelInput.addEventListener('blur', () => updateField(row.id, 'label', labelInput.value.trim()));
+        labelCell.appendChild(labelInput);
+
+        const pageCell = document.createElement('td');
+        const pageInput = document.createElement('input');
+        pageInput.type = 'text';
+        pageInput.value = row.page || '';
+        pageInput.addEventListener('blur', () => updateField(row.id, 'page', pageInput.value.trim()));
+        pageCell.appendChild(pageInput);
+
+        const showCell = document.createElement('td');
+        const showBox = document.createElement('input');
+        showBox.type = 'checkbox';
+        showBox.checked = row.show;
+        showBox.addEventListener('change', () => updateField(row.id, 'show', showBox.checked));
+        showCell.appendChild(showBox);
+
+        const adminCell = document.createElement('td');
+        const adminBox = document.createElement('input');
+        adminBox.type = 'checkbox';
+        adminBox.checked = row.admin_only;
+        adminBox.addEventListener('change', () => updateField(row.id, 'admin_only', adminBox.checked));
+        adminCell.appendChild(adminBox);
+
+        const controlCell = document.createElement('td');
+        const upBtn = document.createElement('button');
+        upBtn.textContent = '↑';
+        upBtn.onclick = () => moveItem(index, -1);
+        const downBtn = document.createElement('button');
+        downBtn.textContent = '↓';
+        downBtn.onclick = () => moveItem(index, 1);
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '削除';
+        delBtn.onclick = () => deleteCategory(row.id);
+
+        controlCell.appendChild(upBtn);
+        controlCell.appendChild(downBtn);
+        controlCell.appendChild(delBtn);
+
+        tr.appendChild(labelCell);
+        tr.appendChild(pageCell);
+        tr.appendChild(showCell);
+        tr.appendChild(adminCell);
+        tr.appendChild(controlCell);
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateField(id, field, value) {
+      const { error } = await supabase.from('menu_config').update({ [field]: value }).eq('id', id);
+      if (error) alert(`${field} の更新に失敗しました`);
+    }
+
+    async function moveItem(index, delta) {
+      const newIndex = index + delta;
+      if (newIndex < 0 || newIndex >= currentData.length) return;
+      const temp = currentData[index];
+      currentData[index] = currentData[newIndex];
+      currentData[newIndex] = temp;
+      await normalizeSort();
+      loadMenuConfig();
+    }
+
+    async function addCategory() {
+      const label = document.getElementById('newLabel').value.trim();
+      const page = document.getElementById('newPage').value.trim();
+      const show = document.getElementById('newShow').checked;
+      const admin_only = document.getElementById('newAdmin').checked;
+      if (!label || !page) {
+        alert('カテゴリ名とページ名を入力してください');
+        return;
+      }
+      const maxSort = currentData.length > 0 ? Math.max(...currentData.map(r => r.sort || 0)) : 0;
+      const { error } = await supabase.from('menu_config').insert([{ label, page, show, admin_only, sort: maxSort + 1 }]);
+      if (error) {
+        console.error('追加エラー:', error);
+        alert('追加に失敗しました');
+      } else {
+        document.getElementById('newLabel').value = '';
+        document.getElementById('newPage').value = '';
+        document.getElementById('newShow').checked = true;
+        document.getElementById('newAdmin').checked = false;
         loadMenuConfig();
       }
+    }
 
-      async function addCategory() {
-        const label = document.getElementById('newLabel').value.trim();
-        const page = document.getElementById('newPage').value.trim();
-        const show = document.getElementById('newShow').checked;
-        const admin_only = document.getElementById('newAdmin').checked;
-        if (!label || !page) {
-          alert('カテゴリ名とページ名を入力してください');
-          return;
-        }
-        const maxSort = currentData.length > 0 ? Math.max(...currentData.map(r => r.sort || 0)) : 0;
-        const { error } = await client.from('menu_config').insert([{ label, page, show, admin_only, sort: maxSort + 1 }]);
-        if (error) {
-          console.error('追加エラー:', error);
-          alert('追加に失敗しました');
-        } else {
-          document.getElementById('newLabel').value = '';
-          document.getElementById('newPage').value = '';
-          document.getElementById('newShow').checked = true;
-          document.getElementById('newAdmin').checked = false;
-          loadMenuConfig();
-        }
+    async function deleteCategory(id) {
+      if (!confirm('本当にこのカテゴリを削除しますか？')) return;
+      const { error } = await supabase.from('menu_config').delete().eq('id', id);
+      if (error) {
+        alert('削除に失敗しました');
+      } else {
+        loadMenuConfig();
       }
+    }
 
-      async function deleteCategory(id) {
-        if (!confirm('本当にこのカテゴリを削除しますか？')) return;
-        const { error } = await client.from('menu_config').delete().eq('id', id);
-        if (error) {
-          alert('削除に失敗しました');
-        } else {
-          loadMenuConfig();
-        }
-      }
-
-      document.getElementById('addBtn').addEventListener('click', addCategory);
-      loadMenuConfig();
-    });
+    document.getElementById('addBtn').addEventListener('click', addCategory);
+    init();
   </script>
 </body>
 </html>
