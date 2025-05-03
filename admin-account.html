@@ -1,173 +1,84 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>管理者承認 - CARELAYタウン</title>
-  <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      padding: 30px;
-      background-color: #f9f9f9;
-    }
-    h1 {
-      font-size: 1.4rem;
-      margin-bottom: 1rem;
-    }
-    .section {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-    .filter-group {
-      margin-bottom: 15px;
-      display: flex;
-      justify-content: flex-end;
-      gap: 1.5rem;
-    }
-    .filter-group label {
-      white-space: nowrap;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.3rem;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: left;
-    }
-    th {
-      background-color: #eef3ff;
-    }
-    .status-approved {
-      color: green;
-      font-weight: bold;
-    }
-    .status-pending {
-      color: orange;
-      font-weight: bold;
-    }
-    .button-group {
-      margin-top: 20px;
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-    }
-    .button-group button {
-      background-color: #3f51b5;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1.2rem;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: background-color 0.2s;
-      flex: initial;
-    }
-    .button-group button:hover {
-      background-color: #32449a;
-    }
-    .hidden { display: none; }
-  </style>
-</head>
-<body>
-  <div id="mainSection" class="section hidden">
-    <h1>🛡️ 承認パネル</h1>
+<section class="section">
+  <h1>🛡️ 承認パネル</h1>
 
-    <div class="filter-group">
-      <label><input type="radio" name="filter" value="all" checked>すべて</label>
-      <label><input type="radio" name="filter" value="pending">未承認のみ</label>
-      <label><input type="radio" name="filter" value="approved">承認済のみ</label>
-    </div>
-
-    <form onsubmit="return false;">
-      <table>
-        <thead>
-          <tr>
-            <th>✔</th>
-            <th>ID</th>
-            <th>事業所名</th>
-            <th>メールアドレス</th>
-            <th>状態</th>
-          </tr>
-        </thead>
-        <tbody id="approvalTable"></tbody>
-      </table>
-
-      <div class="button-group">
-        <button type="button" onclick="updateStatus('approved')">✅ 承認する</button>
-        <button type="button" onclick="updateStatus('pending')">🚫 解除する</button>
-      </div>
-    </form>
+  <div class="filter-group">
+    <label><input type="radio" name="filter" value="all" checked>すべて</label>
+    <label><input type="radio" name="filter" value="pending">未承認のみ</label>
+    <label><input type="radio" name="filter" value="approved">承認済のみ</label>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <form onsubmit="return false;">
+    <table>
+      <thead>
+        <tr>
+          <th>✔</th>
+          <th>ID</th>
+          <th>事業所名</th>
+          <th>メールアドレス</th>
+          <th>状態</th>
+        </tr>
+      </thead>
+      <tbody id="approvalTable"></tbody>
+    </table>
 
-    const supabase = createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    <div class="button-group">
+      <button type="button" onclick="updateStatus('approved')">✅ 承認する</button>
+      <button type="button" onclick="updateStatus('pending')">🚫 解除する</button>
+    </div>
+  </form>
+</section>
+
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabase = createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
+
+  document.querySelectorAll("input[name='filter']").forEach(input => {
+    input.addEventListener("change", loadData);
+  });
+
+  await loadData();
+
+  async function loadData() {
+    const filter = document.querySelector("input[name='filter']:checked").value;
+    const match =
+      filter === "pending" ? { status: "pending" } :
+      filter === "approved" ? { status: "approved" } : {};
+
+    const { data, error } = await supabase
+      .from("applications")
+      .select("id, email, org_name, status")
+      .match(match);
+
+    const tbody = document.getElementById("approvalTable");
+    tbody.innerHTML = "";
+
+    data?.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="checkbox" value="${row.id}"></td>
+        <td>${row.id}</td>
+        <td>${row.org_name}</td>
+        <td>${row.email}</td>
+        <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  window.updateStatus = async function(newStatus) {
+    const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) return alert("対象が選択されていません");
+
+    const updates = Array.from(checkboxes).map(checkbox =>
+      supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
     );
 
-    window.addEventListener("DOMContentLoaded", async () => {
-      if (localStorage.getItem("carelay_admin_auth") !== "true") {
-        document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
-        return;
-      }
-
-      document.getElementById("mainSection").classList.remove("hidden");
-
-      document.querySelectorAll("input[name='filter']").forEach(input => {
-        input.addEventListener("change", loadData);
-      });
-
-      await loadData();
-    });
-
-    async function loadData() {
-      const filter = document.querySelector("input[name='filter']:checked").value;
-      const match =
-        filter === "pending" ? { status: "pending" } :
-        filter === "approved" ? { status: "approved" } : {};
-
-      const { data, error } = await supabase
-        .from("applications")
-        .select("id, email, org_name, status")
-        .match(match);
-
-      const tbody = document.getElementById("approvalTable");
-      tbody.innerHTML = "";
-
-      data?.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" value="${row.id}"></td>
-          <td>${row.id}</td>
-          <td>${row.org_name}</td>
-          <td>${row.email}</td>
-          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.updateStatus = async function(newStatus) {
-      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
-      if (checkboxes.length === 0) return alert("対象が選択されていません");
-
-      const updates = Array.from(checkboxes).map(checkbox =>
-        supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
-      );
-
-      await Promise.all(updates);
-      alert(`✅ ステータスを '${newStatus}' に更新しました`);
-      await loadData();
-    }
-  </script>
-</body>
-</html>
+    await Promise.all(updates);
+    alert(`✅ ステータスを '${newStatus}' に更新しました`);
+    await loadData();
+  }
+</script>
