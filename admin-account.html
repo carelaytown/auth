@@ -6,21 +6,26 @@
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f4f6fa;
+      background-color: #f4f6f8;
       margin: 0;
       padding: 2rem;
     }
-    h1 {
-      font-size: 1.4rem;
+    .section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 1000px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
       color: #2a6ebb;
-      display: flex;
-      align-items: center;
+      margin-bottom: 1rem;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
-      background: #fff;
     }
     th, td {
       border: 1px solid #ccc;
@@ -28,105 +33,96 @@
       text-align: left;
     }
     th {
-      background: #eaf0ff;
+      background-color: #e8f0fe;
     }
     .filter-group {
-      margin: 1rem 0;
+      margin-bottom: 1rem;
     }
-    .status-approved {
-      color: green;
-      font-weight: bold;
+    .filter-group label {
+      margin-right: 1rem;
     }
-    .status-pending {
-      color: orange;
-      font-weight: bold;
-    }
+    .status-approved { color: green; font-weight: bold; }
+    .status-pending { color: orange; font-weight: bold; }
     .button-group {
       margin-top: 1rem;
-      display: flex;
-      gap: 1rem;
     }
-    button {
+    .button-group button {
       padding: 0.5rem 1rem;
-      font-size: 0.9rem;
+      margin-right: 0.5rem;
       border: none;
-      border-radius: 6px;
+      border-radius: 5px;
       cursor: pointer;
     }
-    .approve-btn {
-      background-color: #4caf50;
-      color: #fff;
-    }
-    .revoke-btn {
-      background-color: #f44336;
-      color: #fff;
-    }
+    .approve { background-color: #4caf50; color: white; }
+    .revoke { background-color: #f44336; color: white; }
   </style>
 </head>
 <body>
-  <h1>🛡️ 承認パネル</h1>
-
-  <div class="filter-group">
-    <label><input type="radio" name="filter" value="all" checked onchange="loadAccounts()"> すべて</label>
-    <label><input type="radio" name="filter" value="pending" onchange="loadAccounts()"> 未承認のみ</label>
-    <label><input type="radio" name="filter" value="approved" onchange="loadAccounts()"> 承認済のみ</label>
+  <div class="section">
+    <h2>🛡️ 承認パネル</h2>
+    <div class="filter-group">
+      <label><input type="radio" name="filter" value="all" checked onchange="loadData()"> すべて</label>
+      <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
+    </div>
+    <form onsubmit="return false;">
+      <table>
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>ID</th>
+            <th>事業所名</th>
+            <th>メールアドレス</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="approvalTable"></tbody>
+      </table>
+      <div class="button-group">
+        <button class="approve" onclick="approveSelected()">✅ 承認する</button>
+        <button class="revoke" onclick="revokeSelected()">🚫 解除する</button>
+      </div>
+    </form>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>✔</th>
-        <th>ID</th>
-        <th>事業所名</th>
-        <th>メールアドレス</th>
-        <th>状態</th>
-      </tr>
-    </thead>
-    <tbody id="accountTable">
-      <tr><td colspan="5">ログインしてください</td></tr>
-    </tbody>
-  </table>
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const accessToken = localStorage.getItem("carelay_admin_token");
 
-  <div class="button-group">
-    <button class="approve-btn" onclick="updateStatus('approved')">✅ 承認する</button>
-    <button class="revoke-btn" onclick="updateStatus('pending')">🚫 解除する</button>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-
-    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    if (localStorage.getItem("carelay_admin_auth") !== "true") {
-      document.getElementById("accountTable").innerHTML = '<tr><td colspan="5">管理者認証されていません。</td></tr>';
+    if (!accessToken) {
+      document.body.innerHTML = '<p style="color: red;">管理者認証されていません。</p>';
     } else {
-      loadAccounts();
+      loadData();
     }
 
-    async function loadAccounts() {
+    async function loadData() {
       const filter = document.querySelector('input[name="filter"]:checked').value;
-      let query = supabase.from("applications").select("id, org_name, email, status");
+      let query = "";
+      if (filter === "pending") query = "?status=eq.pending";
+      if (filter === "approved") query = "?status=eq.approved";
 
-      if (filter === "pending") query = query.eq("status", "pending");
-      if (filter === "approved") query = query.eq("status", "approved");
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications${query}`, {
+        headers: {
+          "apikey": accessToken,
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      const tbody = document.getElementById("approvalTable");
+      tbody.innerHTML = "";
 
-      const { data, error } = await query;
-      const table = document.getElementById("accountTable");
-      table.innerHTML = "";
-
-      if (error || !data) {
-        table.innerHTML = '<tr><td colspan="5">データ取得に失敗しました</td></tr>';
+      if (!res.ok) {
+        tbody.innerHTML = '<tr><td colspan="5">データ取得に失敗しました</td></tr>';
         return;
       }
+
+      const data = await res.json();
 
       if (data.length === 0) {
-        table.innerHTML = '<tr><td colspan="5">該当するデータがありません</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="5">表示するデータがありません</td></tr>';
         return;
       }
 
-      for (const row of data) {
+      data.forEach(row => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td><input type="checkbox" value="${row.id}"></td>
@@ -135,22 +131,31 @@
           <td>${row.email}</td>
           <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
         `;
-        table.appendChild(tr);
-      }
+        tbody.appendChild(tr);
+      });
     }
 
-    async function updateStatus(newStatus) {
-      const ids = Array.from(document.querySelectorAll('input[type="checkbox"]:checked')).map(el => el.value);
-      if (ids.length === 0) return alert("対象を選択してください。");
-
-      for (const id of ids) {
-        await supabase.from("applications")
-          .update({ status: newStatus })
-          .eq("id", id);
+    async function updateSelectedStatus(newStatus) {
+      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+      for (const checkbox of checkboxes) {
+        const id = checkbox.value;
+        await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": accessToken,
+            "Authorization": `Bearer ${accessToken}`,
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
       }
-      alert("ステータスを更新しました。");
-      loadAccounts();
+      alert(`✅ ステータスを '${newStatus}' に更新しました`);
+      loadData();
     }
+
+    function approveSelected() { updateSelectedStatus("approved"); }
+    function revokeSelected() { updateSelectedStatus("pending"); }
   </script>
 </body>
 </html>
