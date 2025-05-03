@@ -71,6 +71,7 @@
   </style>
 </head>
 <body>
+
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス"><br>
@@ -85,9 +86,9 @@
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
       <div class="tab-menu">
-        <button class="tab-button" onclick="loadTab('admin-account.html', 'admin-account.js')">📋 アカウント管理</button>
-        <button class="tab-button" onclick="loadTab('admin-menu.html', 'admin-menu.js')">🗂 メニュー管理</button>
-        <button class="tab-button" onclick="loadTab('admin-apps.html', 'admin-apps.js')">🛠 アプリ管理</button>
+        <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
+        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
+        <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
       <div id="tabContent" style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px;">
         <p>上のタブから管理ページを選んでください。</p>
@@ -140,17 +141,10 @@
       });
     });
 
-    window.loadTab = async function (htmlFile, jsModule) {
+    window.loadTab = async function (file) {
       const container = document.getElementById("tabContent");
-      const html = await fetch(htmlFile).then(res => res.text());
-      container.innerHTML = html;
-
-      if (jsModule) {
-        const module = await import(`./${jsModule}`);
-        if (module?.adminAccount?.init) {
-          await module.adminAccount.init(supabase, { supabaseUrl, supabaseKey });
-        }
-      }
+      const res = await fetch(file);
+      container.innerHTML = await res.text();
     }
   </script>
 </body>
