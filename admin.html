@@ -57,13 +57,17 @@
 
   <!-- ダッシュボード -->
   <section id="dashboardSection" style="display: none;">
-    <div style="max-width: 800px; margin: 2rem auto; padding: 1rem;">
-      <h2>CARELAYタウン 管理者ダッシュボード</h2>
-      <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-        <button onclick="loadTab('admin-account.html')" style="flex: 1;">📋 アカウント管理</button>
-        <button onclick="loadTab('admin-menu.html')" style="flex: 1;">🗂 メニュー管理</button>
-        <button onclick="loadTab('admin-apps.html')" style="flex: 1;">🛠 アプリ管理</button>
+    <div style="max-width: 800px; margin: 1rem auto; padding: 1rem;">
+      <h1 style="font-size: 1.5rem; margin-bottom: 1rem;">CARELAYタウン 管理者ダッシュボード</h1>
+  
+      <!-- タブメニュー -->
+      <div style="display: flex; justify-content: center; gap: 1rem; margin-bottom: 1.5rem;">
+        <button onclick="loadTab('admin-account.html')" style="min-width: 160px;">📋 アカウント管理</button>
+        <button onclick="loadTab('admin-menu.html')" style="min-width: 160px;">🗂 メニュー管理</button>
+        <button onclick="loadTab('admin-apps.html')" style="min-width: 160px;">🛠 アプリ管理</button>
       </div>
+  
+      <!-- タブの読み込み先 -->
       <div id="tabContent" style="background: #fff; padding: 1rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
         <p>上のタブから管理ページを選んでください。</p>
       </div>
