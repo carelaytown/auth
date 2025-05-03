@@ -77,43 +77,6 @@
     .toggle-btn { background-color: #27ae60; color: white; }
   </style>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
-</head>
-<body>
-  <h1>📱 アプリ管理</h1>
-
-  <div class="card">
-    <div class="form-row">
-      <input id="label" placeholder="表示名（例：電卓）" />
-      <input id="icon" placeholder="アイコン（例：🧮）" />
-      <input id="page" placeholder="ページID（例：toolcalc）" />
-      <input id="category" placeholder="カテゴリ（例：tools）" />
-    </div>
-    <div class="form-row">
-      <input id="description" placeholder="アプリ説明" />
-      <input id="sort" placeholder="表示順（数字）" type="number" style="max-width:120px" />
-      <button class="primary-button" onclick="addApp()">＋追加</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="form-row">
-      <label for="filter">カテゴリで絞り込み：</label>
-      <select id="filter" onchange="loadApps()">
-        <option value="">すべて表示</option>
-      </select>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>表示名</th><th>アイコン</th><th>ページ</th><th>カテゴリ</th><th>公開</th><th>操作</th>
-        </tr>
-      </thead>
-      <tbody id="appTableBody">
-        <tr><td colspan="6">読み込み中...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
   <script>
     const supabase = supabase.createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
@@ -202,5 +165,41 @@
 
     window.onload = loadApps;
   </script>
+</head>
+<body>
+  <h1>📱 アプリ管理</h1>
+
+  <div class="card">
+    <div class="form-row">
+      <input id="label" placeholder="表示名（例：電卓）" />
+      <input id="icon" placeholder="アイコン（例：🧮）" />
+      <input id="page" placeholder="ページID（例：toolcalc）" />
+      <input id="category" placeholder="カテゴリ（例：tools）" />
+    </div>
+    <div class="form-row">
+      <input id="description" placeholder="アプリ説明" />
+      <input id="sort" placeholder="表示順（数字）" type="number" style="max-width:120px" />
+      <button class="primary-button" onclick="addApp()">＋追加</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="form-row">
+      <label for="filter">カテゴリで絞り込み：</label>
+      <select id="filter" onchange="loadApps()">
+        <option value="">すべて表示</option>
+      </select>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>表示名</th><th>アイコン</th><th>ページ</th><th>カテゴリ</th><th>公開</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="appTableBody">
+        <tr><td colspan="6">読み込み中...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </body>
 </html>
