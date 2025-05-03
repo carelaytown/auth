@@ -13,9 +13,6 @@
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
     }
-    #authSection {
-      margin-bottom: 2rem;
-    }
     #authSection input[type="email"],
     #authSection input[type="password"] {
       padding: 0.5rem;
@@ -27,75 +24,28 @@
       font-size: 1rem;
     }
     .tabs {
+      display: flex;
+      gap: 1rem;
       margin-bottom: 1rem;
     }
     .tab-button {
-      display: inline-block;
-      margin-right: 0.5rem;
       padding: 0.5rem 1rem;
       background: #ccc;
-      color: #000;
       border-radius: 5px;
       cursor: pointer;
-      transition: background 0.2s ease-in-out;
     }
     .tab-button.active {
       background: #007acc;
       color: #fff;
     }
-    iframe {
-      width: 100%;
-      height: 600px;
-      border: none;
-      background: #fff;
-      box-shadow: 0 0 5px rgba(0,0,0,0.1);
-    }
-    #iframeSection {
+    .tab-content {
       display: none;
     }
-  </style>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-    const client = createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
-
-    window.login = async function () {
-      const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminPassword').value.trim();
-      const { error } = await client.auth.signInWithPassword({ email, password });
-      if (error) {
-        alert('ログインに失敗しました: ' + error.message);
-        return;
-      }
-      const { data, error: fetchError } = await client.from("applications").select("is_admin").eq("email", email).single();
-      if (fetchError || !data || !data.is_admin) {
-        alert("管理者権限がありません");
-        return;
-      }
-      localStorage.setItem("carelay_admin_auth", "true");
-      document.getElementById('authSection').style.display = 'none';
-      document.getElementById('iframeSection').style.display = 'block';
+    .tab-content.active {
+      display: block;
     }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      if (localStorage.getItem("carelay_admin_auth") === "true") {
-        document.getElementById("authSection").style.display = "none";
-        document.getElementById("iframeSection").style.display = "block";
-      }
-      const tabs = document.querySelectorAll('.tab-button');
-      const frame = document.getElementById('adminFrame');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          frame.src = tab.dataset.target;
-        });
-      });
-    });
-  </script>
+  </style>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 <body>
   <h1>管理人室</h1>
@@ -106,13 +56,63 @@
     <button onclick="login()">ログイン</button>
   </div>
 
-  <div id="iframeSection">
+  <div id="dashboard" style="display:none">
     <div class="tabs">
-      <span class="tab-button active" data-target="admin-account.html">👥アカウント承認・解除</span>
-      <span class="tab-button" data-target="admin-menu.html">🗂️カテゴリ表示設定</span>
-      <span class="tab-button" data-target="admin-apps.html">📱アプリ管理</span>
+      <div class="tab-button active" data-target="account">👥アカウント</div>
+      <div class="tab-button" data-target="menu">🗂️カテゴリ</div>
+      <div class="tab-button" data-target="apps">📱アプリ</div>
     </div>
-    <iframe id="adminFrame" src="admin-account.html"></iframe>
+    <div class="tab-content active" id="account"></div>
+    <div class="tab-content" id="menu"></div>
+    <div class="tab-content" id="apps"></div>
   </div>
+
+  <script>
+    let client;
+    window.addEventListener('DOMContentLoaded', () => {
+      client = window.supabase.createClient(
+        "https://viihcgkjzzhkdiwdzdex.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+      );
+    });
+
+    async function login() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) return alert('ログイン失敗: ' + error.message);
+
+      const { data, error: fetchError } = await client.from("applications").select("is_admin").eq("email", email).single();
+      if (fetchError || !data?.is_admin) return alert("管理者権限なし");
+
+      localStorage.setItem("carelay_admin_auth", "true");
+      document.getElementById("authSection").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      loadTabs();
+    }
+
+    const buttons = document.querySelectorAll('.tab-button');
+    const contents = document.querySelectorAll('.tab-content');
+    buttons.forEach(btn => {
+      btn.onclick = () => {
+        buttons.forEach(b => b.classList.remove('active'));
+        contents.forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.target).classList.add('active');
+      };
+    });
+
+    function loadTabs() {
+      fetch('admin-account.html').then(res => res.text()).then(html => document.getElementById('account').innerHTML = html);
+      fetch('admin-menu.html').then(res => res.text()).then(html => document.getElementById('menu').innerHTML = html);
+      fetch('admin-apps.html').then(res => res.text()).then(html => document.getElementById('apps').innerHTML = html);
+    }
+
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      document.getElementById("authSection").style.display = "none";
+      document.getElementById("dashboard").style.display = "block";
+      loadTabs();
+    }
+  </script>
 </body>
 </html>
