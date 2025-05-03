@@ -3,21 +3,61 @@
 <head>
   <meta charset="UTF-8">
   <title>CARELAYタウン 管理者ダッシュボード</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f2f4f8;
+    }
+    .centered-box {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: #fff;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 320px;
+      text-align: center;
+    }
+    input {
+      width: 90%;
+      padding: 0.6rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 0.7rem;
+      background-color: #3f51b5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+    button:hover {
+      background-color: #303f9f;
+    }
+    #dashboardSection {
+      padding: 2rem;
+    }
+  </style>
 </head>
 <body>
-  <!-- ログインセクション -->
-  <section id="loginSection">
-    <h2>ログイン</h2>
+  <!-- ログイン -->
+  <section id="loginSection" class="centered-box">
+    <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス"><br>
     <input type="password" id="password" placeholder="パスワード"><br>
     <button id="loginBtn">ログイン</button>
   </section>
 
-  <!-- ダッシュボードセクション -->
-  <section id="dashboardSection" class="hidden" style="display: none;">
-    <h2>ダッシュボードへようこそ</h2>
-    <p>ログイン成功＆管理者認証済み</p>
-    <!-- 今後タブやページ読み込みはここに追加 -->
+  <!-- ダッシュボード -->
+  <section id="dashboardSection" style="display: none;">
+    <h2>CARELAYタウン 管理者ダッシュボード</h2>
+    <p>ログイン成功＆管理者認証済みです。</p>
   </section>
 
   <script type="module">
@@ -28,15 +68,11 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
-    // ログインボタン押下
     document.getElementById('loginBtn').addEventListener('click', async () => {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
 
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
       if (error) {
         alert("ログインに失敗しました");
@@ -54,13 +90,11 @@
         return;
       }
 
-      // 管理者認証成功
       localStorage.setItem("carelay_admin_auth", "true");
       document.getElementById("loginSection").style.display = "none";
       document.getElementById("dashboardSection").style.display = "block";
     });
 
-    // 既にログイン済みでlocalStorageにある場合
     window.addEventListener('DOMContentLoaded', () => {
       if (localStorage.getItem("carelay_admin_auth") === "true") {
         document.getElementById("loginSection").style.display = "none";
