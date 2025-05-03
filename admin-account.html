@@ -39,6 +39,11 @@
     gap: 2rem;
     margin-bottom: 1rem;
   }
+  .carelay-admin-account .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
   .carelay-admin-account .approval-table {
     width: 100%;
     border-collapse: collapse;
@@ -60,6 +65,7 @@
   .carelay-admin-account .button-group {
     display: flex;
     gap: 1rem;
+    justify-content: flex-start;
   }
   .carelay-admin-account .button-group button {
     padding: 0.5rem 1rem;
@@ -69,62 +75,63 @@
     border-radius: 5px;
     cursor: pointer;
     font-size: 0.9rem;
+    width: auto;
+    min-width: 140px;
   }
 </style>
 
 <script>
-  async function loadAdminAccount() {
-    const supabase = window.createCarelaySupabase();
+(async () => {
+  const supabase = window.supabase?.createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
+  if (!supabase) return;
 
-    document.querySelectorAll("input[name='filter']").forEach(input => {
-      input.addEventListener("change", loadData);
+  document.querySelectorAll("input[name='filter']").forEach(input => {
+    input.addEventListener("change", loadData);
+  });
+
+  await loadData();
+
+  async function loadData() {
+    const filter = document.querySelector("input[name='filter']:checked").value;
+    const match =
+      filter === "pending" ? { status: "pending" } :
+      filter === "approved" ? { status: "approved" } : {};
+
+    const { data, error } = await supabase
+      .from("applications")
+      .select("id, email, org_name, status")
+      .match(match);
+
+    const tbody = document.getElementById("approvalTable");
+    tbody.innerHTML = "";
+
+    data?.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><input type="checkbox" value="${row.id}"></td>
+        <td>${row.id}</td>
+        <td>${row.org_name}</td>
+        <td>${row.email}</td>
+        <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
+      `;
+      tbody.appendChild(tr);
     });
-
-    await loadData();
-
-    async function loadData() {
-      const filter = document.querySelector("input[name='filter']:checked").value;
-      const match =
-        filter === "pending" ? { status: "pending" } :
-        filter === "approved" ? { status: "approved" } : {};
-
-      const { data, error } = await supabase
-        .from("applications")
-        .select("id, email, org_name, status")
-        .match(match);
-
-      const tbody = document.getElementById("approvalTable");
-      tbody.innerHTML = "";
-
-      data?.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" value="${row.id}"></td>
-          <td>${row.id}</td>
-          <td>${row.org_name}</td>
-          <td>${row.email}</td>
-          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.updateStatus = async function(newStatus) {
-      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
-      if (checkboxes.length === 0) return alert("対象が選択されていません");
-
-      const supabase = window.createCarelaySupabase();
-      const updates = Array.from(checkboxes).map(checkbox =>
-        supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
-      );
-
-      await Promise.all(updates);
-      alert(`✅ ステータスを '${newStatus}' に更新しました`);
-      await loadData();
-    };
   }
 
-  // 即時実行（loadTabで読み込まれても動く）
-  window.loadAdminAccount = loadAdminAccount;
-  loadAdminAccount();
+  window.updateStatus = async function(newStatus) {
+    const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+    if (checkboxes.length === 0) return alert("対象が選択されていません");
+
+    const updates = Array.from(checkboxes).map(checkbox =>
+      supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
+    );
+
+    await Promise.all(updates);
+    alert(`✅ ステータスを '${newStatus}' に更新しました`);
+    await loadData();
+  };
+})();
 </script>
