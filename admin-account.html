@@ -23,7 +23,7 @@
 
     <div class="button-group">
       <button type="button" onclick="updateStatus('approved')">✅ 承認する</button>
-      <button type="button" onclick="updateStatus('pending')">🚫 解除する</button>
+      <button type="button" onclick="updateStatus('pending')">🛑 解除する</button>
     </div>
   </form>
 </section>
@@ -80,15 +80,12 @@
   }
 </style>
 
-<script>
-(async () => {
+<script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
   const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-
-  const headers = {
-    apikey: supabaseKey,
-    Authorization: `Bearer ${supabaseKey}`,
-  };
+  const supabase = createClient(supabaseUrl, supabaseKey);
 
   document.querySelectorAll("input[name='filter']").forEach(input => {
     input.addEventListener("change", loadData);
@@ -97,13 +94,25 @@
   await loadData();
 
   async function loadData() {
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    if (!accessToken) {
+      document.getElementById("approvalTable").innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
+      return;
+    }
+
     const filter = document.querySelector("input[name='filter']:checked").value;
     let url = `${supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
 
     if (filter === "pending") url += "&status=eq.pending";
     else if (filter === "approved") url += "&status=eq.approved";
 
-    const res = await fetch(url, { headers });
+    const res = await fetch(url, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${accessToken}`
+      }
+    });
     const data = await res.json();
 
     const tbody = document.getElementById("approvalTable");
@@ -123,6 +132,10 @@
   }
 
   window.updateStatus = async function(newStatus) {
+    const { data: { session } } = await supabase.auth.getSession();
+    const accessToken = session?.access_token;
+    if (!accessToken) return alert("ログインが必要です");
+
     const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
     if (checkboxes.length === 0) return alert("対象が選択されていません");
 
@@ -130,7 +143,8 @@
       fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
         method: "PATCH",
         headers: {
-          ...headers,
+          apikey: supabaseKey,
+          Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ status: newStatus })
@@ -141,5 +155,4 @@
     alert(`✅ ステータスを '${newStatus}' に更新しました`);
     await loadData();
   };
-})();
 </script>
