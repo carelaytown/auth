@@ -1,60 +1,55 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CARELAYタウン 管理者ダッシュボード</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #f4f4f4;
       margin: 0;
-      padding: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #f7f9fb;
     }
     header {
-      background: #2267b1;
+      background: #2266bb;
       color: white;
-      padding: 20px;
+      padding: 1rem;
+      font-size: 1.5rem;
       text-align: center;
-      font-size: 1.6rem;
-      font-weight: bold;
     }
     nav {
-      background: #e9f0fc;
-      padding: 10px;
-      text-align: center;
+      background: #eaf0ff;
+      padding: 0.5rem;
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
     }
     nav button {
-      padding: 10px 20px;
-      margin: 0 5px;
+      padding: 0.5rem 1rem;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
+      background-color: #ddd;
       cursor: pointer;
+      font-weight: bold;
     }
     nav button.active {
-      background: #2267b1;
+      background-color: #2266bb;
       color: white;
     }
-    section {
-      padding: 20px;
-      display: none;
-    }
-    section.active {
-      display: block;
+    #content {
+      padding: 2rem;
     }
   </style>
 </head>
 <body>
   <header>CARELAYタウン 管理者ダッシュボード</header>
   <nav>
-    <button onclick="switchTab('account')" id="tab-account">アカウント管理</button>
-    <button onclick="switchTab('menu')" id="tab-menu">カテゴリ管理</button>
-    <button onclick="switchTab('apps')" id="tab-apps">アプリ管理</button>
+    <button id="tab-account" class="active">アカウント管理</button>
+    <button id="tab-menu">カテゴリ管理</button>
+    <button id="tab-apps">アプリ管理</button>
   </nav>
-
-  <section id="section-account"></section>
-  <section id="section-menu"></section>
-  <section id="section-apps"></section>
+  <div id="content">読み込み中...</div>
 
   <script>
     const supabase = supabase.createClient(
@@ -65,35 +60,53 @@
     async function checkAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        document.body.innerHTML = '<p style="color:red; padding:20px;">ログインが必要です。</p>';
+        document.body.innerHTML = '<p style="padding:2rem;color:red;">ログインしていません。</p>';
         return false;
       }
-      const { data } = await supabase.from('applications').select('is_admin').eq('email', user.email).single();
-      if (!data?.is_admin) {
-        document.body.innerHTML = '<p style="color:red; padding:20px;">管理者権限がありません。</p>';
+      const { data, error } = await supabase
+        .from("applications")
+        .select("is_admin")
+        .eq("email", user.email)
+        .single();
+      if (data?.is_admin === true || data?.is_admin === "TRUE") {
+        return true;
+      } else {
+        document.body.innerHTML = '<p style="padding:2rem;color:red;">管理者権限がありません。</p>';
         return false;
       }
-      return true;
     }
 
-    function switchTab(name) {
-      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(`tab-${name}`).classList.add('active');
-      document.getElementById(`section-${name}`).classList.add('active');
+    async function loadTab(tab) {
+      document.querySelectorAll("nav button").forEach(btn => btn.classList.remove("active"));
+      document.getElementById(`tab-${tab}`).classList.add("active");
+
+      const res = await fetch(`admin-${tab}.html`);
+      const html = await res.text();
+      const container = document.getElementById("content");
+      container.innerHTML = html;
+
+      const scripts = container.querySelectorAll("script");
+      scripts.forEach(script => {
+        const s = document.createElement("script");
+        if (script.src) {
+          s.src = script.src;
+        } else {
+          s.textContent = script.textContent;
+        }
+        document.body.appendChild(s);
+        script.remove();
+      });
     }
 
-    async function loadAll() {
-      const ok = await checkAdmin();
-      if (!ok) return;
+    document.getElementById("tab-account").onclick = () => loadTab("account");
+    document.getElementById("tab-menu").onclick = () => loadTab("menu");
+    document.getElementById("tab-apps").onclick = () => loadTab("apps");
 
-      switchTab('account');
-      document.getElementById("section-account").innerHTML = '<p>アカウント管理が読み込まれました。</p>';
-      document.getElementById("section-menu").innerHTML = '<p>カテゴリ管理が読み込まれました。</p>';
-      document.getElementById("section-apps").innerHTML = '<p>アプリ管理が読み込まれました。</p>';
-    }
-
-    loadAll();
+    checkAdmin().then(isAdmin => {
+      if (isAdmin) {
+        loadTab("account");
+      }
+    });
   </script>
 </body>
 </html>
