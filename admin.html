@@ -40,17 +40,14 @@
     button:hover {
       background-color: #303f9f;
     }
-    #dashboardSection {
-      padding: 2rem;
-    }
     .tab-menu {
       display: flex;
       justify-content: center;
       gap: 1rem;
-      margin: 1rem 0;
+      margin: 1rem auto;
       flex-wrap: wrap;
     }
-    .tab-menu .tab-button {
+    .tab-button {
       all: unset;
       display: inline-block;
       background-color: #3f51b5;
@@ -62,10 +59,8 @@
       cursor: pointer;
       min-width: 160px;
       text-align: center;
-      transition: background-color 0.2s;
-      box-sizing: border-box;
     }
-    .tab-menu .tab-button:hover {
+    .tab-button:hover {
       background-color: #32449a;
     }
     iframe {
@@ -79,29 +74,24 @@
   </style>
 </head>
 <body>
-  <!-- ログイン画面 -->
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
-    <input type="email" id="email" placeholder="メールアドレス"><br>
-    <input type="password" id="password" placeholder="パスワード"><br>
+    <input type="email" id="email" placeholder="メールアドレス">
+    <input type="password" id="password" placeholder="パスワード">
     <button id="loginBtn">ログイン</button>
   </section>
 
-  <!-- ヘッダー -->
-  <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
+  <header style="background: #3f51b5; color: white; padding: 0.8rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
 
-  <!-- ダッシュボード -->
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
-      <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
         <button class="tab-button" onclick="loadTab('admin-menu.html')">📂 メニュー管理</button>
         <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
-      <!-- 表示エリア -->
       <iframe id="tabContent"></iframe>
     </div>
   </section>
@@ -109,9 +99,10 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    );
 
     async function initialize() {
       const loginSection = document.getElementById("loginSection");
@@ -119,6 +110,7 @@
 
       const { data: sessionData } = await supabase.auth.getSession();
       const accessToken = sessionData?.session?.access_token;
+
       const isAuthed = localStorage.getItem("carelay_admin_auth") === "true";
 
       if (accessToken && isAuthed) {
@@ -154,8 +146,7 @@
     }
 
     function loadTab(file) {
-      const iframe = document.getElementById("tabContent");
-      iframe.src = `${file}?auth=true&v=${Date.now()}`;
+      document.getElementById("tabContent").src = `${file}?auth=true&v=${Date.now()}`;
     }
 
     initialize();
