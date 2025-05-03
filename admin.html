@@ -2,25 +2,25 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>管理者ログイン - CARELAYタウン</title>
+  <title>CARELAY 管理ログイン</title>
   <style>
     body {
+      font-family: 'Segoe UI', sans-serif;
       margin: 0;
-      font-family: sans-serif;
-      background: #f4f4f4;
+      background: #f2f4f8;
     }
-    .login-box {
+    .centered-box {
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      background: white;
+      background: #fff;
       padding: 2rem;
       border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
       width: 320px;
       text-align: center;
     }
-    input {
+    input, button {
       width: 90%;
       padding: 0.6rem;
       margin: 0.5rem 0;
@@ -28,33 +28,28 @@
       border-radius: 6px;
     }
     button {
-      width: 100%;
-      padding: 0.7rem;
       background-color: #3f51b5;
       color: white;
-      border: none;
-      border-radius: 6px;
       cursor: pointer;
     }
     button:hover {
-      background-color: #2c3a93;
+      background-color: #303f9f;
     }
   </style>
 </head>
 <body>
-  <div class="login-box">
+  <section class="centered-box">
     <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス" />
     <input type="password" id="password" placeholder="パスワード" />
     <button id="loginBtn">ログイン</button>
-  </div>
+  </section>
 
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     document.getElementById("loginBtn").addEventListener("click", async () => {
@@ -67,7 +62,6 @@
         return;
       }
 
-      // 管理者判定（applicationsテーブルのis_admin）
       const { data: profile, error: profileError } = await supabase
         .from("applications")
         .select("is_admin")
@@ -80,8 +74,7 @@
       }
 
       localStorage.setItem("carelay_admin_auth", "true");
-      alert("ログイン成功しました！");
-      location.reload(); // 今後のページ遷移に備えてリロード
+      alert("ログイン成功。ダッシュボードはまだ準備中です。");
     });
   </script>
 </body>
