@@ -1,49 +1,38 @@
-// admin-account.js
-export const adminAccount = {
-  async init(supabase, config) {
-    this.supabase = supabase;
-    this.supabaseUrl = config.supabaseUrl;
-    this.supabaseKey = config.supabaseKey;
+export default async function init(supabase, config) {
+  const token = config.token;
+  if (!token) {
+    document.getElementById("approvalTable").innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
+    return;
+  }
 
-    document.querySelectorAll("input[name='filter']").forEach(input => {
-      input.addEventListener("change", () => this.loadData());
-    });
-    await this.loadData();
-  },
+  const filterInputs = document.querySelectorAll("input[name='filter']");
+  filterInputs.forEach(input => input.addEventListener("change", loadData));
+  document.querySelectorAll("[data-action]").forEach(btn => {
+    btn.addEventListener("click", () => updateStatus(btn.dataset.action));
+  });
 
-  async loadData() {
-    const session = (await this.supabase.auth.getSession()).data.session;
-    const accessToken = session?.access_token;
-    const tbody = document.getElementById("approvalTable");
-    if (!accessToken || !tbody) {
-      tbody.innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
-      return;
-    }
+  await loadData();
 
+  async function loadData() {
+    let url = `${config.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
     const filter = document.querySelector("input[name='filter']:checked").value;
-    let url = `${this.supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
     if (filter === "pending") url += "&status=eq.pending";
-    else if (filter === "approved") url += "&status=eq.approved";
+    if (filter === "approved") url += "&status=eq.approved";
 
     const res = await fetch(url, {
       headers: {
-        apikey: this.supabaseKey,
-        Authorization: `Bearer ${accessToken}`
+        apikey: config.supabaseKey,
+        Authorization: `Bearer ${token}`
       }
     });
-
-    if (!res.ok) {
-      console.error("Fetchエラー:", res.status, await res.text());
-      tbody.innerHTML = "<tr><td colspan='5'>データ取得エラー</td></tr>";
-      return;
-    }
-
     const data = await res.json();
+    const tbody = document.getElementById("approvalTable");
     tbody.innerHTML = "";
+
     data.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td><input type="checkbox" value="${row.id}"></td>
+        <td><input type="checkbox" value="${row.id}" /></td>
         <td>${row.id}</td>
         <td>${row.org_name}</td>
         <td>${row.email}</td>
@@ -51,30 +40,26 @@ export const adminAccount = {
       `;
       tbody.appendChild(tr);
     });
-  },
+  }
 
-  async updateStatus(newStatus) {
-    const session = (await this.supabase.auth.getSession()).data.session;
-    const accessToken = session?.access_token;
-    if (!accessToken) return alert("ログインが必要です");
+  async function updateStatus(newStatus) {
+    const checked = document.querySelectorAll("#approvalTable input[type='checkbox']:checked");
+    if (!checked.length) return alert("対象が選択されていません");
 
-    const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) return alert("対象が選択されていません");
-
-    const updates = Array.from(checkboxes).map(checkbox =>
-      fetch(`${this.supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
+    const promises = Array.from(checked).map(cb =>
+      fetch(`${config.supabaseUrl}/rest/v1/applications?id=eq.${cb.value}`, {
         method: "PATCH",
         headers: {
-          apikey: this.supabaseKey,
-          Authorization: `Bearer ${accessToken}`,
+          apikey: config.supabaseKey,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({ status: newStatus })
       })
     );
 
-    await Promise.all(updates);
-    alert(`✅ ステータスを '${newStatus}' に更新しました`);
-    await this.loadData();
+    await Promise.all(promises);
+    alert("ステータスを更新しました");
+    await loadData();
   }
-};
+}
