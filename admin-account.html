@@ -35,14 +35,15 @@
   }
   .carelay-admin-account .filter-group {
     display: flex;
-    justify-content: flex-start;
     gap: 2rem;
     margin-bottom: 1rem;
+    align-items: center;
   }
   .carelay-admin-account .filter-group label {
     display: flex;
     align-items: center;
     gap: 0.3rem;
+    white-space: nowrap;
   }
   .carelay-admin-account .approval-table {
     width: 100%;
@@ -68,25 +69,26 @@
     justify-content: flex-start;
   }
   .carelay-admin-account .button-group button {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
     background: #3f51b5;
     color: #fff;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 0.9rem;
     width: auto;
-    min-width: 140px;
   }
 </style>
 
 <script>
 (async () => {
-  const supabase = window.supabase?.createClient(
-    "https://viihcgkjzzhkdiwdzdex.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-  );
-  if (!supabase) return;
+  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+
+  const headers = {
+    apikey: supabaseKey,
+    Authorization: `Bearer ${supabaseKey}`,
+  };
 
   document.querySelectorAll("input[name='filter']").forEach(input => {
     input.addEventListener("change", loadData);
@@ -96,19 +98,18 @@
 
   async function loadData() {
     const filter = document.querySelector("input[name='filter']:checked").value;
-    const match =
-      filter === "pending" ? { status: "pending" } :
-      filter === "approved" ? { status: "approved" } : {};
+    let url = `${supabaseUrl}/rest/v1/applications?select=id,email,org_name,status`;
 
-    const { data, error } = await supabase
-      .from("applications")
-      .select("id, email, org_name, status")
-      .match(match);
+    if (filter === "pending") url += "&status=eq.pending";
+    else if (filter === "approved") url += "&status=eq.approved";
+
+    const res = await fetch(url, { headers });
+    const data = await res.json();
 
     const tbody = document.getElementById("approvalTable");
     tbody.innerHTML = "";
 
-    data?.forEach(row => {
+    data.forEach(row => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
         <td><input type="checkbox" value="${row.id}"></td>
@@ -126,7 +127,14 @@
     if (checkboxes.length === 0) return alert("対象が選択されていません");
 
     const updates = Array.from(checkboxes).map(checkbox =>
-      supabase.from("applications").update({ status: newStatus }).eq("id", checkbox.value)
+      fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${checkbox.value}`, {
+        method: "PATCH",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ status: newStatus })
+      })
     );
 
     await Promise.all(updates);
