@@ -14,8 +14,9 @@ export const adminAccount = {
   async loadData() {
     const session = (await this.supabase.auth.getSession()).data.session;
     const accessToken = session?.access_token;
-    if (!accessToken) {
-      document.getElementById("approvalTable").innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
+    const tbody = document.getElementById("approvalTable");
+    if (!accessToken || !tbody) {
+      tbody.innerHTML = "<tr><td colspan='5'>ログインしてください</td></tr>";
       return;
     }
 
@@ -30,9 +31,14 @@ export const adminAccount = {
         Authorization: `Bearer ${accessToken}`
       }
     });
-    const data = await res.json();
 
-    const tbody = document.getElementById("approvalTable");
+    if (!res.ok) {
+      console.error("Fetchエラー:", res.status, await res.text());
+      tbody.innerHTML = "<tr><td colspan='5'>データ取得エラー</td></tr>";
+      return;
+    }
+
+    const data = await res.json();
     tbody.innerHTML = "";
     data.forEach(row => {
       const tr = document.createElement("tr");
