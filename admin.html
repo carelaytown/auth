@@ -54,7 +54,48 @@
       display: none;
     }
   </style>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const client = createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
+
+    window.login = async function () {
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const { error } = await client.auth.signInWithPassword({ email, password });
+      if (error) {
+        alert('ログインに失敗しました: ' + error.message);
+        return;
+      }
+      const { data, error: fetchError } = await client.from("applications").select("is_admin").eq("email", email).single();
+      if (fetchError || !data || !data.is_admin) {
+        alert("管理者権限がありません");
+        return;
+      }
+      localStorage.setItem("carelay_admin_auth", "true");
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('iframeSection').style.display = 'block';
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem("carelay_admin_auth") === "true") {
+        document.getElementById("authSection").style.display = "none";
+        document.getElementById("iframeSection").style.display = "block";
+      }
+      const tabs = document.querySelectorAll('.tab-button');
+      const frame = document.getElementById('adminFrame');
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          frame.src = tab.dataset.target;
+        });
+      });
+    });
+  </script>
 </head>
 <body>
   <h1>管理人室</h1>
@@ -73,47 +114,5 @@
     </div>
     <iframe id="adminFrame" src="admin-account.html"></iframe>
   </div>
-
-  <script>
-    const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-
-    let client;
-
-    window.addEventListener('DOMContentLoaded', () => {
-      client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-      const tabs = document.querySelectorAll('.tab-button');
-      const frame = document.getElementById('adminFrame');
-      tabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-          tabs.forEach(t => t.classList.remove('active'));
-          tab.classList.add('active');
-          frame.src = tab.dataset.target;
-        });
-      });
-    });
-
-    async function login() {
-      const email = document.getElementById('adminEmail').value.trim();
-      const password = document.getElementById('adminPassword').value.trim();
-      const { error: loginError } = await client.auth.signInWithPassword({ email, password });
-
-      if (loginError) {
-        alert('ログインに失敗しました: ' + loginError.message);
-        return;
-      }
-
-      const { data, error: fetchError } = await client.from("applications").select("is_admin").eq("email", email).single();
-      if (fetchError || !data || !data.is_admin) {
-        alert("管理者権限がありません");
-        return;
-      }
-
-      localStorage.setItem("carelay_admin_auth", "true");
-      document.getElementById('authSection').style.display = 'none';
-      document.getElementById('iframeSection').style.display = 'block';
-    }
-  </script>
 </body>
 </html>
