@@ -2,82 +2,174 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>管理者ダッシュボード | CARELAYタウン</title>
+  <title>CARELAYタウン 管理者ダッシュボード</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: 'Noto Sans JP', sans-serif;
+      background: #f8f9fa;
       margin: 0;
-      padding: 0;
     }
     header {
-      background-color: #2a6ebb;
+      background-color: #206ecf;
       color: white;
-      padding: 1rem;
+      padding: 20px;
       text-align: center;
+      font-size: 24px;
+      font-weight: bold;
     }
     nav {
-      background-color: #eef3ff;
+      background: #e9f0ff;
       display: flex;
       justify-content: center;
-      gap: 1rem;
-      padding: 0.5rem 0;
+      gap: 10px;
+      padding: 10px;
     }
-    nav button {
-      background-color: #fff;
-      border: 1px solid #ccc;
-      padding: 0.5rem 1rem;
+    .tab-button {
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      background-color: #ddd;
       cursor: pointer;
     }
-    nav button.active {
+    .tab-button.active {
       background-color: #2a6ebb;
       color: white;
     }
-    iframe {
+    .section {
+      display: none;
+      padding: 20px;
+    }
+    .section.active {
+      display: block;
+    }
+    .button-group button {
+      margin-right: 10px;
+    }
+    .status-approved { color: green; font-weight: bold; }
+    .status-pending { color: orange; font-weight: bold; }
+    table {
       width: 100%;
-      height: calc(100vh - 150px);
-      border: none;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #eef3ff;
     }
   </style>
 </head>
 <body>
-  <header><h1>CARELAYタウン 管理者ダッシュボード</h1></header>
+  <header>CARELAYタウン 管理者ダッシュボード</header>
   <nav>
-    <button onclick="loadPage('admin-account.html')" id="tab-account">アカウント管理</button>
-    <button onclick="loadPage('admin-menu.html')" id="tab-menu">カテゴリ管理</button>
-    <button onclick="loadPage('admin-apps.html')" id="tab-apps">アプリ管理</button>
+    <button class="tab-button active" onclick="switchTab('account')">アカウント管理</button>
+    <button class="tab-button" onclick="switchTab('menu')">カテゴリ管理</button>
+    <button class="tab-button" onclick="switchTab('apps')">アプリ管理</button>
   </nav>
-  <iframe id="mainFrame" src=""></iframe>
+
+  <div id="admin-account-panel" class="section active">
+    <h2>🛡️ 承認パネル</h2>
+    <div class="filter-group">
+      <label><input type="radio" name="filter" value="all" checked onchange="loadAdminAccountData()"> すべて</label>
+      <label><input type="radio" name="filter" value="pending" onchange="loadAdminAccountData()"> 未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved" onchange="loadAdminAccountData()"> 承認済のみ</label>
+    </div>
+    <form onsubmit="return false;">
+      <table>
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>ID</th>
+            <th>事業所名</th>
+            <th>メールアドレス</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="adminApprovalTable"></tbody>
+      </table>
+      <div class="button-group">
+        <button onclick="approveAdminSelected()">✅ 承認する</button>
+        <button onclick="revokeAdminSelected()">🚫 解除する</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="admin-menu-panel" class="section">
+    <h2>📁 カテゴリ設定</h2>
+    <p>（ここにカテゴリ管理機能のUIを入れます）</p>
+  </div>
+
+  <div id="admin-apps-panel" class="section">
+    <h2>📱 アプリ管理</h2>
+    <p>（ここにアプリ管理機能のUIを入れます）</p>
+  </div>
 
   <script>
-    const supabase = supabase.createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
+    const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    window.onload = async () => {
+    document.addEventListener("DOMContentLoaded", async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        document.body.innerHTML = "<p style='color:red;text-align:center;margin-top:2rem;'>ログインされていません。</p>";
+        document.body.innerHTML = "<p style='color:red'>ログインしていません。</p>";
         return;
       }
-      const { data } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
-      if (!data?.is_admin) {
-        document.body.innerHTML = "<p style='color:red;text-align:center;margin-top:2rem;'>管理者権限がありません。</p>";
+      const { data, error } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
+      if (error || !data?.is_admin) {
+        document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
         return;
       }
+      loadAdminAccountData(); // 初期ロード
+    });
 
-      // 初期表示ページ
-      loadPage('admin-account.html');
-      document.getElementById('tab-account').classList.add('active');
-    };
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+      document.getElementById(`admin-${tabName}-panel`).classList.add('active');
+    }
 
-    function loadPage(page) {
-      document.getElementById('mainFrame').src = page;
-      document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('active'));
-      if (page.includes('account')) document.getElementById('tab-account').classList.add('active');
-      if (page.includes('menu')) document.getElementById('tab-menu').classList.add('active');
-      if (page.includes('apps')) document.getElementById('tab-apps').classList.add('active');
+    async function loadAdminAccountData() {
+      const filter = document.querySelector('input[name="filter"]:checked').value;
+      let query = supabase.from("applications").select("id, org_name, email, status");
+      if (filter === "pending") query = query.eq("status", "pending");
+      if (filter === "approved") query = query.eq("status", "approved");
+      const { data } = await query;
+      const tbody = document.getElementById("adminApprovalTable");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" value="${row.id}"></td>
+          <td>${row.id}</td>
+          <td>${row.org_name}</td>
+          <td>${row.email}</td>
+          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function updateAdminStatus(newStatus) {
+      const checkboxes = document.querySelectorAll('#adminApprovalTable input[type="checkbox"]:checked');
+      for (const checkbox of checkboxes) {
+        const id = checkbox.value;
+        await supabase.from("applications").update({ status: newStatus }).eq("id", id);
+      }
+      alert(`✅ ステータスを '${newStatus}' に更新しました`);
+      loadAdminAccountData();
+    }
+
+    function approveAdminSelected() {
+      updateAdminStatus("approved");
+    }
+    function revokeAdminSelected() {
+      updateAdminStatus("pending");
     }
   </script>
 </body>
