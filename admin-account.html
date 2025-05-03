@@ -1,91 +1,95 @@
-<section class="carelay-admin-account">
-  <h1>🔡️ 承認パネル</h1>
-
-  <div class="filter-group">
-    <label><input type="radio" name="filter" value="all" checked>すべて</label>
-    <label><input type="radio" name="filter" value="pending">未承認のみ</label>
-    <label><input type="radio" name="filter" value="approved">承認済のみ</label>
+  <div id="mainSection" class="section hidden">
+    <h1>🛡️ 承認パネル</h1>
+    <div class="filter-group">
+      <label><input type="radio" name="filter" value="all" checked onchange="loadData()"> すべて</label>
+      <label><input type="radio" name="filter" value="pending" onchange="loadData()"> 未承認のみ</label>
+      <label><input type="radio" name="filter" value="approved" onchange="loadData()"> 承認済のみ</label>
+    </div>
+    <form onsubmit="return false;">
+      <table>
+        <thead>
+          <tr>
+            <th>✔</th>
+            <th>ID</th>
+            <th>事業所名</th>
+            <th>メールアドレス</th>
+            <th>状態</th>
+          </tr>
+        </thead>
+        <tbody id="approvalTable"></tbody>
+      </table>
+      <div class="button-group">
+        <button onclick="approveSelected()">✅ 承認する</button>
+        <button onclick="revokeSelected()">🚫 解除する</button>
+      </div>
+    </form>
   </div>
 
-  <form onsubmit="return false;">
-    <table class="approval-table">
-      <thead>
-        <tr>
-          <th>✔</th>
-          <th>ID</th>
-          <th>事業所名</th>
-          <th>メールアドレス</th>
-          <th>状態</th>
-        </tr>
-      </thead>
-      <tbody id="approvalTable"></tbody>
-    </table>
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    <div class="button-group">
-      <button type="button" data-action="approve">✅ 承認する</button>
-      <button type="button" data-action="revert">🛑 解除する</button>
-    </div>
-  </form>
-</section>
-
-<style>
-  .carelay-admin-account {
-    padding: 1rem;
-    font-size: 0.95rem;
-  }
-  .carelay-admin-account .filter-group {
-    display: flex;
-    gap: 2rem;
-    margin-bottom: 1rem;
-    align-items: center;
-  }
-  .carelay-admin-account .filter-group label {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    white-space: nowrap;
-  }
-  .carelay-admin-account .approval-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 1rem;
-  }
-  .carelay-admin-account .approval-table th,
-  .carelay-admin-account .approval-table td {
-    border: 1px solid #ccc;
-    padding: 0.4rem 0.6rem;
-    text-align: left;
-  }
-  .carelay-admin-account .status-approved {
-    color: green;
-    font-weight: bold;
-  }
-  .carelay-admin-account .status-pending {
-    color: gray;
-  }
-  .carelay-admin-account .button-group {
-    display: flex;
-    gap: 1rem;
-    justify-content: flex-start;
-  }
-  .carelay-admin-account .button-group button {
-    padding: 0.4rem 0.8rem;
-    font-size: 0.85rem;
-    background: #3f51b5;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    width: auto;
-  }
-</style>
-
-<script type="module">
-  import { adminAccount as module } from './admin-account.js';
-
-  window.adminAccount = {
-    async init(supabase, config) {
-      await module.init.call(this, supabase, config);
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      document.getElementById("mainSection").classList.remove("hidden");
+      loadData();
+    } else {
+      document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
     }
-  };
-</script>
+
+    async function loadData() {
+      const filter = document.querySelector('input[name="filter"]:checked').value;
+      let query = "";
+      if (filter === "pending") query = "?status=eq.pending";
+      if (filter === "approved") query = "?status=eq.approved";
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications${query}`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const data = await res.json();
+
+      const tbody = document.getElementById("approvalTable");
+      tbody.innerHTML = "";
+
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" value="${row.id}"></td>
+          <td>${row.id}</td>
+          <td>${row.org_name}</td>
+          <td>${row.email}</td>
+          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function approveSelected() {
+      await updateSelectedStatus("approved");
+    }
+
+    async function revokeSelected() {
+      await updateSelectedStatus("pending");
+    }
+
+    async function updateSelectedStatus(newStatus) {
+      const checkboxes = document.querySelectorAll('#approvalTable input[type="checkbox"]:checked');
+      for (const checkbox of checkboxes) {
+        const id = checkbox.value;
+        await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({ status: newStatus })
+        });
+      }
+      alert(`✅ ステータスを '${newStatus}' に更新しました`);
+      loadData();
+    }
+  </script>
