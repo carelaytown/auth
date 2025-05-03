@@ -43,8 +43,6 @@
     #dashboardSection {
       padding: 2rem;
     }
-
-    /* タブボタン用の共通クラス */
     .tab-menu {
       display: flex;
       justify-content: center;
@@ -52,7 +50,6 @@
       margin: 1rem 0;
       flex-wrap: wrap;
     }
-    
     .tab-menu .tab-button {
       all: unset;
       display: inline-block;
@@ -68,46 +65,33 @@
       transition: background-color 0.2s;
       box-sizing: border-box;
     }
-
-.tab-menu .tab-button:hover {
-  background-color: #32449a;
-}
-
+    .tab-menu .tab-button:hover {
+      background-color: #32449a;
+    }
   </style>
 </head>
 <body>
-
-  <!-- ログイン画面 -->
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
     <input type="email" id="email" placeholder="メールアドレス"><br>
     <input type="password" id="password" placeholder="パスワード"><br>
     <button id="loginBtn">ログイン</button>
   </section>
-
-  <!-- ダッシュボード -->
   <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
-
   <section id="dashboardSection" style="display: none;">
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
-
-      <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
         <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
         <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
-
-      <!-- 表示エリア -->
       <div id="tabContent" style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px;">
         <p>上のタブから管理ページを選んでください。</p>
       </div>
-
     </div>
   </section>
-
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
@@ -121,14 +105,12 @@
       const dashboardSection = document.getElementById("dashboardSection");
       const loginBtn = document.getElementById("loginBtn");
 
-      // 認証済みならダッシュボード表示
       if (localStorage.getItem("carelay_admin_auth") === "true") {
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
         return;
       }
 
-      // ログイン処理
       loginBtn.addEventListener('click', async () => {
         const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value.trim();
@@ -156,12 +138,19 @@
       });
     });
 
-    // タブ読み込み（グローバル関数）
     window.loadTab = async function (file) {
       const res = await fetch(file);
       const html = await res.text();
       document.getElementById("tabContent").innerHTML = html;
-    }
+
+      // admin-account 初期化（JS定義があれば）
+      if (file === "admin-account.html" && window.adminAccount?.init) {
+        await window.adminAccount.init(supabase, {
+          supabaseUrl: 'https://viihcgkjzzhkdiwdzdex.supabase.co',
+          supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+        });
+      }
+    };
   </script>
 </body>
 </html>
