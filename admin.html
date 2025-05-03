@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>管理人室 - CARELAY</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -13,6 +12,19 @@
     h1 {
       font-size: 1.8rem;
       margin-bottom: 1.5rem;
+    }
+    #authSection {
+      margin-bottom: 2rem;
+    }
+    #authSection input[type="email"],
+    #authSection input[type="password"] {
+      padding: 0.5rem;
+      font-size: 1rem;
+      margin-right: 0.5rem;
+    }
+    #authSection button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
     }
     .tabs {
       margin-bottom: 1rem;
@@ -41,23 +53,14 @@
     #iframeSection {
       display: none;
     }
-    #loginSection input {
-      padding: 0.5rem;
-      font-size: 1rem;
-      margin-right: 0.5rem;
-    }
-    #loginSection button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-    }
   </style>
 </head>
 <body>
   <h1>管理人室</h1>
 
-  <div id="loginSection">
-    <input type="email" id="email" placeholder="メールアドレス">
-    <input type="password" id="password" placeholder="パスワード">
+  <div id="authSection">
+    <input type="email" id="adminEmail" placeholder="メールアドレス">
+    <input type="password" id="adminPassword" placeholder="パスワード">
     <button onclick="login()">ログイン</button>
   </div>
 
@@ -70,6 +73,7 @@
     <iframe id="adminFrame" src="admin-account.html"></iframe>
   </div>
 
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
     const supabase = supabase.createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
@@ -77,26 +81,27 @@
     );
 
     async function login() {
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      const { data: session, error } = await supabase.auth.signInWithPassword({ email, password });
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value.trim();
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) {
-        alert('ログインに失敗しました');
+        alert('ログインに失敗しました: ' + error.message);
         return;
       }
-
-      const { data: userData } = await supabase.from("applications").select("is_admin").eq("email", email).single();
-      if (userData?.is_admin) {
-        document.getElementById("loginSection").style.display = "none";
-        document.getElementById("iframeSection").style.display = "block";
-      } else {
+      const { data, error: fetchError } = await supabase.from("applications").select("is_admin").eq("email", email).single();
+      if (fetchError || !data || !data.is_admin) {
         alert("管理者権限がありません");
+        return;
       }
+      localStorage.setItem("carelay_admin_auth", "true");
+      document.getElementById('authSection').style.display = 'none';
+      document.getElementById('iframeSection').style.display = 'block';
     }
+
+    // 自動ログイン処理は一旦無効化（要セッションチェック）
 
     const tabs = document.querySelectorAll('.tab-button');
     const frame = document.getElementById('adminFrame');
-
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
