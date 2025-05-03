@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>CARELAYタウン 管理者ダッシュボード</title>
   <style>
     body {
@@ -40,6 +40,9 @@
     button:hover {
       background-color: #303f9f;
     }
+    #dashboardSection {
+      padding: 2rem;
+    }
     .tab-menu {
       display: flex;
       justify-content: center;
@@ -47,32 +50,35 @@
       margin: 1rem 0;
       flex-wrap: wrap;
     }
-    .tab-button {
+    .tab-menu .tab-button {
       all: unset;
+      display: inline-block;
       background-color: #3f51b5;
       color: white;
+      border: none;
       border-radius: 4px;
       padding: 0.6rem 1.2rem;
       font-size: 0.95rem;
       cursor: pointer;
       min-width: 160px;
       text-align: center;
+      transition: background-color 0.2s;
+      box-sizing: border-box;
     }
-    .tab-button:hover {
+    .tab-menu .tab-button:hover {
       background-color: #32449a;
     }
   </style>
 </head>
 <body>
-
   <section id="loginSection" class="centered-box">
     <h2>管理者ログイン</h2>
-    <input type="email" id="email" placeholder="メールアドレス"><br />
-    <input type="password" id="password" placeholder="パスワード"><br />
+    <input type="email" id="email" placeholder="メールアドレス"><br>
+    <input type="password" id="password" placeholder="パスワード"><br>
     <button id="loginBtn">ログイン</button>
   </section>
 
-  <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; text-align: center;">
+  <header style="background: #3f51b5; color: white; padding: 0.8rem 1rem; font-size: 1.2rem; text-align: center;">
     CARELAYタウン 管理者ダッシュボード
   </header>
 
@@ -80,8 +86,8 @@
     <div style="width: 90%; max-width: 1200px; margin: 1.5rem auto;">
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html', 'admin-account.js')">📋 アカウント管理</button>
-        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
-        <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
+        <button class="tab-button" onclick="loadTab('admin-menu.html', 'admin-menu.js')">🗂 メニュー管理</button>
+        <button class="tab-button" onclick="loadTab('admin-apps.html', 'admin-apps.js')">🛠 アプリ管理</button>
       </div>
       <div id="tabContent" style="background: #fff; padding: 1.5rem; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); min-height: 300px;">
         <p>上のタブから管理ページを選んでください。</p>
@@ -93,12 +99,13 @@
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ←省略可
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    window.addEventListener("DOMContentLoaded", () => {
+    window.addEventListener('DOMContentLoaded', () => {
       const loginSection = document.getElementById("loginSection");
       const dashboardSection = document.getElementById("dashboardSection");
+      const loginBtn = document.getElementById("loginBtn");
 
       if (localStorage.getItem("carelay_admin_auth") === "true") {
         loginSection.style.display = "none";
@@ -106,12 +113,15 @@
         return;
       }
 
-      document.getElementById("loginBtn").addEventListener("click", async () => {
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value.trim();
+      loginBtn.addEventListener('click', async () => {
+        const email = document.getElementById('email').value.trim();
+        const password = document.getElementById('password').value.trim();
 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return alert("ログインに失敗しました");
+        if (error) {
+          alert("ログインに失敗しました");
+          return;
+        }
 
         const { data: profile, error: profileError } = await supabase
           .from("applications")
@@ -120,30 +130,28 @@
           .single();
 
         if (profileError || !profile?.is_admin) {
-          return alert("管理者権限がありません");
+          alert("管理者権限がありません");
+          return;
         }
 
         localStorage.setItem("carelay_admin_auth", "true");
-        localStorage.setItem("carelay_admin_token", data.session.access_token);
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
       });
     });
 
-    window.loadTab = async function (htmlPath, jsPath = null) {
+    window.loadTab = async function (htmlFile, jsModule) {
       const container = document.getElementById("tabContent");
-      const res = await fetch(htmlPath);
-      container.innerHTML = await res.text();
+      const html = await fetch(htmlFile).then(res => res.text());
+      container.innerHTML = html;
 
-      if (jsPath) {
-        const mod = await import(`./${jsPath}`);
-        mod.default(supabase, {
-          supabaseUrl,
-          supabaseKey,
-          token: localStorage.getItem("carelay_admin_token")
-        });
+      if (jsModule) {
+        const module = await import(`./${jsModule}`);
+        if (module?.adminAccount?.init) {
+          await module.adminAccount.init(supabase, { supabaseUrl, supabaseKey });
+        }
       }
-    };
+    }
   </script>
 </body>
 </html>
