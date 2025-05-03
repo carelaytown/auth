@@ -99,7 +99,7 @@
       <!-- タブメニュー -->
       <div class="tab-menu">
         <button class="tab-button" onclick="loadTab('admin-account.html')">📋 アカウント管理</button>
-        <button class="tab-button" onclick="loadTab('admin-menu.html')">📂 メニュー管理</button>
+        <button class="tab-button" onclick="loadTab('admin-menu.html')">🗂 メニュー管理</button>
         <button class="tab-button" onclick="loadTab('admin-apps.html')">🛠 アプリ管理</button>
       </div>
 
@@ -130,7 +130,7 @@
         const password = document.getElementById('password').value.trim();
 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return alert("ログインに失敗しました");
+        if (error || !data.session) return alert("ログインに失敗しました");
 
         const { data: profile, error: profileError } = await supabase
           .from("applications")
@@ -140,10 +140,8 @@
 
         if (profileError || !profile?.is_admin) return alert("管理者権限がありません");
 
-        const session = await supabase.auth.getSession();
         localStorage.setItem("carelay_admin_auth", "true");
-        localStorage.setItem("carelay_admin_token", session.data.session.access_token);
-
+        localStorage.setItem("carelay_admin_token", data.session.access_token);
         loginSection.style.display = "none";
         dashboardSection.style.display = "block";
       });
