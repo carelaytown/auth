@@ -1,89 +1,96 @@
-<div id="admin-account-panel" class="section hidden">
-  <h1>🛡️ 承認パネル</h1>
-  <div class="filter-group">
-    <label><input type="radio" name="filter" value="all" checked onchange="loadAdminAccountData()"> すべて</label>
-    <label><input type="radio" name="filter" value="pending" onchange="loadAdminAccountData()"> 未承認のみ</label>
-    <label><input type="radio" name="filter" value="approved" onchange="loadAdminAccountData()"> 承認済のみ</label>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>管理人室 - CARELAYタウン</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f9f9f9;
+      padding: 30px;
+    }
+    h1 {
+      color: #2a6ebb;
+      margin-bottom: 20px;
+    }
+    .tab-buttons {
+      margin-bottom: 20px;
+    }
+    .tab-buttons button {
+      padding: 10px 20px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #ccc;
+      color: #333;
+    }
+    .tab-buttons button.active {
+      background-color: #2a6ebb;
+      color: #fff;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>管理人室</h1>
+  <div class="tab-buttons">
+    <button id="tab-account" class="active">👥アカウント承認・解除</button>
+    <button id="tab-category">📂カテゴリ表示設定</button>
+    <button id="tab-apps">📱アプリ管理</button>
   </div>
-  <form onsubmit="return false;">
-    <table>
-      <thead>
-        <tr>
-          <th>✔</th>
-          <th>ID</th>
-          <th>事業所名</th>
-          <th>メールアドレス</th>
-          <th>状態</th>
-        </tr>
-      </thead>
-      <tbody id="adminApprovalTable"></tbody>
-    </table>
-    <div class="button-group">
-      <button onclick="approveAdminSelected()">✅ 承認する</button>
-      <button onclick="revokeAdminSelected()">🚫 解除する</button>
-    </div>
-  </form>
-</div>
+  <div id="tab-account-panel" class="tab-content active"></div>
+  <div id="tab-category-panel" class="tab-content"></div>
+  <div id="tab-apps-panel" class="tab-content"></div>
 
-<script src="https://unpkg.com/@supabase/supabase-js"></script>
-<script>
-window.addEventListener('DOMContentLoaded', () => {
-  const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-  const adminClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script>
+    const supabase = supabase.createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
 
-  window.loadAdminAccountData = async function () {
-    const filter = document.querySelector('input[name="filter"]:checked').value;
-    let query = adminClient.from("applications").select("id, org_name, email, status");
-    if (filter === "pending") query = query.eq("status", "pending");
-    if (filter === "approved") query = query.eq("status", "approved");
-    const { data } = await query;
-    const tbody = document.getElementById("adminApprovalTable");
-    tbody.innerHTML = "";
-    data.forEach(row => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><input type="checkbox" value="${row.id}"></td>
-        <td>${row.id}</td>
-        <td>${row.org_name}</td>
-        <td>${row.email}</td>
-        <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
-      `;
-      tbody.appendChild(tr);
+    document.addEventListener('DOMContentLoaded', () => {
+      const tabs = document.querySelectorAll('.tab-buttons button');
+      const panels = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          panels.forEach(p => p.classList.remove('active'));
+
+          btn.classList.add('active');
+          const targetId = btn.id.replace('tab-', '') + '-panel';
+          document.getElementById(targetId).classList.add('active');
+        });
+      });
+
+      loadFragments();
     });
-  };
 
-  window.approveAdminSelected = async function () {
-    await updateAdminStatus("approved");
-  };
+    async function loadFragments() {
+      const fragments = [
+        { id: 'tab-account-panel', file: 'admin-account.html', init: 'initAdminAccountPanel' },
+        { id: 'tab-category-panel', file: 'admin-category.html', init: 'initAdminCategoryPanel' },
+        { id: 'tab-apps-panel', file: 'admin-apps.html', init: 'initAdminAppsPanel' },
+      ];
 
-  window.revokeAdminSelected = async function () {
-    await updateAdminStatus("pending");
-  };
-
-  async function updateAdminStatus(newStatus) {
-    const checkboxes = document.querySelectorAll('#adminApprovalTable input[type="checkbox"]:checked');
-    for (const checkbox of checkboxes) {
-      const id = checkbox.value;
-      await adminClient.from("applications").update({ status: newStatus }).eq("id", id);
+      for (const { id, file, init } of fragments) {
+        try {
+          const res = await fetch(file);
+          const html = await res.text();
+          document.getElementById(id).innerHTML = html;
+          if (typeof window[init] === 'function') window[init]();
+        } catch (e) {
+          document.getElementById(id).innerHTML = `<p style='color:red'>${file} の読み込みに失敗しました</p>`;
+        }
+      }
     }
-    alert(`✅ ステータスを '${newStatus}' に更新しました`);
-    loadAdminAccountData();
-  }
-
-  async function initAdminAccountPanel() {
-    const { data: userInfo } = await adminClient.auth.getUser();
-    const user = userInfo?.user;
-    if (!user) return;
-    const { data: profile } = await adminClient.from("applications").select("is_admin").eq("email", user.email).single();
-    if (profile?.is_admin) {
-      document.getElementById("admin-account-panel").classList.remove("hidden");
-      loadAdminAccountData();
-    } else {
-      document.getElementById("admin-account-panel").innerHTML = "<p style='color:red'>管理者権限がありません。</p>";
-    }
-  }
-
-  initAdminAccountPanel();
-});
-</script>
+  </script>
+</body>
+</html>
