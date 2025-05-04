@@ -1,131 +1,118 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>管理者ダッシュボード</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>CARELAY 管理者ダッシュボード</title>
   <style>
-    body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: #f0f6ff; }
-    header { background: #2a6ebb; color: #fff; padding: 15px 20px; font-size: 20px; font-weight: bold; }
-    .login-container { max-width: 400px; margin: 100px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); text-align: center; }
-    .login-container input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
-    .login-container button { background: #2a6ebb; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
-    .login-container button:hover { background: #1f5aa0; }
-    .error { color: #c0392b; margin-top: 10px; }
-    .main { display: flex; height: calc(100vh - 60px); }
-    .sidebar { width: 200px; background: #ffffff; border-right: 1px solid #ccc; display: flex; flex-direction: column; padding: 20px; }
-    .sidebar button { padding: 10px 15px; margin-bottom: 10px; background: #e6eef9; border: none; border-radius: 6px; text-align: left; cursor: pointer; font-size: 14px; }
-    .sidebar button.active { background: #2a6ebb; color: white; font-weight: bold; }
-    .content { flex: 1; padding: 30px; background: #f9fbff; overflow-y: auto; }
-    .hidden { display: none; }
-  </style>
-</head>
-<body>
-
-<header>管理者ダッシュボード</header>
-
-<div id="authArea" class="login-container">
-  <h2>管理者パスワード</h2>
-  <input type="password" id="adminPass" placeholder="パスワード" />
-  <button onclick="verifyAdmin()">入室する</button>
-  <div class="error" id="errorMsg"></div>
-</div>
-
-<div id="notAdmin" class="login-container hidden">
-  <div class="error">管理者ではありません。</div>
-</div>
-
-<div id="dashboard" class="main hidden">
-  <div class="sidebar">
-    <button id="tab-account" class="active" onclick="switchTab('account')">アカウント管理</button>
-    <button id="tab-menu" onclick="switchTab('menu')">メニュー管理</button>
-    <button id="tab-apps" onclick="switchTab('apps')">アプリ管理</button>
-  </div>
-  <div class="content" id="tabContent">読み込み中...</div>
-</div>
-
-<script type="module">
-  const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-  let user = null;
-  try {
-    user = JSON.parse(localStorage.getItem("carelayUser"));
-  } catch (e) {
-    user = null;
-  }
-
-  if (!user) {
-    document.getElementById("notAdmin").classList.remove("hidden");
-  } else {
-    document.getElementById("authArea").classList.remove("hidden");
-  }
-
-  window.verifyAdmin = async function () {
-    const pass = document.getElementById("adminPass").value.trim();
-    const errorDiv = document.getElementById("errorMsg");
-    errorDiv.innerText = "";
-
-    if (!user || !user.email) {
-      errorDiv.innerText = "ユーザー情報が見つかりません。";
-      return;
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 2em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
+    h1 {
+      color: #333;
+    }
+    .card {
+      background: white;
+      padding: 2em;
+      border-radius: 12px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75em;
+      margin-top: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    button {
+      background: #2c7be5;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1a5ec8;
+    }
+    .error {
+      color: red;
+      margin-top: 1em;
+    }
+  </style>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-    try {
+    const supabase = createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    );
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      const user = JSON.parse(localStorage.getItem("carelayUser") || "null");
+      const approved = localStorage.getItem("carelayApproved");
+
+      if (!user || approved !== "ok") {
+        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
+        return;
+      }
+
       const { data, error } = await supabase
         .from("applications")
         .select("admin_pass")
         .eq("email", user.email)
-        .maybeSingle();
+        .eq("is_admin", true)
+        .single();
 
-      if (error) {
-        errorDiv.innerText = "認証エラー：" + error.message;
+      if (error || !data) {
+        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
         return;
       }
-      if (!data) {
-        errorDiv.innerText = "管理者情報が見つかりません。";
-        return;
+
+      const adminPass = data.admin_pass;
+
+      const form = document.getElementById("auth-form");
+      form.style.display = "block";
+
+      form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = document.getElementById("admin-password").value;
+        const err = document.getElementById("error-msg");
+
+        if (input === adminPass) {
+          localStorage.setItem("carelay_admin_auth", "true");
+          location.reload();
+        } else {
+          err.textContent = "パスワードが違います。";
+        }
+      });
+
+      // すでに認証済みならメイン表示
+      if (localStorage.getItem("carelay_admin_auth") === "true") {
+        loadAdminUI();
       }
-      if (pass === data.admin_pass) {
-        localStorage.setItem("carelay_admin_auth", "true");
-        document.getElementById("authArea").classList.add("hidden");
-        document.getElementById("dashboard").classList.remove("hidden");
-        loadTab("account");
-      } else {
-        errorDiv.innerText = "パスワードが間違っています。";
-      }
-    } catch (err) {
-      console.error("認証失敗", err);
-      errorDiv.innerText = "認証処理中にエラーが発生しました。";
+    });
+
+    async function loadAdminUI() {
+      document.body.innerHTML = "<h1>管理者ダッシュボード</h1><div id='admin-tabs'></div><div id='admin-content'></div>";
+      // 次ステップでタブUIとHTML読込処理を追加予定
     }
-  };
-
-  window.switchTab = function (tab) {
-    loadTab(tab);
-  };
-
-  async function loadTab(tab) {
-    const tabs = ["account", "menu", "apps"];
-    tabs.forEach(t => document.getElementById(`tab-${t}`).classList.remove("active"));
-    document.getElementById(`tab-${tab}`).classList.add("active");
-    const content = document.getElementById("tabContent");
-    content.innerHTML = "読み込み中...";
-    try {
-      const html = await fetch(`admin-${tab}.html`);
-      const htmlText = await html.text();
-      content.innerHTML = htmlText;
-      const script = document.createElement("script");
-      script.src = `admin-${tab}.js`;
-      document.body.appendChild(script);
-    } catch (e) {
-      content.innerHTML = "読み込みに失敗しました。";
-      console.error(e);
-    }
-  }
-</script>
-
+  </script>
+</head>
+<body>
+  <div class="card" id="auth-form" style="display: none;">
+    <h1>管理者パスワード</h1>
+    <form>
+      <input type="password" id="admin-password" placeholder="パスワードを入力" required />
+      <button type="submit">ログイン</button>
+      <p class="error" id="error-msg"></p>
+    </form>
+  </div>
 </body>
 </html>
