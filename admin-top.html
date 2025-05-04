@@ -24,7 +24,7 @@
 
 <header>管理者ダッシュボード</header>
 
-<div id="authArea" class="login-container hidden">
+<div id="authArea" class="login-container">
   <h2>管理者パスワード</h2>
   <input type="password" id="adminPass" placeholder="パスワード" />
   <button onclick="verifyAdmin()">入室する</button>
@@ -58,11 +58,7 @@
     user = null;
   }
 
-  const isAdmin = localStorage.getItem("carelay_admin_auth") === "true";
-
   if (!user) {
-    document.getElementById("notAdmin").classList.remove("hidden");
-  } else if (!isAdmin) {
     document.getElementById("notAdmin").classList.remove("hidden");
   } else {
     document.getElementById("authArea").classList.remove("hidden");
@@ -94,6 +90,7 @@
         return;
       }
       if (pass === data.admin_pass) {
+        localStorage.setItem("carelay_admin_auth", "true");
         document.getElementById("authArea").classList.add("hidden");
         document.getElementById("dashboard").classList.remove("hidden");
         loadTab("account");
