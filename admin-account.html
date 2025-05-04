@@ -1,15 +1,15 @@
-<!-- admin-account.html 修正済みバージョン -->
-<div id="mainSection" style="padding: 20px; background-color: #f9fbff;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
-    <div style="display: flex; gap: 10px;">
-      <button onclick="filterAccounts('all')">すべて</button>
-      <button onclick="filterAccounts('approved')">承認済</button>
-      <button onclick="filterAccounts('pending')">未承認</button>
+<div id="mainSection">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <div>
+      <strong>フィルター：</strong>
+      <button onclick="setFilter('all')">すべて</button>
+      <button onclick="setFilter('approved')">承認済</button>
+      <button onclick="setFilter('pending')">未承認</button>
     </div>
-    <div style="display: flex; gap: 10px; margin-top: 10px;">
-      <button onclick="approveSelected()">承認</button>
-      <button onclick="rejectSelected()">解除</button>
-      <button onclick="deleteSelected()">削除</button>
+    <div>
+      <button onclick="updateSelected('approved')">承認</button>
+      <button onclick="updateSelected('pending')">解除</button>
+      <button onclick="deleteSelected()" style="background-color: #c0392b; color: white;">削除</button>
     </div>
   </div>
 
@@ -29,28 +29,26 @@
 
 <script>
 const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+
+let currentFilter = 'all';
+let accountData = [];
 
 async function loadAccountList() {
-  try {
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`
-      }
-    });
-    const data = await res.json();
-    window.accountData = data;
-    renderAccounts("all");
-  } catch (e) {
-    console.error("データ取得に失敗", e);
-  }
+  const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+    headers: {
+      apikey: supabaseKey,
+      Authorization: `Bearer ${supabaseKey}`
+    }
+  });
+  accountData = await res.json();
+  renderAccounts(currentFilter);
 }
 
 function renderAccounts(filter) {
   const tbody = document.getElementById("accountTableBody");
   tbody.innerHTML = "";
-  const filtered = window.accountData.filter(row => {
+  const filtered = accountData.filter(row => {
     if (filter === "approved") return row.status === "approved";
     if (filter === "pending") return row.status === "pending";
     return true;
@@ -68,8 +66,9 @@ function renderAccounts(filter) {
   });
 }
 
-function filterAccounts(filter) {
-  renderAccounts(filter);
+function setFilter(value) {
+  currentFilter = value;
+  renderAccounts(currentFilter);
 }
 
 function toggleAll(source) {
@@ -108,15 +107,8 @@ async function deleteSelected() {
   }
   await loadAccountList();
 }
-
-function approveSelected() {
-  updateSelected("approved");
-}
-
-function rejectSelected() {
-  updateSelected("pending");
-}
-
-// 自動読み込み
-loadAccountList();
+</script>
+<script>
+  // 初期化：admin-top.html側が呼び出せるようにグローバル関数として登録
+  window.loadAccountList = loadAccountList;
 </script>
