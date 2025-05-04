@@ -16,17 +16,19 @@
     }
     .toolbar {
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
     }
     .toolbar button {
       padding: 8px 16px;
-      margin-right: 5px;
       border: none;
       background-color: #2a6ebb;
       color: white;
       border-radius: 6px;
       cursor: pointer;
+      font-size: 14px;
     }
     .toolbar button:hover {
       background-color: #1f5aa0;
@@ -45,6 +47,14 @@
       background: #2a6ebb;
       color: white;
     }
+    .status-approved {
+      color: #27ae60;
+      font-weight: bold;
+    }
+    .status-pending {
+      color: #c0392b;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -52,16 +62,12 @@
 <h2>アカウント管理</h2>
 
 <div class="toolbar">
-  <div>
-    <button onclick="applyFilter('all')">すべて</button>
-    <button onclick="applyFilter('approved')">承認済</button>
-    <button onclick="applyFilter('pending')">未承認</button>
-  </div>
-  <div>
-    <button onclick="approveSelected()">承認</button>
-    <button onclick="rejectSelected()">解除</button>
-    <button onclick="deleteSelected()">削除</button>
-  </div>
+  <button onclick="approveSelected()">承認</button>
+  <button onclick="rejectSelected()">解除</button>
+  <button onclick="deleteSelected()">削除</button>
+  <button onclick="applyFilter('all')">すべて</button>
+  <button onclick="applyFilter('approved')">承認済</button>
+  <button onclick="applyFilter('pending')">未承認</button>
 </div>
 
 <table>
@@ -78,8 +84,8 @@
 </table>
 
 <script>
-const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co"; // ←ここを修正
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"; // ←ここも修正
+const supabaseUrl = "https://YOUR_PROJECT_ID.supabase.co"; // ←ここを修正
+const supabaseKey = "YOUR_SUPABASE_KEY"; // ←ここも修正
 
 let allAccounts = [];
 
@@ -105,12 +111,13 @@ function renderAccounts(filter) {
   });
 
   filtered.forEach(acc => {
+    const statusClass = acc.status === "approved" ? "status-approved" : "status-pending";
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><input type="checkbox" data-id="${acc.id}"></td>
       <td>${acc.org_name}</td>
       <td>${acc.email}</td>
-      <td>${acc.status}</td>
+      <td class="${statusClass}">${acc.status}</td>
       <td>${acc.is_admin ? "✅" : ""}</td>
     `;
     tbody.appendChild(tr);
