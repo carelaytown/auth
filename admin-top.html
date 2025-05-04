@@ -51,7 +51,13 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  const user = JSON.parse(localStorage.getItem("carelayUser"));
+  let user = null;
+  try {
+    user = JSON.parse(localStorage.getItem("carelayUser"));
+  } catch (e) {
+    user = null;
+  }
+
   const isAdmin = localStorage.getItem("carelay_admin_auth") === "true";
 
   if (!user) {
