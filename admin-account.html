@@ -1,114 +1,135 @@
-<style>
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    font-size: 14px;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 8px;
-    text-align: left;
-  }
-  th {
-    background-color: #f0f0f0;
-  }
-  .filter-btns button {
-    margin-right: 10px;
-    padding: 6px 12px;
-    background-color: #e0e0e0;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-  }
-  .filter-btns button.active {
-    background-color: #1b355d;
-    color: white;
-  }
-</style>
-
-<div>
-  <h2>👤 アカウント管理</h2>
-  <div class="filter-btns">
-    <button id="f-all" class="active" onclick="loadAccounts('all')">全て</button>
-    <button id="f-pending" onclick="loadAccounts('pending')">未承認</button>
-    <button id="f-approved" onclick="loadAccounts('approved')">承認済</button>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>アカウント管理</title>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 20px;
+      background: #f9fbff;
+    }
+    h1 {
+      color: #2a6ebb;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background: #e6eef9;
+    }
+    button {
+      margin: 10px 5px;
+      padding: 8px 16px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1f5aa0;
+    }
+  </style>
+</head>
+<body>
+  <h1>アカウント管理</h1>
+  <div>
+    <button onclick="updateStatus('approved')">✅ 一括承認</button>
+    <button onclick="updateStatus('pending')">❌ 一括解除</button>
   </div>
-
-  <table>
+  <table id="accountsTable">
     <thead>
       <tr>
+        <th><input type="checkbox" id="checkAll" onchange="toggleAll(this)"></th>
         <th>事業所名</th>
         <th>メールアドレス</th>
         <th>状態</th>
         <th>管理者</th>
-        <th>操作</th>
       </tr>
     </thead>
-    <tbody id="accountTable">
-      <tr><td colspan="5">読み込み中...</td></tr>
-    </tbody>
+    <tbody id="tableBody"></tbody>
   </table>
-</div>
 
-<script>
-  const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."; // 省略可
 
-  async function loadAccounts(filter = 'all') {
-    document.querySelectorAll(".filter-btns button").forEach(b => b.classList.remove("active"));
-    document.getElementById(`f-${filter}`).classList.add("active");
+    window.onload = async () => {
+      const email = localStorage.getItem("carelayUser");
+      const approved = localStorage.getItem("carelayApproved");
+      if (!email || approved !== "ok") {
+        alert("ログインしていません");
+        window.location.href = "index.html";
+        return;
+      }
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}&select=is_admin`, {
+        headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }
+      });
+      const data = await res.json();
+      if (!data[0]?.is_admin) {
+        alert("管理者権限がありません");
+        window.location.href = "top.html";
+        return;
+      }
+      loadAccounts();
+    };
 
-    let query = supabase.from("applications").select("*").order("created_at", { ascending: false });
-    if (filter === "pending") query = query.eq("status", "pending");
-    if (filter === "approved") query = query.eq("status", "approved");
-
-    const { data, error } = await query;
-    const tbody = document.getElementById("accountTable");
-    tbody.innerHTML = "";
-
-    if (error || !data) {
-      tbody.innerHTML = `<tr><td colspan="5">読み込みエラー</td></tr>`;
-      return;
+    async function loadAccounts() {
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+        headers: { "apikey": supabaseKey, "Authorization": `Bearer ${supabaseKey}` }
+      });
+      const accounts = await res.json();
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+      accounts.forEach(user => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td><input type="checkbox" class="selectRow" data-id="${user.id}"></td>
+          <td>${user.org_name}</td>
+          <td>${user.email}</td>
+          <td>${user.status}</td>
+          <td>${user.is_admin ? '✔' : ''}</td>
+        `;
+        tbody.appendChild(row);
+      });
     }
 
-    if (data.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5">該当なし</td></tr>`;
-      return;
+    function toggleAll(checkbox) {
+      document.querySelectorAll(".selectRow").forEach(cb => cb.checked = checkbox.checked);
     }
 
-    for (const row of data) {
-      const tr = document.createElement("tr");
-
-      tr.innerHTML = `
-        <td>${row.org_name || "-"}</td>
-        <td>${row.email}</td>
-        <td>${row.status}</td>
-        <td>${row.is_admin ? "✅" : ""}</td>
-        <td>
-          ${row.status === "approved"
-            ? `<button onclick="updateStatus('${row.email}', 'pending')">解除</button>`
-            : `<button onclick="updateStatus('${row.email}', 'approved')">承認</button>`}
-        </td>
-      `;
-
-      tbody.appendChild(tr);
+    async function updateStatus(status) {
+      const checked = Array.from(document.querySelectorAll(".selectRow:checked"));
+      if (checked.length === 0) {
+        alert("対象が選択されていません。");
+        return;
+      }
+      for (let cb of checked) {
+        const id = cb.dataset.id;
+        await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": supabaseKey,
+            "Authorization": `Bearer ${supabaseKey}`,
+            "Prefer": "return=representation"
+          },
+          body: JSON.stringify({ status })
+        });
+      }
+      loadAccounts();
     }
-  }
-
-  async function updateStatus(email, newStatus) {
-    const { error } = await supabase
-      .from("applications")
-      .update({ status: newStatus })
-      .eq("email", email);
-
-    if (error) {
-      alert("更新に失敗しました。");
-    } else {
-      loadAccounts(document.querySelector(".filter-btns button.active").id.replace("f-", ""));
-    }
-  }
-
-  loadAccounts("all");
-</script>
+  </script>
+</body>
+</html>
