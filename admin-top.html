@@ -6,25 +6,57 @@
   <style>
     body {
       font-family: "Segoe UI", sans-serif;
-      background: linear-gradient(to right, #e8edf3, #f7f9fb);
+      background: #f4f6f9;
       margin: 0;
-      padding: 2em;
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background-color: #3498db;
+      color: white;
+      padding: 1em;
+      font-size: 1.5em;
+      text-align: center;
+    }
+    #container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+    #sidebar {
+      background-color: #ecf0f1;
+      width: 200px;
+      padding: 1em;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    #sidebar button {
+      background: #fff;
+      border: 1px solid #bdc3c7;
+      padding: 0.75em;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    #sidebar button:hover {
+      background: #d0d7de;
+    }
+    #main {
+      flex: 1;
+      padding: 2em;
+      overflow-y: auto;
     }
     .card {
       background: #fff;
       border-radius: 16px;
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
       padding: 2em;
-      max-width: 420px;
-      width: 100%;
+      max-width: 400px;
+      margin: 4em auto;
       text-align: center;
-    }
-    h2 {
-      margin-bottom: 1em;
-      color: #2c3e50;
     }
     input, button {
       width: 100%;
@@ -34,14 +66,14 @@
       border: 1px solid #ccc;
       font-size: 1em;
     }
-    button {
+    button.primary {
       background: #3498db;
       color: white;
       border: none;
       cursor: pointer;
       transition: background 0.3s;
     }
-    button:hover {
+    button.primary:hover {
       background: #2980b9;
     }
     .error {
@@ -51,65 +83,22 @@
   </style>
 </head>
 <body>
-  <div class="card">
-    <h2>管理者パスワード</h2>
-    <input type="password" id="adminPass" placeholder="パスワードを入力">
-    <button onclick="verifyAdmin()">ログイン</button>
-    <div class="error" id="error"></div>
+  <header>CARELAY 管理者ダッシュボード</header>
+  <div id="container">
+    <div id="sidebar">
+      <button onclick="loadPage('admin-account.html')">アカウント管理</button>
+      <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
+      <button onclick="loadPage('admin-apps.html')">アプリ管理</button>
+    </div>
+    <div id="main">読み込み中...</div>
   </div>
 
   <script>
     const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    async function verifyAdmin() {
-      const email = localStorage.getItem("carelayUser");
-      const approved = localStorage.getItem("carelayApproved");
-      const inputPass = document.getElementById("adminPass").value;
-      const errorBox = document.getElementById("error");
-
-      if (!email || approved !== "ok") {
-        errorBox.textContent = "管理者ではありません。";
-        return;
-      }
-
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?select=admin_pass,is_admin&email=eq.${email}`, {
-        headers: {
-          apikey: supabaseKey,
-          Authorization: `Bearer ${supabaseKey}`
-        }
-      });
-
-      if (!res.ok) {
-        errorBox.textContent = "管理者確認に失敗しました。";
-        return;
-      }
-
-      const data = await res.json();
-      if (data.length === 0 || !data[0].is_admin || data[0].admin_pass !== inputPass) {
-        errorBox.textContent = "管理者ではありません。";
-        return;
-      }
-
-      localStorage.setItem("carelay_admin_auth", "true");
-      location.href = "admin-top.html#dashboard";
-    }
-
-    if (localStorage.getItem("carelay_admin_auth") === "true") {
-      location.href = "admin-top.html#dashboard";
-    }
-
-    if (location.hash === "#dashboard") {
-      document.body.innerHTML = `
-        <h1>CARELAY 管理者ダッシュボード</h1>
-        <div id="menu">
-          <button onclick="loadPage('admin-account.html')">アカウント管理</button>
-          <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
-          <button onclick="loadPage('admin-apps.html')">アプリ管理</button>
-        </div>
-        <div id="main">読み込み中...</div>
-      `;
-      loadPage("admin-account.html");
+    if (localStorage.getItem("carelay_admin_auth") !== "true") {
+      location.href = "admin-top.html";
     }
 
     function loadPage(path) {
@@ -119,6 +108,10 @@
         document.getElementById("main").innerHTML = "<p class='error'>ページの読み込みに失敗しました。</p>";
       });
     }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPage("admin-account.html");
+    });
   </script>
 </body>
 </html>
