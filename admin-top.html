@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CARELAY 管理者ダッシュボード</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: #f9f9f9;
+    }
+    header {
+      background-color: #1b355d;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 {
+      font-size: 18px;
+    }
+    .tab-buttons {
+      display: flex;
+      background-color: #f0f0f0;
+      border-bottom: 1px solid #ccc;
+    }
+    .tab-buttons button {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background-color: #e0e0e0;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .tab-buttons button.active {
+      background-color: white;
+      border-bottom: 2px solid #1b355d;
+      color: #1b355d;
+    }
+    .tab-content {
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>CARELAY 管理者ダッシュボード</h1>
+    <button onclick="logout()">ログアウト</button>
+  </header>
+
+  <div class="tab-buttons">
+    <button id="tab1" class="active" onclick="switchTab('account')">👤 アカウント管理</button>
+    <button id="tab2" onclick="switchTab('menu')">📂 メニュー管理</button>
+    <button id="tab3" onclick="switchTab('apps')">🛠 アプリ管理</button>
+  </div>
+
+  <div id="mainContent" class="tab-content">
+    読み込み中...
+  </div>
+
+  <script>
+    // 認証チェック
+    const approved = localStorage.getItem("carelayApproved");
+    const admin = localStorage.getItem("carelayAdmin");
+    if (approved !== "ok" || admin !== "true") {
+      window.location.href = "index.html";
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = "index.html";
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
+      if (tab === 'account') document.getElementById('tab1').classList.add('active');
+      if (tab === 'menu') document.getElementById('tab2').classList.add('active');
+      if (tab === 'apps') document.getElementById('tab3').classList.add('active');
+
+      loadTabContent(tab);
+    }
+
+    function loadTabContent(tab) {
+      const target = {
+        account: "admin-account.html",
+        menu: "admin-menu.html",
+        apps: "admin-apps.html"
+      }[tab];
+
+      document.getElementById("mainContent").innerHTML = "読み込み中...";
+      fetch(target)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById("mainContent").innerHTML = html;
+        })
+        .catch(() => {
+          document.getElementById("mainContent").innerHTML = "読み込みエラーが発生しました。";
+        });
+    }
+
+    // 初期タブ
+    loadTabContent("account");
+  </script>
+</body>
+</html>
