@@ -2,227 +2,193 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAYタウン 利用開始</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CARELAYタウン｜ログイン・申込</title>
   <style>
     body {
-      margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
       background: #f0f6ff;
-      color: #333;
     }
-
-    .header {
-      background-color: #2a6ebb;
+    header {
+      background: #1b355d;
       color: white;
-      padding: 20px;
+      padding: 16px;
       text-align: center;
-      font-size: 24px;
-      font-weight: bold;
     }
-
     .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      padding: 40px 20px;
-    }
-
-    .card {
+      max-width: 480px;
+      margin: 30px auto;
+      padding: 20px;
       background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      width: 360px;
-      max-width: 90%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
     }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
-      color: #2a6ebb;
+    h2 {
+      font-size: 18px;
+      margin-bottom: 10px;
+      color: #1b355d;
     }
-
-    input[type="text"], input[type="email"] {
+    input {
       width: 100%;
       padding: 10px;
-      margin-top: 10px;
+      margin-bottom: 12px;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 14px;
     }
-
     button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #2a6ebb;
+      width: 100%;
+      padding: 10px;
+      background: #1b355d;
       color: white;
       border: none;
       border-radius: 6px;
-      font-size: 14px;
       cursor: pointer;
+      font-size: 15px;
     }
-
     button:hover {
-      background-color: #1f5aa0;
+      background: #142849;
     }
-
     .status {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 13px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #333;
     }
-
-    .error { color: #c0392b; }
-    .success { color: #27ae60; }
-    .pending { color: #f39c12; }
+    .error {
+      color: red;
+    }
+    .pending {
+      color: orange;
+    }
   </style>
 </head>
 <body>
-  <div class="header">CARELAY TOWN 利用開始</div>
+  <header>
+    <h1>CARELAYタウン 利用申込み・ログイン</h1>
+  </header>
+  <div class="container">
+    <h2>STEP1：利用申込み</h2>
+    <div class="status" id="applyStatus"></div>
+    <input type="text" id="orgName" placeholder="事業所名を入力" />
+    <input type="email" id="applyEmail" placeholder="メールアドレスを入力" />
+    <button onclick="submitApplication()">申請する</button>
+  </div>
 
   <div class="container">
-    <!-- 利用申し込み -->
-    <div class="card">
-      <h2>📝 利用申し込み</h2>
-      <input type="text" id="orgName" placeholder="事業所名" />
-      <input type="email" id="regEmail" placeholder="メールアドレス" />
-      <button onclick="submitApplication(event)">申請する</button>
-      <div id="applyStatus" class="status"></div>
-    </div>
-
-    <!-- ログイン -->
-    <div class="card">
-      <h2>🔐 ログイン</h2>
-      <input type="email" id="loginEmail" placeholder="メールアドレス" />
-      <button onclick="login()">ログイン</button>
-      <div id="loginStatus" class="status"></div>
-    </div>
+    <h2>STEP2：ログイン</h2>
+    <div class="status" id="loginStatus"></div>
+    <input type="email" id="loginEmail" placeholder="申請したメールアドレスを入力" />
+    <button onclick="login()">ログインする</button>
   </div>
 
   <script>
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-  window.onload = () => {
-    const approved = localStorage.getItem("carelayApproved");
-    const email = localStorage.getItem("carelayUser");
-    if (approved === "ok" && email) {
-      window.location.href = "top.html";
-    }
-  };
+    window.onload = () => {
+      const approved = localStorage.getItem("carelayApproved");
+      const email = localStorage.getItem("carelayUser");
+      if (approved === "ok" && email) {
+        window.location.href = "top.html";
+      }
+    };
 
-  async function submitApplication(event) {
-    const orgName = document.getElementById("orgName").value.trim();
-    const email = document.getElementById("regEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("applyStatus");
-    const button = event.target;
+    async function submitApplication() {
+      const orgName = document.getElementById("orgName").value.trim();
+      const email = document.getElementById("applyEmail").value.trim().toLowerCase();
+      const statusDiv = document.getElementById("applyStatus");
+      statusDiv.innerText = "";
+      statusDiv.className = "status";
 
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
+      if (!orgName || !email) {
+        statusDiv.innerText = "すべての項目を入力してください。";
+        statusDiv.classList.add("error");
+        return;
+      }
 
-    if (!orgName || !email) {
-      statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
-    }
-
-    statusDiv.innerText = "⏳ 申請中です...";
-    button.disabled = true;
-    button.innerText = "申請中...";
-    button.style.backgroundColor = "#aaa";
-
-    try {
       const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+        method: "GET",
         headers: {
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`
         }
       });
-      const existing = await checkRes.json();
 
-      if (existing.length > 0) {
-        statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
+      const checkData = await checkRes.json();
+
+      if (checkData.length > 0) {
+        statusDiv.innerText = "すでに申請済みのメールアドレスです。";
         statusDiv.classList.add("error");
-        button.disabled = false;
-        button.innerText = "申請する";
-        button.style.backgroundColor = "#2a6ebb";
         return;
       }
 
       const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "apikey": supabaseKey,
           "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=representation"
+          "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          org_name: orgName,
           email: email,
-          status: "pending",
-          created_at: new Date().toISOString()
+          org_name: orgName,
+          status: "pending"
         })
       });
 
-      if (!res.ok) throw new Error("申請失敗");
-
-      statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
-      statusDiv.classList.add("success");
-      document.getElementById("orgName").disabled = true;
-      document.getElementById("regEmail").disabled = true;
-      button.disabled = true;
-      button.innerText = "申請済み";
-      button.style.backgroundColor = "#aaa";
-
-    } catch (err) {
-      statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
-      statusDiv.classList.add("error");
-      button.disabled = false;
-      button.innerText = "申請する";
-      button.style.backgroundColor = "#2a6ebb";
-    }
-  }
-
-  async function login() {
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("loginStatus");
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
-
-    if (!email) {
-      statusDiv.innerText = "メールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
-    }
-
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-      method: "GET",
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
-      }
-    });
-
-    const data = await res.json();
-
-    if (data && data.length > 0) {
-      if (data[0].status === "approved") {
-        localStorage.setItem("carelayUser", email);
-        localStorage.setItem("carelayApproved", "ok");
-        window.location.href = "top.html";
+      if (res.ok) {
+        statusDiv.innerText = "申請が送信されました。承認されるまでお待ちください。";
       } else {
-        statusDiv.innerText = "申請済みですが、まだ承認されていません。";
-        statusDiv.classList.add("pending");
+        statusDiv.innerText = "申請に失敗しました。もう一度お試しください。";
+        statusDiv.classList.add("error");
       }
-    } else {
-      statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
-      statusDiv.classList.add("error");
     }
-  }
-</script>
 
+    async function login() {
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const statusDiv = document.getElementById("loginStatus");
+      statusDiv.innerText = "";
+      statusDiv.className = "status";
+
+      if (!email) {
+        statusDiv.innerText = "メールアドレスを入力してください。";
+        statusDiv.classList.add("error");
+        return;
+      }
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+        method: "GET",
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (data && data.length > 0) {
+        if (data[0].status === "approved") {
+          localStorage.setItem("carelayUser", email);
+          localStorage.setItem("carelayApproved", "ok");
+
+          // ✅ 管理者フラグを保存（今回の追加点）
+          if (data[0].is_admin === true) {
+            localStorage.setItem("carelayAdmin", "true");
+          } else {
+            localStorage.setItem("carelayAdmin", "false");
+          }
+
+          window.location.href = "top.html";
+        } else {
+          statusDiv.innerText = "申請済みですが、まだ承認されていません。";
+          statusDiv.classList.add("pending");
+        }
+      } else {
+        statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+        statusDiv.classList.add("error");
+      }
+    }
+  </script>
 </body>
 </html>
