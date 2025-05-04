@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>CARELAY 管理者ログイン</title>
+  <style>
+    body {
+      background: linear-gradient(to right, #dfe9f3, #ffffff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+    }
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 2em;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 1em;
+      color: #2c3e50;
+    }
+    input {
+      width: 100%;
+      padding: 0.75em;
+      margin-bottom: 1em;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      width: 100%;
+      padding: 0.75em;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1em;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background: #2980b9;
+    }
+    .error {
+      color: #e74c3c;
+      margin-top: 1em;
+      font-size: 0.9em;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <h2>管理者ログイン</h2>
+    <input type="password" id="adminPass" placeholder="パスワード">
+    <button onclick="verifyAdmin()">ログイン</button>
+    <div class="error" id="error"></div>
+  </div>
+
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+
+    async function verifyAdmin() {
+      const email = localStorage.getItem("carelayUser");
+      const approved = localStorage.getItem("carelayApproved");
+      const inputPass = document.getElementById("adminPass").value;
+      const errorBox = document.getElementById("error");
+
+      if (!email || approved !== "ok") {
+        errorBox.textContent = "管理者ではありません。";
+        return;
+      }
+
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?select=admin_pass,is_admin&email=eq.${email}`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`
+        }
+      });
+
+      if (!res.ok) {
+        errorBox.textContent = "確認に失敗しました。";
+        return;
+      }
+
+      const data = await res.json();
+      if (data.length === 0 || !data[0].is_admin || data[0].admin_pass !== inputPass) {
+        errorBox.textContent = "管理者ではありません。";
+        return;
+      }
+
+      localStorage.setItem("carelay_admin_auth", "true");
+      location.href = "admin-top.html";
+    }
+  </script>
+</body>
+</html>
