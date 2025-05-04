@@ -63,7 +63,8 @@
     );
 
     window.addEventListener('DOMContentLoaded', async () => {
-      const email = localStorage.getItem("carelayUser");
+      const userObj = JSON.parse(localStorage.getItem("carelayUser") || "{}");
+      const email = userObj.email;
       const approved = localStorage.getItem("carelayApproved");
 
       if (!email || approved !== "ok") {
