@@ -58,7 +58,7 @@
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <script>
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 省略してOK、実際は全体入れてください
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function verifyPassword() {
@@ -68,8 +68,8 @@
 
       const email = localStorage.getItem("carelayUser");
       const approved = localStorage.getItem("carelayApproved");
-      if (!email || approved !== "ok") {
-        status.textContent = "CARELAYタウンにログインしてください。";
+      if (email !== "carelaytown@gmail.com" || approved !== "ok") {
+        status.textContent = "管理人ではありません。";
         return;
       }
 
@@ -78,10 +78,10 @@
         .select("admin_pass")
         .eq("email", email)
         .eq("is_admin", true)
-        .single();
+        .maybeSingle();
 
-      if (error || !data) {
-        status.textContent = "管理者アカウントではありません。";
+      if (error || !data || !data.admin_pass) {
+        status.textContent = "管理人ではありません。";
         return;
       }
 
@@ -89,7 +89,7 @@
         localStorage.setItem("carelay_admin_auth", "true");
         window.location.href = "admin-top.html";
       } else {
-        status.textContent = "パスワードが正しくありません。";
+        status.textContent = "管理人ではありません。";
       }
     }
   </script>
