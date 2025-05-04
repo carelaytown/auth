@@ -36,7 +36,8 @@
   </div>
 
   <script type="module">
-    const supabase = supabase.createClient(
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm'
+    const supabaseClient = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）'
     );
@@ -55,35 +56,35 @@
       emailDisplay.textContent = `ログイン中のメールアドレス：${email}`;
     }
 
-    // 自動ログイン
     if (localStorage.getItem("carelay_admin_auth") === "true") {
       showDashboard();
     }
 
     loginBtn.addEventListener("click", async () => {
       const password = document.getElementById("admin-password").value.trim();
-      const { data, error } = await supabase
+      const { data, error } = await supabaseClient
         .from("applications")
         .select("*")
         .eq("email", email)
         .eq("is_admin", true)
         .single();
 
-      if (data && data.password === password) {
+      if (!data) {
+        loginMsg.textContent = "管理者権限がありません";
+      } else if (data.password !== password) {
+        loginMsg.textContent = "パスワードが間違っています";
+      } else {
         localStorage.setItem("carelay_admin_auth", "true");
         showDashboard();
-      } else {
-        loginMsg.textContent = "認証に失敗しました。";
       }
     });
 
     function showDashboard() {
       loginArea.classList.add("hidden");
       dashboardArea.classList.remove("hidden");
-      loadAccounts(); // 初期表示
+      loadAccounts();
     }
 
-    // タブ切替
     document.querySelectorAll(".tab-btn").forEach(btn => {
       btn.addEventListener("click", () => {
         document.querySelectorAll(".tab-section").forEach(sec => sec.classList.add("hidden"));
@@ -95,15 +96,13 @@
       });
     });
 
-    // ログアウト
     document.getElementById("logout-btn").addEventListener("click", () => {
       localStorage.removeItem("carelay_admin_auth");
       location.reload();
     });
 
-    // 管理機能（アカウント）
     async function loadAccounts() {
-      const res = await supabase.from("applications").select("*").order("created_at", { ascending: false });
+      const res = await supabaseClient.from("applications").select("*").order("created_at", { ascending: false });
       const container = document.getElementById("tab-accounts");
       container.innerHTML = res.data.map(app => `
         <div class="flex items-center justify-between border-b py-2">
@@ -120,13 +119,12 @@
     }
 
     async function updateStatus(id, status) {
-      await supabase.from("applications").update({ status }).eq("id", id);
+      await supabaseClient.from("applications").update({ status }).eq("id", id);
       loadAccounts();
     }
 
-    // 管理機能（メニュー）
     async function loadMenus() {
-      const res = await supabase.from("menus").select("*").order("id");
+      const res = await supabaseClient.from("menus").select("*").order("id");
       const container = document.getElementById("tab-menus");
       container.innerHTML = res.data.map(menu => `
         <div class="flex items-center justify-between border-b py-2">
@@ -139,9 +137,8 @@
       `).join('');
     }
 
-    // 管理機能（アプリ）
     async function loadApps() {
-      const res = await supabase.from("apps").select("*").order("id");
+      const res = await supabaseClient.from("apps").select("*").order("id");
       const container = document.getElementById("tab-apps");
       container.innerHTML = res.data.map(app => `
         <div class="flex items-center justify-between border-b py-2">
@@ -155,13 +152,13 @@
     }
 
     window.toggleVisible = async (table, id, value) => {
-      await supabase.from(table).update({ visible: value }).eq("id", id);
+      await supabaseClient.from(table).update({ visible: value }).eq("id", id);
       if (table === "menus") loadMenus();
       if (table === "apps") loadApps();
     };
 
     window.deleteRow = async (table, id) => {
-      await supabase.from(table).delete().eq("id", id);
+      await supabaseClient.from(table).delete().eq("id", id);
       if (table === "menus") loadMenus();
       if (table === "apps") loadApps();
     };
