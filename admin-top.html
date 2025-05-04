@@ -10,8 +10,7 @@
   <div id="login-area" class="flex flex-col items-center justify-center h-screen">
     <div class="bg-white p-8 rounded shadow w-96">
       <h2 class="text-xl font-bold mb-4">管理者ログイン</h2>
-      <p id="email-display" class="mb-4 text-gray-700"></p>
-      <input id="admin-password" type="password" placeholder="パスワード" class="border rounded w-full p-2 mb-4">
+      <input id="admin-password" type="password" placeholder="管理者パスワードを入力" class="border rounded w-full p-2 mb-4">
       <button id="login-btn" class="bg-blue-600 text-white w-full py-2 rounded">ログイン</button>
       <div id="login-msg" class="text-red-500 mt-3 text-center"></div>
     </div>
@@ -42,20 +41,12 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）'
     );
 
-    const email = localStorage.getItem("email");
-    const emailDisplay = document.getElementById("email-display");
     const loginBtn = document.getElementById("login-btn");
     const loginMsg = document.getElementById("login-msg");
     const loginArea = document.getElementById("login-area");
     const dashboardArea = document.getElementById("dashboard-area");
 
-    if (!email) {
-      alert("CARELAYタウンにログインしていません。");
-      location.href = "index.html";
-    } else {
-      emailDisplay.textContent = `ログイン中のメールアドレス：${email}`;
-    }
-
+    // 自動ログイン
     if (localStorage.getItem("carelay_admin_auth") === "true") {
       showDashboard();
     }
@@ -65,12 +56,11 @@
       const { data, error } = await supabaseClient
         .from("applications")
         .select("*")
-        .eq("email", email)
         .eq("is_admin", true)
         .single();
 
       if (!data) {
-        loginMsg.textContent = "管理者権限がありません";
+        loginMsg.textContent = "管理者アカウントが見つかりません";
       } else if (data.password !== password) {
         loginMsg.textContent = "パスワードが間違っています";
       } else {
