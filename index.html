@@ -62,51 +62,69 @@
     <button onclick="login()">ログイン</button>
   </div>
 
-  <script>
-    const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+  （中略：元のheadとstyleはそのまま）
 
-    async function login() {
-      const email = document.getElementById('email').value.trim().toLowerCase();
-      const errorBox = document.getElementById('errorBox');
-      errorBox.textContent = "";
+<script>
+const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-      if (!email) {
-        errorBox.textContent = "メールアドレスを入力してください。";
-        return;
-      }
+window.onload = () => {
+  const approved = localStorage.getItem("carelayApproved");
+  const email = localStorage.getItem("carelayUser");
+  if (approved === "ok" && email) {
+    window.location.href = "top.html";
+  }
+};
 
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`, {
-        headers: {
-          "apikey": SUPABASE_KEY,
-          "Authorization": `Bearer ${SUPABASE_KEY}`
-        }
-      });
-      const data = await res.json();
+async function submitApplication(event) {
+  （元の申請処理は変更なし）
+}
 
-      if (data.length === 0) {
-        errorBox.textContent = "アカウントが見つかりません。";
-        return;
-      }
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+  const statusDiv = document.getElementById("loginStatus");
+  statusDiv.innerText = "";
+  statusDiv.className = "status";
 
-      const account = data[0];
+  if (!email) {
+    statusDiv.innerText = "メールアドレスを入力してください。";
+    statusDiv.classList.add("error");
+    return;
+  }
 
-      if (account.status !== "approved") {
-        errorBox.textContent = "まだ承認されていません。";
-        return;
-      }
+  const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+    method: "GET",
+    headers: {
+      "apikey": supabaseKey,
+      "Authorization": `Bearer ${supabaseKey}`
+    }
+  });
 
+  const data = await res.json();
+
+  if (data && data.length > 0) {
+    if (data[0].status === "approved") {
       localStorage.setItem("carelayUser", email);
       localStorage.setItem("carelayApproved", "ok");
 
-      if (account.is_admin === true) {
+      // 追加：管理者フラグの保存
+      if (data[0].is_admin === true) {
         localStorage.setItem("carelayAdmin", "true");
       } else {
         localStorage.setItem("carelayAdmin", "false");
       }
 
-      location.href = "top.html";
+      window.location.href = "top.html";
+    } else {
+      statusDiv.innerText = "申請済みですが、まだ承認されていません。";
+      statusDiv.classList.add("pending");
     }
-  </script>
+  } else {
+    statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+    statusDiv.classList.add("error");
+  }
+}
+</script>
+
 </body>
 </html>
