@@ -1,108 +1,170 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAY 管理者ダッシュボード</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #f9f9f9;
-    }
-    header {
-      background-color: #1b355d;
-      color: white;
-      padding: 10px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    header h1 {
-      font-size: 18px;
-    }
-    .tab-buttons {
-      display: flex;
-      background-color: #f0f0f0;
-      border-bottom: 1px solid #ccc;
-    }
-    .tab-buttons button {
-      flex: 1;
-      padding: 12px;
-      border: none;
-      background-color: #e0e0e0;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    .tab-buttons button.active {
-      background-color: white;
-      border-bottom: 2px solid #1b355d;
-      color: #1b355d;
-    }
-    .tab-content {
-      padding: 20px;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>CARELAYタウン 管理者ダッシュボード</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm" type="module"></script>
 </head>
-<body>
-
-  <header>
-    <h1>CARELAY 管理者ダッシュボード</h1>
-    <button onclick="logout()">ログアウト</button>
-  </header>
-
-  <div class="tab-buttons">
-    <button id="tab1" class="active" onclick="switchTab('account')">👤 アカウント管理</button>
-    <button id="tab2" onclick="switchTab('menu')">📂 メニュー管理</button>
-    <button id="tab3" onclick="switchTab('apps')">🛠 アプリ管理</button>
+<body class="bg-gray-100 text-sm">
+  <div id="login-area" class="flex flex-col items-center justify-center h-screen">
+    <div class="bg-white p-8 rounded shadow w-96">
+      <h2 class="text-xl font-bold mb-4">管理者ログイン</h2>
+      <p id="email-display" class="mb-4 text-gray-700"></p>
+      <input id="admin-password" type="password" placeholder="パスワード" class="border rounded w-full p-2 mb-4">
+      <button id="login-btn" class="bg-blue-600 text-white w-full py-2 rounded">ログイン</button>
+      <div id="login-msg" class="text-red-500 mt-3 text-center"></div>
+    </div>
   </div>
 
-  <div id="mainContent" class="tab-content">
-    読み込み中...
+  <div id="dashboard-area" class="hidden">
+    <div class="bg-blue-700 text-white px-6 py-3 flex justify-between items-center">
+      <h1 class="text-lg font-bold">CARELAY 管理者ダッシュボード</h1>
+      <div id="logout-btn" class="cursor-pointer hover:underline">ログアウト</div>
+    </div>
+    <div class="p-4 bg-white flex space-x-4 border-b">
+      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="accounts">アカウント管理</button>
+      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="menus">メニュー管理</button>
+      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="apps">アプリ管理</button>
+    </div>
+
+    <div id="tab-contents" class="p-4">
+      <div id="tab-accounts" class="tab-section hidden"></div>
+      <div id="tab-menus" class="tab-section hidden"></div>
+      <div id="tab-apps" class="tab-section hidden"></div>
+    </div>
   </div>
 
-  <script>
-    // 認証チェック
-    const approved = localStorage.getItem("carelayApproved");
-    const admin = localStorage.getItem("carelayAdmin");
-    if (approved !== "ok" || admin !== "true") {
-      window.location.href = "index.html";
+  <script type="module">
+    const supabase = supabase.createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）'
+    );
+
+    const email = localStorage.getItem("email");
+    const emailDisplay = document.getElementById("email-display");
+    const loginBtn = document.getElementById("login-btn");
+    const loginMsg = document.getElementById("login-msg");
+    const loginArea = document.getElementById("login-area");
+    const dashboardArea = document.getElementById("dashboard-area");
+
+    if (!email) {
+      alert("CARELAYタウンにログインしていません。");
+      location.href = "index.html";
+    } else {
+      emailDisplay.textContent = `ログイン中のメールアドレス：${email}`;
     }
 
-    function logout() {
-      localStorage.clear();
-      window.location.href = "index.html";
+    // 自動ログイン
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      showDashboard();
     }
 
-    function switchTab(tab) {
-      document.querySelectorAll('.tab-buttons button').forEach(btn => btn.classList.remove('active'));
-      if (tab === 'account') document.getElementById('tab1').classList.add('active');
-      if (tab === 'menu') document.getElementById('tab2').classList.add('active');
-      if (tab === 'apps') document.getElementById('tab3').classList.add('active');
+    loginBtn.addEventListener("click", async () => {
+      const password = document.getElementById("admin-password").value.trim();
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("email", email)
+        .eq("is_admin", true)
+        .single();
 
-      loadTabContent(tab);
+      if (data && data.password === password) {
+        localStorage.setItem("carelay_admin_auth", "true");
+        showDashboard();
+      } else {
+        loginMsg.textContent = "認証に失敗しました。";
+      }
+    });
+
+    function showDashboard() {
+      loginArea.classList.add("hidden");
+      dashboardArea.classList.remove("hidden");
+      loadAccounts(); // 初期表示
     }
 
-    function loadTabContent(tab) {
-      const target = {
-        account: "admin-account.html",
-        menu: "admin-menu.html",
-        apps: "admin-apps.html"
-      }[tab];
+    // タブ切替
+    document.querySelectorAll(".tab-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".tab-section").forEach(sec => sec.classList.add("hidden"));
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.remove("hidden");
 
-      document.getElementById("mainContent").innerHTML = "読み込み中...";
-      fetch(target)
-        .then(res => res.text())
-        .then(html => {
-          document.getElementById("mainContent").innerHTML = html;
-        })
-        .catch(() => {
-          document.getElementById("mainContent").innerHTML = "読み込みエラーが発生しました。";
-        });
+        if (btn.dataset.tab === "accounts") loadAccounts();
+        if (btn.dataset.tab === "menus") loadMenus();
+        if (btn.dataset.tab === "apps") loadApps();
+      });
+    });
+
+    // ログアウト
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      localStorage.removeItem("carelay_admin_auth");
+      location.reload();
+    });
+
+    // 管理機能（アカウント）
+    async function loadAccounts() {
+      const res = await supabase.from("applications").select("*").order("created_at", { ascending: false });
+      const container = document.getElementById("tab-accounts");
+      container.innerHTML = res.data.map(app => `
+        <div class="flex items-center justify-between border-b py-2">
+          <div>
+            <div><strong>${app.org_name}</strong> (${app.email})</div>
+            <div class="text-xs text-gray-500">状態: ${app.status}</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="updateStatus(${app.id}, 'approved')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">承認</button>
+            <button onclick="updateStatus(${app.id}, 'pending')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">解除</button>
+          </div>
+        </div>
+      `).join('');
     }
 
-    // 初期タブ
-    loadTabContent("account");
+    async function updateStatus(id, status) {
+      await supabase.from("applications").update({ status }).eq("id", id);
+      loadAccounts();
+    }
+
+    // 管理機能（メニュー）
+    async function loadMenus() {
+      const res = await supabase.from("menus").select("*").order("id");
+      const container = document.getElementById("tab-menus");
+      container.innerHTML = res.data.map(menu => `
+        <div class="flex items-center justify-between border-b py-2">
+          <div>${menu.name}</div>
+          <div class="flex gap-2">
+            <button onclick="toggleVisible('menus', ${menu.id}, ${!menu.visible})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">${menu.visible ? '非表示' : '表示'}</button>
+            <button onclick="deleteRow('menus', ${menu.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 管理機能（アプリ）
+    async function loadApps() {
+      const res = await supabase.from("apps").select("*").order("id");
+      const container = document.getElementById("tab-apps");
+      container.innerHTML = res.data.map(app => `
+        <div class="flex items-center justify-between border-b py-2">
+          <div>${app.name}</div>
+          <div class="flex gap-2">
+            <button onclick="toggleVisible('apps', ${app.id}, ${!app.visible})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">${app.visible ? '非表示' : '表示'}</button>
+            <button onclick="deleteRow('apps', ${app.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">削除</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.toggleVisible = async (table, id, value) => {
+      await supabase.from(table).update({ visible: value }).eq("id", id);
+      if (table === "menus") loadMenus();
+      if (table === "apps") loadApps();
+    };
+
+    window.deleteRow = async (table, id) => {
+      await supabase.from(table).delete().eq("id", id);
+      if (table === "menus") loadMenus();
+      if (table === "apps") loadApps();
+    };
   </script>
 </body>
 </html>
