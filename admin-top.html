@@ -5,14 +5,10 @@
   <title>管理者ダッシュボード</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
-    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
       background-color: #f0f6ff;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
     }
     header {
       background-color: #2a6ebb;
@@ -20,42 +16,6 @@
       padding: 15px 20px;
       font-size: 20px;
       font-weight: bold;
-    }
-    .main {
-      display: flex;
-      flex: 1;
-    }
-    .sidebar {
-      width: 200px;
-      background-color: #ffffff;
-      border-right: 1px solid #ccc;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-    .sidebar button {
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      background-color: #e6eef9;
-      border: none;
-      border-radius: 6px;
-      text-align: left;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .sidebar button.active {
-      background-color: #2a6ebb;
-      color: white;
-      font-weight: bold;
-    }
-    .content {
-      flex: 1;
-      padding: 30px;
-      background-color: #f9fbff;
-      overflow-y: auto;
-    }
-    .hidden {
-      display: none;
     }
     .login-container {
       max-width: 400px;
@@ -90,15 +50,54 @@
       color: #c0392b;
       margin-top: 10px;
     }
+
+    .main {
+      display: flex;
+      height: calc(100vh - 60px);
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #ffffff;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar button {
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      background-color: #e6eef9;
+      border: none;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .sidebar button.active {
+      background-color: #2a6ebb;
+      color: white;
+      font-weight: bold;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+      background-color: #f9fbff;
+      overflow-y: auto;
+    }
+
+    .hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
 
 <header>管理者ダッシュボード</header>
 
-<div id="authArea" class="login-container hidden">
-  <h2>管理者認証</h2>
-  <input type="password" id="adminPass" placeholder="管理者パスワードを入力" />
+<div id="authArea" class="login-container">
+  <h2>管理者パスワード</h2>
+  <input type="email" id="adminEmail" placeholder="メールアドレス" />
+  <input type="password" id="adminPass" placeholder="パスワード" />
   <button onclick="verifyAdmin()">入室する</button>
   <div class="error" id="errorMsg"></div>
 </div>
@@ -112,79 +111,49 @@
   <div class="content" id="tabContent">読み込み中...</div>
 </div>
 
-<script>
-  // ✅ グローバル変数でSupabase情報を定義
-  window.CARELAY_SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  window.CARELAY_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+<script type="module">
+  const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  window.CARELAY_SUPABASE_URL = SUPABASE_URL;
+  window.CARELAY_SUPABASE_KEY = SUPABASE_KEY;
 
-  const userEmail = localStorage.getItem("carelayUser");
-  const approved = localStorage.getItem("carelayApproved");
-
-  if (!userEmail || approved !== "ok") {
-    alert("CARELAYタウンにログインしていません。");
-    window.location.href = "index.html";
-  } else {
-    const alreadyAuth = localStorage.getItem("carelay_admin_auth");
-    if (alreadyAuth === "true") {
-      showDashboard();
-    } else {
-      checkIsAdmin();
-    }
-  }
-
-  async function checkIsAdmin() {
-    try {
-      const res = await fetch(`${CARELAY_SUPABASE_URL}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
-        headers: {
-          apikey: CARELAY_SUPABASE_KEY,
-          Authorization: `Bearer ${CARELAY_SUPABASE_KEY}`
-        }
-      });
-      const data = await res.json();
-      if (!data[0]?.is_admin) {
-        alert("管理者権限がありません。");
-        window.location.href = "top.html";
-      } else {
-        document.getElementById("authArea").classList.remove("hidden");
-      }
-    } catch (e) {
-      console.error("認証エラー:", e);
-      alert("認証エラーが発生しました。");
-      window.location.href = "top.html";
-    }
-  }
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   async function verifyAdmin() {
-    const inputPass = document.getElementById("adminPass").value.trim();
+    const email = document.getElementById("adminEmail").value.trim();
+    const pass = document.getElementById("adminPass").value.trim();
     const errorDiv = document.getElementById("errorMsg");
     errorDiv.innerText = "";
 
-    if (!inputPass) {
-      errorDiv.innerText = "パスワードを入力してください。";
+    if (!email || !pass) {
+      errorDiv.innerText = "メールとパスワードを入力してください。";
       return;
     }
 
-    const res = await fetch(`${CARELAY_SUPABASE_URL}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
-      headers: {
-        apikey: CARELAY_SUPABASE_KEY,
-        Authorization: `Bearer ${CARELAY_SUPABASE_KEY}`
+    try {
+      const { data, error } = await supabase
+        .from("applications")
+        .select("admin_pass")
+        .eq("email", email)
+        .single();
+
+      if (error || !data) {
+        errorDiv.innerText = "該当する管理者が見つかりません。";
+        return;
       }
-    });
-    const data = await res.json();
-    const correctPass = data[0]?.admin_pass;
 
-    if (inputPass === correctPass) {
-      localStorage.setItem("carelay_admin_auth", "true");
-      showDashboard();
-    } else {
-      errorDiv.innerText = "パスワードが正しくありません。";
+      if (pass === data.admin_pass) {
+        document.getElementById("authArea").classList.add("hidden");
+        document.getElementById("dashboard").classList.remove("hidden");
+        loadTab("account");
+      } else {
+        errorDiv.innerText = "パスワードが正しくありません。";
+      }
+    } catch (err) {
+      console.error("認証エラー:", err);
+      errorDiv.innerText = "認証エラーが発生しました。";
     }
-  }
-
-  function showDashboard() {
-    document.getElementById("authArea").classList.add("hidden");
-    document.getElementById("dashboard").classList.remove("hidden");
-    loadTab("account");
   }
 
   function switchTab(tab) {
@@ -192,23 +161,24 @@
   }
 
   async function loadTab(tab) {
-    const sections = ["account", "menu", "apps"];
-    sections.forEach(s => document.getElementById(`tab-${s}`).classList.remove("active"));
+    const tabs = ["account", "menu", "apps"];
+    tabs.forEach(t => document.getElementById(`tab-${t}`).classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
 
     const content = document.getElementById("tabContent");
     content.innerHTML = "読み込み中...";
 
     try {
-      const htmlRes = await fetch(`admin-${tab}.html`);
-      const htmlText = await htmlRes.text();
+      const html = await fetch(`admin-${tab}.html`);
+      const htmlText = await html.text();
       content.innerHTML = htmlText;
 
       const script = document.createElement("script");
       script.src = `admin-${tab}.js`;
       document.body.appendChild(script);
-    } catch {
+    } catch (e) {
       content.innerHTML = "読み込みに失敗しました。";
+      console.error(e);
     }
   }
 </script>
