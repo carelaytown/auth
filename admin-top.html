@@ -112,10 +112,8 @@
     <button id="tab-apps" onclick="switchTab('apps')">アプリ管理</button>
   </div>
 
-  <div class="content">
-    <div id="section-account">👤 アカウント管理セクション（ここに一覧や承認処理を追加）</div>
-    <div id="section-menu" class="hidden">📋 メニュー管理セクション（後で実装）</div>
-    <div id="section-apps" class="hidden">🛠 アプリ管理セクション（後で実装）</div>
+  <div class="content" id="tabContent">
+    読み込み中...
   </div>
 </div>
 
@@ -184,16 +182,31 @@
   function showDashboard() {
     document.getElementById("authArea").classList.add("hidden");
     document.getElementById("dashboard").classList.remove("hidden");
+    loadTab("account");
   }
 
-  function switchTab(tab) {
+  async function loadTab(tab) {
     const sections = ["account", "menu", "apps"];
     sections.forEach(s => {
       document.getElementById(`tab-${s}`).classList.remove("active");
-      document.getElementById(`section-${s}`).classList.add("hidden");
     });
     document.getElementById(`tab-${tab}`).classList.add("active");
-    document.getElementById(`section-${tab}`).classList.remove("hidden");
+
+    const content = document.getElementById("tabContent");
+    content.innerHTML = "読み込み中...";
+
+    try {
+      const file = `admin-${tab}.html`;
+      const res = await fetch(file);
+      const html = await res.text();
+      content.innerHTML = html;
+    } catch (e) {
+      content.innerHTML = "読み込みに失敗しました。";
+    }
+  }
+
+  function switchTab(tab) {
+    loadTab(tab);
   }
 </script>
 
