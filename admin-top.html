@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>CARELAY 管理者ダッシュボード</title>
   <style>
     body {
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background: linear-gradient(to right, #e6ecf0, #f7f9fb);
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(to right, #e8edf3, #f7f9fb);
       margin: 0;
       padding: 2em;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      color: #2c3e50;
-      margin-bottom: 1em;
+      justify-content: center;
+      align-items: flex-start;
     }
     .card {
-      background: white;
-      padding: 2em;
+      background: #fff;
       border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      max-width: 400px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      padding: 2em;
+      max-width: 420px;
       width: 100%;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 1em;
+      color: #2c3e50;
     }
     input, button {
       width: 100%;
@@ -37,6 +38,7 @@
       background: #3498db;
       color: white;
       border: none;
+      cursor: pointer;
       transition: background 0.3s;
     }
     button:hover {
@@ -46,74 +48,58 @@
       color: #e74c3c;
       margin-top: 1em;
     }
-    #menu {
-      display: flex;
-      justify-content: center;
-      gap: 1em;
-      margin-top: 2em;
-    }
-    #menu button {
-      background: #ecf0f1;
-      color: #2c3e50;
-      border: 1px solid #bdc3c7;
-      transition: background 0.2s;
-    }
-    #menu button:hover {
-      background: #d0d7de;
-    }
-    #main {
-      margin-top: 2em;
-      padding: 1em;
-    }
   </style>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+</head>
+<body>
+  <div class="card">
+    <h2>管理者パスワード</h2>
+    <input type="password" id="adminPass" placeholder="パスワードを入力">
+    <button onclick="verifyAdmin()">ログイン</button>
+    <div class="error" id="error"></div>
+  </div>
 
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+  <script>
+    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    window.addEventListener('DOMContentLoaded', async () => {
+    async function verifyAdmin() {
       const email = localStorage.getItem("carelayUser");
       const approved = localStorage.getItem("carelayApproved");
+      const inputPass = document.getElementById("adminPass").value;
+      const errorBox = document.getElementById("error");
 
       if (!email || approved !== "ok") {
-        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
+        errorBox.textContent = "管理者ではありません。";
         return;
       }
 
-      const { data, error } = await supabase
-        .from("applications")
-        .select("is_admin, admin_pass")
-        .eq("email", email)
-        .single();
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?select=admin_pass,is_admin&email=eq.${email}`, {
+        headers: {
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`
+        }
+      });
 
-      if (error || !data || data.is_admin !== true) {
-        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
+      if (!res.ok) {
+        errorBox.textContent = "管理者確認に失敗しました。";
         return;
       }
 
-      const saved = localStorage.getItem("carelay_admin_auth");
-      if (saved === "true") {
-        loadDashboard();
-      } else {
-        document.getElementById("auth-form").style.display = "block";
-        document.getElementById("auth-form").addEventListener("submit", (e) => {
-          e.preventDefault();
-          const input = document.getElementById("admin-password").value;
-          const errorBox = document.getElementById("error-msg");
-          if (input === data.admin_pass) {
-            localStorage.setItem("carelay_admin_auth", "true");
-            loadDashboard();
-          } else {
-            errorBox.textContent = "管理者ではありません。";
-          }
-        });
+      const data = await res.json();
+      if (data.length === 0 || !data[0].is_admin || data[0].admin_pass !== inputPass) {
+        errorBox.textContent = "管理者ではありません。";
+        return;
       }
-    });
 
-    function loadDashboard() {
+      localStorage.setItem("carelay_admin_auth", "true");
+      location.href = "admin-top.html#dashboard";
+    }
+
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      location.href = "admin-top.html#dashboard";
+    }
+
+    if (location.hash === "#dashboard") {
       document.body.innerHTML = `
         <h1>CARELAY 管理者ダッシュボード</h1>
         <div id="menu">
@@ -123,28 +109,16 @@
         </div>
         <div id="main">読み込み中...</div>
       `;
-      loadPage('admin-account.html');
+      loadPage("admin-account.html");
     }
 
-    window.loadPage = async function(path) {
-      try {
-        const res = await fetch(path);
-        const html = await res.text();
+    function loadPage(path) {
+      fetch(path).then(res => res.text()).then(html => {
         document.getElementById("main").innerHTML = html;
-      } catch (err) {
-        document.getElementById("main").innerHTML = `<p class='error'>ページの読み込みに失敗しました。</p>`;
-      }
+      }).catch(() => {
+        document.getElementById("main").innerHTML = "<p class='error'>ページの読み込みに失敗しました。</p>";
+      });
     }
   </script>
-</head>
-<body>
-  <div class="card" id="auth-form" style="display: none;">
-    <h2>管理者パスワード</h2>
-    <form>
-      <input type="password" id="admin-password" placeholder="パスワードを入力" required />
-      <button type="submit">ログイン</button>
-      <p class="error" id="error-msg"></p>
-    </form>
-  </div>
 </body>
 </html>
