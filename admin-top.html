@@ -62,41 +62,44 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
-    const user = await supabase.auth.getUser();
-    const email = user?.data?.user?.email;
-    const approved = localStorage.getItem("carelayApproved");
+    window.addEventListener('DOMContentLoaded', async () => {
+      const email = localStorage.getItem("carelayUser");
+      const approved = localStorage.getItem("carelayApproved");
 
-    if (!email || approved !== "ok") {
-      document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
-    } else {
+      if (!email || approved !== "ok") {
+        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
+        return;
+      }
+
       const { data, error } = await supabase
         .from("applications")
         .select("is_admin, admin_pass")
         .eq("email", email)
         .single();
 
-      if (error || !data || !data.is_admin) {
+      if (error || !data || data.is_admin !== true) {
         document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
-      } else {
-        const saved = localStorage.getItem("carelay_admin_auth");
-        if (saved === "true") {
-          loadDashboard();
-        } else {
-          document.getElementById("auth-form").style.display = "block";
-          document.getElementById("auth-form").addEventListener("submit", (e) => {
-            e.preventDefault();
-            const input = document.getElementById("admin-password").value;
-            const errorBox = document.getElementById("error-msg");
-            if (input === data.admin_pass) {
-              localStorage.setItem("carelay_admin_auth", "true");
-              loadDashboard();
-            } else {
-              errorBox.textContent = "管理者ではありません。";
-            }
-          });
-        }
+        return;
       }
-    }
+
+      const saved = localStorage.getItem("carelay_admin_auth");
+      if (saved === "true") {
+        loadDashboard();
+      } else {
+        document.getElementById("auth-form").style.display = "block";
+        document.getElementById("auth-form").addEventListener("submit", (e) => {
+          e.preventDefault();
+          const input = document.getElementById("admin-password").value;
+          const errorBox = document.getElementById("error-msg");
+          if (input === data.admin_pass) {
+            localStorage.setItem("carelay_admin_auth", "true");
+            loadDashboard();
+          } else {
+            errorBox.textContent = "管理者ではありません。";
+          }
+        });
+      }
+    });
 
     function loadDashboard() {
       document.body.innerHTML = `
