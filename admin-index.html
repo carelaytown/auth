@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>管理人室ログイン</title>
   <style>
     body {
@@ -22,8 +22,9 @@
       text-align: center;
     }
     h1 {
-      margin-bottom: 15px;
+      margin-bottom: 20px;
       color: #2a6ebb;
+      font-size: 15px;
     }
     input {
       width: 100%;
@@ -62,16 +63,24 @@
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     async function verifyPassword() {
-      const pass = document.getElementById("adminPass").value.trim();
       const status = document.getElementById("status");
+      const pass = document.getElementById("adminPass").value.trim();
       status.textContent = "";
 
-      const email = localStorage.getItem("carelayUser");
+      const localEmail = localStorage.getItem("carelayUser");
       const approved = localStorage.getItem("carelayApproved");
-      if (email !== "carelaytown@gmail.com" || approved !== "ok") {
+      if (!localEmail || approved !== "ok") {
         status.textContent = "管理人ではありません。";
         return;
       }
+
+      const { data: user, error: sessionError } = await supabase.auth.getUser();
+      if (sessionError || !user || !user.user || user.user.email !== localEmail) {
+        status.textContent = "管理人ではありません。";
+        return;
+      }
+
+      const email = user.user.email;
 
       const { data, error } = await supabase
         .from("applications")
@@ -81,6 +90,7 @@
         .maybeSingle();
 
       if (error || !data || !data.admin_pass) {
+        console.log("Supabase error:", error);
         status.textContent = "管理人ではありません。";
         return;
       }
