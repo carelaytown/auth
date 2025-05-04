@@ -80,12 +80,13 @@
 
       const query = new URLSearchParams({
         select: "admin_pass,is_admin",
-        email: `eq.${email}`
+        email: `eq.${encodeURIComponent(email)}`
       });
 
       const res = await fetch(`${supabaseUrl}/rest/v1/applications?${query.toString()}`, {
         headers: {
-          apikey: supabaseKey
+          apikey: supabaseKey,
+          Authorization: `Bearer ${supabaseKey}`
         }
       });
 
