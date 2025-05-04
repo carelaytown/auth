@@ -200,6 +200,10 @@
       const res = await fetch(file);
       const html = await res.text();
       content.innerHTML = html;
+
+      if (tab === "account" && typeof loadAccountList === "function") {
+        loadAccountList();
+      }
     } catch (e) {
       content.innerHTML = "読み込みに失敗しました。";
     }
