@@ -6,11 +6,7 @@
   <title>CARELAYタウン</title>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%;
       background-color: #f9f9f9;
@@ -106,9 +102,7 @@
       font-size: 12px;
       flex-shrink: 0;
     }
-    #bottomNav {
-      display: none;
-    }
+    #bottomNav { display: none; }
   </style>
 </head>
 <body onload="initTopPage()">
@@ -132,7 +126,6 @@
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-    let userOrgName = "";
 
     async function initTopPage() {
       const approved = localStorage.getItem("carelayApproved");
@@ -142,7 +135,6 @@
         return;
       }
       await fetchUserInfo(email);
-      document.getElementById("orgLabel").textContent = userOrgName;
       await setupAccordionMenu();
       loadMain("map");
     }
@@ -154,18 +146,20 @@
         .select("org_name, is_admin")
         .eq("email", query);
 
-      if (error || !data || data.length === 0) {
-        userOrgName = "(未登録)";
-        localStorage.removeItem("carelayAdmin");
-      } else {
+      let orgName = "(未登録)";
+      if (!error && data && data.length > 0) {
         const row = data[0];
-        userOrgName = row.org_name || "(不明)";
+        orgName = row.org_name || "(不明)";
         if (row.is_admin === true || row.is_admin === 'TRUE') {
           localStorage.setItem("carelayAdmin", "true");
         } else {
           localStorage.removeItem("carelayAdmin");
         }
+      } else {
+        localStorage.removeItem("carelayAdmin");
       }
+
+      document.getElementById("orgLabel").textContent = orgName;
     }
 
     async function setupAccordionMenu() {
