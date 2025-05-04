@@ -24,11 +24,15 @@
 
 <header>管理者ダッシュボード</header>
 
-<div id="authArea" class="login-container">
+<div id="authArea" class="login-container hidden">
   <h2>管理者パスワード</h2>
   <input type="password" id="adminPass" placeholder="パスワード" />
   <button onclick="verifyAdmin()">入室する</button>
   <div class="error" id="errorMsg"></div>
+</div>
+
+<div id="notAdmin" class="login-container hidden">
+  <div class="error">管理者ではありません。</div>
 </div>
 
 <div id="dashboard" class="main hidden">
@@ -47,46 +51,52 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+  const user = JSON.parse(localStorage.getItem("carelayUser"));
+  const isAdmin = localStorage.getItem("carelay_admin_auth") === "true";
+
+  if (!user) {
+    document.getElementById("notAdmin").classList.remove("hidden");
+  } else if (!isAdmin) {
+    document.getElementById("notAdmin").classList.remove("hidden");
+  } else {
+    document.getElementById("authArea").classList.remove("hidden");
+  }
+
   window.verifyAdmin = async function () {
     const pass = document.getElementById("adminPass").value.trim();
     const errorDiv = document.getElementById("errorMsg");
     errorDiv.innerText = "";
 
-    const sessionRes = await supabase.auth.getSession();
-    const session = sessionRes.data.session;
-    const email = session?.user?.email;
-    const token = session?.access_token;
-
-    if (!token || !email) {
-      errorDiv.innerText = "ログインしていません。ログイン画面に戻ります。";
-      setTimeout(() => window.location.href = "index.html", 2000);
+    if (!user || !user.email) {
+      errorDiv.innerText = "ユーザー情報が見つかりません。";
       return;
     }
 
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=admin_pass&email=eq.${email}`, {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const result = await res.json();
+      const { data, error } = await supabase
+        .from("applications")
+        .select("admin_pass")
+        .eq("email", user.email)
+        .maybeSingle();
 
-      if (!result || result.length === 0) {
-        errorDiv.innerText = "管理者データが見つかりません。";
+      if (error) {
+        errorDiv.innerText = "認証エラー：" + error.message;
         return;
       }
-      const storedPass = result[0].admin_pass;
-      if (pass === storedPass) {
+      if (!data) {
+        errorDiv.innerText = "管理者情報が見つかりません。";
+        return;
+      }
+      if (pass === data.admin_pass) {
         document.getElementById("authArea").classList.add("hidden");
         document.getElementById("dashboard").classList.remove("hidden");
         loadTab("account");
       } else {
-        errorDiv.innerText = "パスワードが違います。";
+        errorDiv.innerText = "パスワードが間違っています。";
       }
     } catch (err) {
       console.error("認証失敗", err);
-      errorDiv.innerText = "認証中にエラーが発生しました。";
+      errorDiv.innerText = "認証処理中にエラーが発生しました。";
     }
   };
 
