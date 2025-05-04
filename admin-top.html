@@ -2,16 +2,62 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>CARELAYタウン 管理人室</title>
+  <title>管理人ダッシュボード</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    * { box-sizing: border-box; }
     body {
-      font-family: 'Noto Sans JP', sans-serif;
       margin: 0;
-      padding: 0;
-      background-color: #eef4fc;
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f0f6ff;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
-    .container {
+    header {
+      background-color: #2a6ebb;
+      color: white;
+      padding: 15px 20px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .main {
+      display: flex;
+      flex: 1;
+    }
+    .sidebar {
+      width: 200px;
+      background-color: #ffffff;
+      border-right: 1px solid #ccc;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+    .sidebar button {
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      background-color: #e6eef9;
+      border: none;
+      border-radius: 6px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .sidebar button.active {
+      background-color: #2a6ebb;
+      color: white;
+      font-weight: bold;
+    }
+    .content {
+      flex: 1;
+      padding: 30px;
+      background-color: #f9fbff;
+      overflow-y: auto;
+    }
+    .hidden { display: none; }
+
+    /* 認証画面用 */
+    .login-container {
       max-width: 400px;
       margin: 100px auto;
       padding: 30px;
@@ -20,10 +66,7 @@
       box-shadow: 0 0 12px rgba(0,0,0,0.1);
       text-align: center;
     }
-    h2 {
-      color: #2a6ebb;
-    }
-    input {
+    .login-container input {
       width: 90%;
       padding: 10px;
       margin: 15px 0;
@@ -31,7 +74,7 @@
       border-radius: 6px;
       font-size: 16px;
     }
-    button {
+    .login-container button {
       background: #2a6ebb;
       color: white;
       padding: 10px 20px;
@@ -40,7 +83,7 @@
       font-size: 16px;
       cursor: pointer;
     }
-    button:hover {
+    .login-container button:hover {
       background: #1f5aa0;
     }
     .error {
@@ -51,86 +94,107 @@
 </head>
 <body>
 
-<div id="app">
-  <div class="container" id="loginBox" style="display: none;">
-    <h2>管理人室 入室</h2>
-    <input type="password" id="adminPass" placeholder="管理人パスワードを入力">
-    <button onclick="verifyAdmin()">入室する</button>
-    <div class="error" id="errorMsg"></div>
+<header>管理人ダッシュボード</header>
+
+<!-- 管理者パスワード入力エリア -->
+<div id="authArea" class="login-container hidden">
+  <h2>管理人室 入室</h2>
+  <input type="password" id="adminPass" placeholder="管理人パスワードを入力">
+  <button onclick="verifyAdmin()">入室する</button>
+  <div class="error" id="errorMsg"></div>
+</div>
+
+<!-- ダッシュボードエリア -->
+<div id="dashboard" class="main hidden">
+  <div class="sidebar">
+    <button id="tab-account" class="active" onclick="switchTab('account')">アカウント管理</button>
+    <button id="tab-menu" onclick="switchTab('menu')">メニュー管理</button>
+    <button id="tab-apps" onclick="switchTab('apps')">アプリ管理</button>
   </div>
 
-  <div class="container" id="dashboardBox" style="display: none;">
-    <h2>ようこそ、管理人室へ</h2>
-    <p>ここにダッシュボードの内容を追加していきます。</p>
+  <div class="content">
+    <div id="section-account">👤 アカウント管理セクション（ここに一覧や承認処理を追加）</div>
+    <div id="section-menu" class="hidden">📋 メニュー管理セクション（後で実装）</div>
+    <div id="section-apps" class="hidden">🛠 アプリ管理セクション（後で実装）</div>
   </div>
 </div>
 
 <script>
-const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-const userEmail = localStorage.getItem("carelayUser");
-const approved = localStorage.getItem("carelayApproved");
+  const userEmail = localStorage.getItem("carelayUser");
+  const approved = localStorage.getItem("carelayApproved");
 
-if (!userEmail || approved !== "ok") {
-  alert("CARELAYタウンにログインしていません。");
-  window.location.href = "index.html";
-} else {
-  const alreadyAuth = localStorage.getItem("carelay_admin_auth");
-  if (alreadyAuth === "true") {
-    showDashboard();
+  if (!userEmail || approved !== "ok") {
+    alert("CARELAYタウンにログインしていません。");
+    window.location.href = "index.html";
   } else {
-    checkIsAdmin();
-  }
-}
-
-async function checkIsAdmin() {
-  const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
-    headers: {
-      "apikey": supabaseKey,
-      "Authorization": `Bearer ${supabaseKey}`
+    const alreadyAuth = localStorage.getItem("carelay_admin_auth");
+    if (alreadyAuth === "true") {
+      showDashboard();
+    } else {
+      checkIsAdmin();
     }
-  });
-  const data = await res.json();
-  if (data.length === 0 || data[0].is_admin !== true) {
-    alert("管理者権限がありません。");
-    window.location.href = "top.html";
-  } else {
-    document.getElementById("loginBox").style.display = "block";
-  }
-}
-
-async function verifyAdmin() {
-  const inputPass = document.getElementById("adminPass").value.trim();
-  const errorDiv = document.getElementById("errorMsg");
-  errorDiv.innerText = "";
-
-  if (!inputPass) {
-    errorDiv.innerText = "パスワードを入力してください。";
-    return;
   }
 
-  const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
-    headers: {
-      "apikey": supabaseKey,
-      "Authorization": `Bearer ${supabaseKey}`
+  async function checkIsAdmin() {
+    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
+      headers: {
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`
+      }
+    });
+    const data = await res.json();
+    if (data.length === 0 || data[0].is_admin !== true) {
+      alert("管理者権限がありません。");
+      window.location.href = "top.html";
+    } else {
+      document.getElementById("authArea").classList.remove("hidden");
     }
-  });
-  const data = await res.json();
-  const correctPass = data[0]?.admin_pass;
-
-  if (inputPass === correctPass) {
-    localStorage.setItem("carelay_admin_auth", "true");
-    showDashboard();
-  } else {
-    errorDiv.innerText = "パスワードが正しくありません。";
   }
-}
 
-function showDashboard() {
-  document.getElementById("loginBox").style.display = "none";
-  document.getElementById("dashboardBox").style.display = "block";
-}
+  async function verifyAdmin() {
+    const inputPass = document.getElementById("adminPass").value.trim();
+    const errorDiv = document.getElementById("errorMsg");
+    errorDiv.innerText = "";
+
+    if (!inputPass) {
+      errorDiv.innerText = "パスワードを入力してください。";
+      return;
+    }
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
+      headers: {
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`
+      }
+    });
+    const data = await res.json();
+    const correctPass = data[0]?.admin_pass;
+
+    if (inputPass === correctPass) {
+      localStorage.setItem("carelay_admin_auth", "true");
+      showDashboard();
+    } else {
+      errorDiv.innerText = "パスワードが正しくありません。";
+    }
+  }
+
+  function showDashboard() {
+    document.getElementById("authArea").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+  }
+
+  function switchTab(tab) {
+    const sections = ["account", "menu", "apps"];
+    sections.forEach(s => {
+      document.getElementById(`tab-${s}`).classList.remove("active");
+      document.getElementById(`section-${s}`).classList.add("hidden");
+    });
+    document.getElementById(`tab-${tab}`).classList.add("active");
+    document.getElementById(`section-${tab}`).classList.remove("hidden");
+  }
 </script>
 
 </body>
