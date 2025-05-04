@@ -78,8 +78,7 @@
         return;
       }
 
-      const encodedEmail = encodeURIComponent(email);
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications?select=admin_pass,is_admin&email=eq.${encodedEmail}`, {
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
         headers: {
           apikey: supabaseKey
         }
