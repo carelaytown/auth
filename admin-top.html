@@ -114,13 +114,14 @@
 <script type="module">
   const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+
   window.CARELAY_SUPABASE_URL = SUPABASE_URL;
   window.CARELAY_SUPABASE_KEY = SUPABASE_KEY;
 
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  async function verifyAdmin() {
+  window.verifyAdmin = async function () {
     const email = document.getElementById("adminEmail").value.trim();
     const pass = document.getElementById("adminPass").value.trim();
     const errorDiv = document.getElementById("errorMsg");
@@ -136,9 +137,15 @@
         .from("applications")
         .select("admin_pass")
         .eq("email", email)
-        .single();
+        .maybeSingle(); // ← 件数0件でも動作する
 
-      if (error || !data) {
+      if (error) {
+        console.error("取得エラー:", error.message);
+        errorDiv.innerText = "取得エラー：" + error.message;
+        return;
+      }
+
+      if (!data) {
         errorDiv.innerText = "該当する管理者が見つかりません。";
         return;
       }
@@ -151,14 +158,14 @@
         errorDiv.innerText = "パスワードが正しくありません。";
       }
     } catch (err) {
-      console.error("認証エラー:", err);
+      console.error("catchエラー:", err);
       errorDiv.innerText = "認証エラーが発生しました。";
     }
-  }
+  };
 
-  function switchTab(tab) {
+  window.switchTab = function (tab) {
     loadTab(tab);
-  }
+  };
 
   async function loadTab(tab) {
     const tabs = ["account", "menu", "apps"];
