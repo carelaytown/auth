@@ -2,164 +2,136 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>CARELAYタウン 管理者ダッシュボード</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm" type="module"></script>
+  <title>CARELAYタウン 管理人室</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #eef4fc;
+    }
+    .container {
+      max-width: 400px;
+      margin: 100px auto;
+      padding: 30px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    h2 {
+      color: #2a6ebb;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 15px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+    button {
+      background: #2a6ebb;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1f5aa0;
+    }
+    .error {
+      color: #c0392b;
+      margin-top: 10px;
+    }
+  </style>
 </head>
-<body class="bg-gray-100 text-sm">
-  <div id="login-area" class="flex flex-col items-center justify-center h-screen">
-    <div class="bg-white p-8 rounded shadow w-96">
-      <h2 class="text-xl font-bold mb-4">管理者ログイン</h2>
-      <input id="admin-email" type="email" placeholder="メールアドレス" class="border rounded w-full p-2 mb-4">
-      <input id="admin-password" type="password" placeholder="パスワード" class="border rounded w-full p-2 mb-4">
-      <button id="login-btn" class="bg-blue-600 text-white w-full py-2 rounded">ログイン</button>
-      <div id="login-msg" class="text-red-500 mt-3 text-center"></div>
-    </div>
+<body>
+
+<div id="app">
+  <div class="container" id="loginBox" style="display: none;">
+    <h2>管理人室 入室</h2>
+    <input type="password" id="adminPass" placeholder="管理人パスワードを入力">
+    <button onclick="verifyAdmin()">入室する</button>
+    <div class="error" id="errorMsg"></div>
   </div>
 
-  <div id="dashboard-area" class="hidden">
-    <div class="bg-blue-700 text-white px-6 py-3 flex justify-between items-center">
-      <h1 class="text-lg font-bold">CARELAY 管理者ダッシュボード</h1>
-      <div id="logout-btn" class="cursor-pointer hover:underline">ログアウト</div>
-    </div>
-    <div class="p-4 bg-white flex space-x-4 border-b">
-      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="accounts">アカウント管理</button>
-      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="menus">メニュー管理</button>
-      <button class="tab-btn px-3 py-1 border rounded bg-gray-100" data-tab="apps">アプリ管理</button>
-    </div>
-
-    <div id="tab-contents" class="p-4">
-      <div id="tab-accounts" class="tab-section hidden"></div>
-      <div id="tab-menus" class="tab-section hidden"></div>
-      <div id="tab-apps" class="tab-section hidden"></div>
-    </div>
+  <div class="container" id="dashboardBox" style="display: none;">
+    <h2>ようこそ、管理人室へ</h2>
+    <p>ここにダッシュボードの内容を追加していきます。</p>
   </div>
+</div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm';
-    const supabaseClient = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）'
-    );
+<script>
+const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    const loginBtn = document.getElementById("login-btn");
-    const loginMsg = document.getElementById("login-msg");
-    const loginArea = document.getElementById("login-area");
-    const dashboardArea = document.getElementById("dashboard-area");
+const userEmail = localStorage.getItem("carelayUser");
+const approved = localStorage.getItem("carelayApproved");
 
-    // 自動ログイン判定
-    const savedAuth = localStorage.getItem("carelay_admin_auth");
-    const savedEmail = localStorage.getItem("carelay_admin_email");
-    if (savedAuth === "true" && savedEmail) {
-      showDashboard();
+if (!userEmail || approved !== "ok") {
+  alert("CARELAYタウンにログインしていません。");
+  window.location.href = "index.html";
+} else {
+  const alreadyAuth = localStorage.getItem("carelay_admin_auth");
+  if (alreadyAuth === "true") {
+    showDashboard();
+  } else {
+    checkIsAdmin();
+  }
+}
+
+async function checkIsAdmin() {
+  const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
+    headers: {
+      "apikey": supabaseKey,
+      "Authorization": `Bearer ${supabaseKey}`
     }
+  });
+  const data = await res.json();
+  if (data.length === 0 || data[0].is_admin !== true) {
+    alert("管理者権限がありません。");
+    window.location.href = "top.html";
+  } else {
+    document.getElementById("loginBox").style.display = "block";
+  }
+}
 
-    loginBtn.addEventListener("click", async () => {
-      const email = document.getElementById("admin-email").value.trim();
-      const password = document.getElementById("admin-password").value.trim();
+async function verifyAdmin() {
+  const inputPass = document.getElementById("adminPass").value.trim();
+  const errorDiv = document.getElementById("errorMsg");
+  errorDiv.innerText = "";
 
-      const { data, error } = await supabaseClient
-        .from("applications")
-        .select("*")
-        .eq("email", email)
-        .eq("is_admin", true)
-        .single();
+  if (!inputPass) {
+    errorDiv.innerText = "パスワードを入力してください。";
+    return;
+  }
 
-      if (!data) {
-        loginMsg.textContent = "管理者権限がありません";
-      } else if (data.password !== password) {
-        loginMsg.textContent = "パスワードが間違っています";
-      } else {
-        localStorage.setItem("carelay_admin_auth", "true");
-        localStorage.setItem("carelay_admin_email", email);
-        showDashboard();
-      }
-    });
-
-    function showDashboard() {
-      loginArea.classList.add("hidden");
-      dashboardArea.classList.remove("hidden");
-      loadAccounts();
+  const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
+    headers: {
+      "apikey": supabaseKey,
+      "Authorization": `Bearer ${supabaseKey}`
     }
+  });
+  const data = await res.json();
+  const correctPass = data[0]?.admin_pass;
 
-    document.querySelectorAll(".tab-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".tab-section").forEach(sec => sec.classList.add("hidden"));
-        document.getElementById(`tab-${btn.dataset.tab}`).classList.remove("hidden");
+  if (inputPass === correctPass) {
+    localStorage.setItem("carelay_admin_auth", "true");
+    showDashboard();
+  } else {
+    errorDiv.innerText = "パスワードが正しくありません。";
+  }
+}
 
-        if (btn.dataset.tab === "accounts") loadAccounts();
-        if (btn.dataset.tab === "menus") loadMenus();
-        if (btn.dataset.tab === "apps") loadApps();
-      });
-    });
+function showDashboard() {
+  document.getElementById("loginBox").style.display = "none";
+  document.getElementById("dashboardBox").style.display = "block";
+}
+</script>
 
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      localStorage.removeItem("carelay_admin_auth");
-      localStorage.removeItem("carelay_admin_email");
-      location.reload();
-    });
-
-    async function loadAccounts() {
-      const res = await supabaseClient.from("applications").select("*").order("created_at", { ascending: false });
-      const container = document.getElementById("tab-accounts");
-      container.innerHTML = res.data.map(app => `
-        <div class="flex items-center justify-between border-b py-2">
-          <div>
-            <div><strong>${app.org_name}</strong> (${app.email})</div>
-            <div class="text-xs text-gray-500">状態: ${app.status}</div>
-          </div>
-          <div class="flex gap-2">
-            <button onclick="updateStatus(${app.id}, 'approved')" class="bg-green-500 text-white px-2 py-1 rounded text-xs">承認</button>
-            <button onclick="updateStatus(${app.id}, 'pending')" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs">解除</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function updateStatus(id, status) {
-      await supabaseClient.from("applications").update({ status }).eq("id", id);
-      loadAccounts();
-    }
-
-    async function loadMenus() {
-      const res = await supabaseClient.from("menus").select("*").order("id");
-      const container = document.getElementById("tab-menus");
-      container.innerHTML = res.data.map(menu => `
-        <div class="flex items-center justify-between border-b py-2">
-          <div>${menu.name}</div>
-          <div class="flex gap-2">
-            <button onclick="toggleVisible('menus', ${menu.id}, ${!menu.visible})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">${menu.visible ? '非表示' : '表示'}</button>
-            <button onclick="deleteRow('menus', ${menu.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">削除</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    async function loadApps() {
-      const res = await supabaseClient.from("apps").select("*").order("id");
-      const container = document.getElementById("tab-apps");
-      container.innerHTML = res.data.map(app => `
-        <div class="flex items-center justify-between border-b py-2">
-          <div>${app.name}</div>
-          <div class="flex gap-2">
-            <button onclick="toggleVisible('apps', ${app.id}, ${!app.visible})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">${app.visible ? '非表示' : '表示'}</button>
-            <button onclick="deleteRow('apps', ${app.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs">削除</button>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    window.toggleVisible = async (table, id, value) => {
-      await supabaseClient.from(table).update({ visible: value }).eq("id", id);
-      if (table === "menus") loadMenus();
-      if (table === "apps") loadApps();
-    };
-
-    window.deleteRow = async (table, id) => {
-      await supabaseClient.from(table).delete().eq("id", id);
-      if (table === "menus") loadMenus();
-      if (table === "apps") loadApps();
-    };
-  </script>
 </body>
 </html>
