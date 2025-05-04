@@ -26,7 +26,6 @@
 
 <div id="authArea" class="login-container">
   <h2>管理者パスワード</h2>
-  <input type="email" id="adminEmail" placeholder="メールアドレス" />
   <input type="password" id="adminPass" placeholder="パスワード" />
   <button onclick="verifyAdmin()">入室する</button>
   <div class="error" id="errorMsg"></div>
@@ -49,21 +48,18 @@
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
   window.verifyAdmin = async function () {
-    const email = document.getElementById("adminEmail").value.trim();
     const pass = document.getElementById("adminPass").value.trim();
     const errorDiv = document.getElementById("errorMsg");
     errorDiv.innerText = "";
 
-    if (!email || !pass) {
-      errorDiv.innerText = "メールとパスワードを入力してください。";
-      return;
-    }
-
     const sessionRes = await supabase.auth.getSession();
-    const token = sessionRes.data.session?.access_token;
+    const session = sessionRes.data.session;
+    const email = session?.user?.email;
+    const token = session?.access_token;
 
-    if (!token) {
-      errorDiv.innerText = "ログインセッションが見つかりません。ログインし直してください。";
+    if (!token || !email) {
+      errorDiv.innerText = "ログインしていません。ログイン画面に戻ります。";
+      setTimeout(() => window.location.href = "index.html", 2000);
       return;
     }
 
@@ -77,7 +73,7 @@
       const result = await res.json();
 
       if (!result || result.length === 0) {
-        errorDiv.innerText = "該当する管理者が見つかりません。";
+        errorDiv.innerText = "管理者データが見つかりません。";
         return;
       }
       const storedPass = result[0].admin_pass;
@@ -86,11 +82,11 @@
         document.getElementById("dashboard").classList.remove("hidden");
         loadTab("account");
       } else {
-        errorDiv.innerText = "パスワードが正しくありません。";
+        errorDiv.innerText = "パスワードが違います。";
       }
     } catch (err) {
       console.error("認証失敗", err);
-      errorDiv.innerText = "認証エラーが発生しました。";
+      errorDiv.innerText = "認証中にエラーが発生しました。";
     }
   };
 
