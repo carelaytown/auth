@@ -5,38 +5,45 @@
   <title>CARELAY 管理者ダッシュボード</title>
   <style>
     body {
-      font-family: sans-serif;
-      background: #f9f9f9;
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(to right, #e6ecf0, #f7f9fb);
       margin: 0;
       padding: 2em;
-      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 1em;
     }
     .card {
       background: white;
-      max-width: 400px;
-      margin: 3em auto;
       padding: 2em;
-      border-radius: 12px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
     }
     input, button {
       width: 100%;
       padding: 0.75em;
       margin-top: 1em;
-      border-radius: 8px;
+      border-radius: 10px;
       border: 1px solid #ccc;
       font-size: 1em;
     }
     button {
-      background: #2c7be5;
+      background: #3498db;
       color: white;
       border: none;
+      transition: background 0.3s;
     }
     button:hover {
-      background: #1a5ec8;
+      background: #2980b9;
     }
     .error {
-      color: red;
+      color: #e74c3c;
       margin-top: 1em;
     }
     #menu {
@@ -46,8 +53,13 @@
       margin-top: 2em;
     }
     #menu button {
-      flex: 1;
-      max-width: 200px;
+      background: #ecf0f1;
+      color: #2c3e50;
+      border: 1px solid #bdc3c7;
+      transition: background 0.2s;
+    }
+    #menu button:hover {
+      background: #d0d7de;
     }
     #main {
       margin-top: 2em;
@@ -63,8 +75,7 @@
     );
 
     window.addEventListener('DOMContentLoaded', async () => {
-      const userObj = JSON.parse(localStorage.getItem("carelayUser") || "{}");
-      const email = userObj.email;
+      const email = localStorage.getItem("carelayUser");
       const approved = localStorage.getItem("carelayApproved");
 
       if (!email || approved !== "ok") {
@@ -104,7 +115,7 @@
 
     function loadDashboard() {
       document.body.innerHTML = `
-        <h1>管理者ダッシュボード</h1>
+        <h1>CARELAY 管理者ダッシュボード</h1>
         <div id="menu">
           <button onclick="loadPage('admin-account.html')">アカウント管理</button>
           <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
@@ -116,9 +127,13 @@
     }
 
     window.loadPage = async function(path) {
-      const res = await fetch(path);
-      const html = await res.text();
-      document.getElementById("main").innerHTML = html;
+      try {
+        const res = await fetch(path);
+        const html = await res.text();
+        document.getElementById("main").innerHTML = html;
+      } catch (err) {
+        document.getElementById("main").innerHTML = `<p class='error'>ページの読み込みに失敗しました。</p>`;
+      }
     }
   </script>
 </head>
