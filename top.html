@@ -1,228 +1,249 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAYタウン 利用開始</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CARELAYタウン</title>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      height: 100%;
+      background-color: #f9f9f9;
       font-family: 'Noto Sans JP', sans-serif;
-      background: #f0f6ff;
-      color: #333;
-    }
-
-    .header {
-      background-color: #2a6ebb;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .container {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      padding: 40px 20px;
+      flex-direction: column;
     }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      width: 360px;
-      max-width: 90%;
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
-      color: #2a6ebb;
-    }
-
-    input[type="text"], input[type="email"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #2a6ebb;
+    header {
+      background-color: #1b355d;
       color: white;
-      border: none;
+      padding: 5px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .logo-button {
+      background: none;
+      border: 2px solid white;
+      color: white;
+      padding: 6px 12px;
       border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+    .account-name {
+      color: white;
+      font-weight: bold;
       font-size: 14px;
+    }
+    .header-buttons button {
+      background: none;
+      border: 2px solid white;
+      color: white;
+      padding: 6px 12px;
+      margin-left: 10px;
+      border-radius: 6px;
+      font-weight: bold;
       cursor: pointer;
     }
-
-    button:hover {
-      background-color: #1f5aa0;
+    #layout {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
     }
-
-    .status {
-      margin-top: 15px;
+    #sidebar {
+      width: 200px;
+      background-color: #ffe5b4;
+      border-right: 1px solid #ccc;
+      overflow-y: auto;
+      padding: 10px 0;
+    }
+    .category-block {
+      margin: 10px;
+      background: white;
+      border: 2px solid #999;
+      border-radius: 6px;
+    }
+    .category-title {
+      background: #2a6ebb;
+      color: white;
+      padding: 10px;
       font-weight: bold;
-      font-size: 13px;
+      cursor: pointer;
+      border-radius: 6px 6px 0 0;
     }
-
-    .error { color: #c0392b; }
-    .success { color: #27ae60; }
-    .pending { color: #f39c12; }
+    .submenu {
+      display: none;
+      padding: 5px 10px;
+    }
+    .submenu button {
+      width: 100%;
+      margin-top: 5px;
+      padding: 8px;
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    #main {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: #fff;
+    }
+    footer {
+      background-color: #1b355d;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+    #bottomNav {
+      display: none;
+    }
   </style>
 </head>
-<body>
-  <div class="header">CARELAY TOWN 利用開始</div>
-
-  <div class="container">
-    <!-- 利用申し込み -->
-    <div class="card">
-      <h2>📝 利用申し込み</h2>
-      <input type="text" id="orgName" placeholder="事業所名" />
-      <input type="email" id="regEmail" placeholder="メールアドレス" />
-      <button onclick="submitApplication(event)">申請する</button>
-      <div id="applyStatus" class="status"></div>
+<body onload="initTopPage()">
+  <header>
+    <div style="display: flex; align-items: center;">
+      <button class="logo-button" onclick="loadMain('map')">🏡 CARELAYタウン</button>
+      <div class="account-name" id="orgLabel"></div>
     </div>
-
-    <!-- ログイン -->
-    <div class="card">
-      <h2>🔐 ログイン</h2>
-      <input type="email" id="loginEmail" placeholder="メールアドレス" />
-      <button onclick="login()">ログイン</button>
-      <div id="loginStatus" class="status"></div>
+    <div class="header-buttons">
+      <button onclick="loadMain('mypage')">👤 マイページ</button>
+      <button onclick="loadMain('howto')">❓ 使い方</button>
     </div>
+  </header>
+  <div id="layout">
+    <div id="sidebar"></div>
+    <div id="main">読み込み中...</div>
   </div>
+  <footer>© 2025 CARELAY TOWN</footer>
 
   <script>
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+    const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let userOrgName = "";
 
-  window.onload = () => {
-    const approved = localStorage.getItem("carelayApproved");
-    const email = localStorage.getItem("carelayUser");
-    if (approved === "ok" && email) {
-      window.location.href = "top.html";
-    }
-  };
-
-  async function submitApplication(event) {
-    const orgName = document.getElementById("orgName").value.trim();
-    const email = document.getElementById("regEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("applyStatus");
-    const button = event.target;
-
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
-
-    if (!orgName || !email) {
-      statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
-    }
-
-    statusDiv.innerText = "⏳ 申請中です...";
-    button.disabled = true;
-    button.innerText = "申請中...";
-    button.style.backgroundColor = "#aaa";
-
-    try {
-      const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-        headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`
-        }
-      });
-      const existing = await checkRes.json();
-
-      if (existing.length > 0) {
-        statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
-        statusDiv.classList.add("error");
-        button.disabled = false;
-        button.innerText = "申請する";
-        button.style.backgroundColor = "#2a6ebb";
+    async function initTopPage() {
+      const approved = localStorage.getItem("carelayApproved");
+      const email = localStorage.getItem("carelayUser");
+      if (approved !== "ok" || !email) {
+        window.location.href = "index.html";
         return;
       }
-
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({
-          org_name: orgName,
-          email: email,
-          status: "pending",
-          created_at: new Date().toISOString()
-        })
-      });
-
-      if (!res.ok) throw new Error("申請失敗");
-
-      statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
-      statusDiv.classList.add("success");
-      document.getElementById("orgName").disabled = true;
-      document.getElementById("regEmail").disabled = true;
-      button.disabled = true;
-      button.innerText = "申請済み";
-      button.style.backgroundColor = "#aaa";
-
-    } catch (err) {
-      statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
-      statusDiv.classList.add("error");
-      button.disabled = false;
-      button.innerText = "申請する";
-      button.style.backgroundColor = "#2a6ebb";
-    }
-  }
-
-  async function login() {
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("loginStatus");
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
-
-    if (!email) {
-      statusDiv.innerText = "メールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
+      await fetchUserInfo(email);
+      document.getElementById("orgLabel").textContent = userOrgName;
+      await setupAccordionMenu();
+      loadMain("map");
     }
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-      method: "GET",
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
-      }
-    });
+    async function fetchUserInfo(email) {
+      const query = email.trim().toLowerCase();
+      const { data, error } = await supabase
+        .from("applications")
+        .select("org_name, is_admin")
+        .eq("email", query);
 
-    const data = await res.json();
-
-    if (data && data.length > 0) {
-      if (data[0].status === "approved") {
-        localStorage.setItem("carelayUser", email);
-        localStorage.setItem("carelayApproved", "ok");
-        window.location.href = "top.html";
+      if (error || !data || data.length === 0) {
+        userOrgName = "(未登録)";
+        localStorage.removeItem("carelayAdmin");
       } else {
-        statusDiv.innerText = "申請済みですが、まだ承認されていません。";
-        statusDiv.classList.add("pending");
+        const row = data[0];
+        userOrgName = row.org_name || "(不明)";
+        if (row.is_admin === true || row.is_admin === 'TRUE') {
+          localStorage.setItem("carelayAdmin", "true");
+        } else {
+          localStorage.removeItem("carelayAdmin");
+        }
       }
-    } else {
-      statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
-      statusDiv.classList.add("error");
     }
-  }
-</script>
 
+    async function setupAccordionMenu() {
+      const isAdmin = localStorage.getItem("carelayAdmin") === "true";
+      const { data, error } = await supabase
+        .from("menu_config")
+        .select("label, page, show, admin_only")
+        .order("sort");
+
+      const sidebar = document.getElementById("sidebar");
+      sidebar.innerHTML = "";
+
+      if (error || !data) return;
+
+      data.filter(row => row.show && (!row.admin_only || isAdmin)).forEach(row => {
+        const block = document.createElement("div");
+        block.className = "category-block";
+
+        const title = document.createElement("div");
+        title.className = "category-title";
+        title.textContent = row.label;
+        title.onclick = () => {
+          const submenu = block.querySelector(".submenu");
+          submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+        };
+
+        const submenu = document.createElement("div");
+        submenu.className = "submenu";
+
+        const appListBtn = document.createElement("button");
+        appListBtn.textContent = "📋 アプリ一覧";
+        appListBtn.onclick = () => loadMain(`${row.page}-list`);
+        submenu.appendChild(appListBtn);
+
+        if (row.page === "tools") {
+          const appNameMap = {
+            toolcalc: "🧮 電卓",
+            tooldays: "📅 日数計算",
+            toolcheck: "📋 チェック表",
+            toolmemo: "📝 メモ帳",
+            toolcalendar: "📅 カレンダー"
+          };
+          const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
+          toolList.forEach(id => {
+            if (appNameMap[id]) {
+              const toolBtn = document.createElement("button");
+              toolBtn.textContent = appNameMap[id];
+              toolBtn.onclick = () => loadMain(id);
+              submenu.appendChild(toolBtn);
+            }
+          });
+        }
+
+        block.appendChild(title);
+        block.appendChild(submenu);
+        sidebar.appendChild(block);
+      });
+    }
+
+    function loadMain(pageName) {
+      document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
+      fetch(`${pageName}.html`)
+        .then(res => res.text())
+        .then(html => {
+          const main = document.getElementById("main");
+          main.innerHTML = html;
+          const scripts = main.querySelectorAll("script");
+          scripts.forEach(oldScript => {
+            const newScript = document.createElement("script");
+            if (oldScript.src) {
+              newScript.src = oldScript.src;
+            } else {
+              newScript.textContent = oldScript.textContent;
+            }
+            oldScript.parentNode.replaceChild(newScript, oldScript);
+          });
+        });
+    }
+  </script>
 </body>
 </html>
