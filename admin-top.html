@@ -55,10 +55,10 @@
     );
 
     window.addEventListener('DOMContentLoaded', async () => {
-      const user = JSON.parse(localStorage.getItem("carelayUser") || "null");
+      const userEmail = localStorage.getItem("carelayUser");
       const approved = localStorage.getItem("carelayApproved");
 
-      if (!user || approved !== "ok") {
+      if (!userEmail || approved !== "ok") {
         document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
         return;
       }
@@ -66,7 +66,7 @@
       const { data, error } = await supabase
         .from("applications")
         .select("admin_pass")
-        .eq("email", user.email)
+        .eq("email", userEmail)
         .eq("is_admin", true)
         .single();
 
@@ -93,15 +93,16 @@
         }
       });
 
-      // すでに認証済みならメイン表示
       if (localStorage.getItem("carelay_admin_auth") === "true") {
         loadAdminUI();
       }
     });
 
-    async function loadAdminUI() {
-      document.body.innerHTML = "<h1>管理者ダッシュボード</h1><div id='admin-tabs'></div><div id='admin-content'></div>";
-      // 次ステップでタブUIとHTML読込処理を追加予定
+    function loadAdminUI() {
+      document.body.innerHTML = `
+        <h1>管理者ダッシュボード</h1>
+        <p>ここにUIを追加します（次ステップ）</p>
+      `;
     }
   </script>
 </head>
