@@ -1,14 +1,14 @@
 <div id="mainSection">
   <div style="margin-bottom: 20px;">
-    <label for="filterSelect">フィルター：</label>
-    <select id="filterSelect" onchange="filterAccounts()">
-      <option value="all">すべて</option>
-      <option value="approved">承認済のみ</option>
-      <option value="pending">未承認のみ</option>
-    </select>
+    <span>フィルター：</span>
+    <button onclick="filterAccounts('all')">すべて</button>
+    <button onclick="filterAccounts('approved')">承認済</button>
+    <button onclick="filterAccounts('pending')">未承認</button>
     <button onclick="approveSelected()">承認</button>
     <button onclick="rejectSelected()">解除</button>
+    <button onclick="deleteSelected()">削除</button>
   </div>
+
   <table border="1" cellpadding="6" cellspacing="0" style="width:100%; background:white; border-collapse: collapse;">
     <thead>
       <tr style="background-color:#2a6ebb; color:white;">
@@ -35,7 +35,7 @@ async function loadAccountList() {
     }
   });
   const data = await res.json();
-  window.accountData = data; // 保持
+  window.accountData = data;
   renderAccounts("all");
 }
 
@@ -61,9 +61,8 @@ function renderAccounts(filter) {
   });
 }
 
-function filterAccounts() {
-  const filter = document.getElementById("filterSelect").value;
-  renderAccounts(filter);
+function filterAccounts(status) {
+  renderAccounts(status);
 }
 
 function toggleAll(source) {
@@ -95,4 +94,21 @@ async function updateSelected(status) {
   }
   await loadAccountList();
 }
+
+async function deleteSelected() {
+  const selected = [...document.querySelectorAll("#accountTableBody input[type='checkbox']:checked")];
+  for (const cb of selected) {
+    const id = cb.dataset.id;
+    await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
+      }
+    });
+  }
+  await loadAccountList();
+}
+
+window.onload = loadAccountList;
 </script>
