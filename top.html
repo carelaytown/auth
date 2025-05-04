@@ -148,20 +148,25 @@
     }
 
     async function fetchUserInfo(email) {
+      const query = email.trim().toLowerCase();
       const { data, error } = await supabase
         .from("applications")
         .select("org_name, is_admin")
-        .eq("email", email.trim().toLowerCase());
+        .eq("email", query);
     
-      if (data && data.length > 0) {
-        userOrgName = data[0].org_name;
-        isAdmin = data[0].is_admin === true;
-        localStorage.setItem("carelayAdmin", isAdmin ? "true" : "false");
+      if (error || !data || data.length === 0) {
+        userOrgName = "(未登録)";
+        localStorage.removeItem("carelayAdmin");
       } else {
-        userOrgName = "（不明）";
-        isAdmin = false;
+        const row = data[0];
+        userOrgName = row.org_name;
+        if (row.is_admin === true || row.is_admin === 'TRUE') {
+          localStorage.setItem("carelayAdmin", "true");
+        } else {
+          localStorage.removeItem("carelayAdmin");
+        }
       }
-    }
+}
     }
 
     async function setupAccordionMenu() {
