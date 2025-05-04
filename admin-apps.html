@@ -1,227 +1,106 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>アプリ管理 | CARELAYタウン</title>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f9f9f9;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      color: #2a6ebb;
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.08);
-      margin-bottom: 30px;
-    }
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 15px;
-    }
-    .form-row input, select {
-      flex: 1;
-      padding: 8px;
-      font-size: 14px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .primary-button {
-      background-color: #2a6ebb;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .primary-button:hover {
-      background-color: #1e5393;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    th {
-      background-color: #2a6ebb;
-      color: white;
-      padding: 10px;
-      text-align: left;
-    }
-    td {
-      padding: 10px;
-      border-bottom: 1px solid #eee;
-      font-size: 14px;
-    }
-    .action-buttons button {
-      margin-right: 6px;
-      padding: 4px 10px;
-      font-size: 12px;
-      border-radius: 4px;
-      border: none;
-      cursor: pointer;
-    }
-    .edit-btn { background-color: #f39c12; color: white; }
-    .delete-btn { background-color: #c0392b; color: white; }
-    .toggle-btn { background-color: #27ae60; color: white; }
-    .hidden { display: none; }
-  </style>
-</head>
-<body>
-  <div id="mainSection" class="hidden">
-    <h1>📱 アプリ管理</h1>
+<style>
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 8px;
+    text-align: left;
+  }
+  th {
+    background-color: #f0f0f0;
+  }
+  .btn {
+    padding: 4px 8px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    border: none;
+  }
+  .btn-on {
+    background-color: #1b355d;
+    color: white;
+  }
+  .btn-off {
+    background-color: #aaa;
+    color: white;
+  }
+</style>
 
-    <div class="card">
-      <div class="form-row">
-        <input id="label" placeholder="表示名（例：電卓）" />
-        <input id="icon" placeholder="アイコン（例：🧮）" />
-        <input id="page" placeholder="ページID（例：toolcalc）" />
-        <input id="category" placeholder="カテゴリ（例：tools）" />
-      </div>
-      <div class="form-row">
-        <input id="description" placeholder="アプリ説明" />
-        <input id="sort" placeholder="表示順（数字）" type="number" style="max-width:120px" />
-        <button class="primary-button" onclick="addApp()">＋追加</button>
-      </div>
-    </div>
+<div>
+  <h2>🛠 アプリ管理</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>ラベル</th>
+        <th>ページID</th>
+        <th>カテゴリ</th>
+        <th>アイコン</th>
+        <th>公開状態</th>
+        <th>操作</th>
+      </tr>
+    </thead>
+    <tbody id="appTable">
+      <tr><td colspan="6">読み込み中...</td></tr>
+    </tbody>
+  </table>
+</div>
 
-    <div class="card">
-      <div class="form-row">
-        <label for="filter">カテゴリで絞り込み：</label>
-        <select id="filter" onchange="loadApps()">
-          <option value="">すべて表示</option>
-        </select>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>表示名</th><th>アイコン</th><th>ページ</th><th>カテゴリ</th><th>公開</th><th>操作</th>
-          </tr>
-        </thead>
-        <tbody id="appTableBody">
-          <tr><td colspan="6">読み込み中...</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+<script>
+  const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-  <script>
-    const supabase = supabase.createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
+  async function loadApps() {
+    const { data, error } = await supabase
+      .from("apps")
+      .select("*")
+      .order("sort", { ascending: true });
 
-    async function checkAdmin() {
-      const {
-        data: { user }
-      } = await supabase.auth.getUser();
-      if (!user) return false;
-      const { data, error } = await supabase.from("applications").select("is_admin").eq("email", user.email).single();
-      return data?.is_admin === true;
+    const tbody = document.getElementById("appTable");
+    tbody.innerHTML = "";
+
+    if (error || !data) {
+      tbody.innerHTML = `<tr><td colspan="6">読み込みエラー</td></tr>`;
+      return;
     }
 
-    async function init() {
-      if (await checkAdmin()) {
-        document.getElementById("mainSection").classList.remove("hidden");
-        loadApps();
-      } else {
-        document.body.innerHTML = "<p style='color:red'>管理者認証されていません。</p>";
-      }
+    for (const row of data) {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${row.label || "-"}</td>
+        <td>${row.page || "-"}</td>
+        <td>${row.category || "-"}</td>
+        <td>${row.icon || "-"}</td>
+        <td>${row.is_public ? "公開中" : "非公開"}</td>
+        <td>
+          <button class="btn ${row.is_public ? 'btn-off' : 'btn-on'}"
+                  onclick="toggleApp('${row.id}', ${row.is_public})">
+            ${row.is_public ? '非公開にする' : '公開にする'}
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(tr);
     }
+  }
 
-    window.loadApps = async function () {
-      const filter = document.getElementById("filter").value;
-      let query = supabase.from("apps").select("*").order("sort", { ascending: true });
-      if (filter) query = query.eq("category", filter);
-      const { data, error } = await query;
+  async function toggleApp(id, current) {
+    const { error } = await supabase
+      .from("apps")
+      .update({ is_public: !current })
+      .eq("id", id);
 
-      const tbody = document.getElementById("appTableBody");
-      tbody.innerHTML = "";
-      const categories = new Set();
-
-      if (!data || error) {
-        tbody.innerHTML = '<tr><td colspan="6">読み込み失敗</td></tr>';
-        return;
-      }
-
-      data.forEach(app => {
-        categories.add(app.category);
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${app.label}</td>
-          <td>${app.icon}</td>
-          <td>${app.page}</td>
-          <td>${app.category}</td>
-          <td><button class="toggle-btn" onclick="togglePublic('${app.id}', ${app.is_public})">${app.is_public ? "✅" : "❌"}</button></td>
-          <td class="action-buttons">
-            <button class="edit-btn" onclick='editApp(${JSON.stringify(app).replace(/"/g, "&quot;")})'>編集</button>
-            <button class="delete-btn" onclick="deleteApp('${app.id}')">削除</button>
-          </td>`;
-        tbody.appendChild(row);
-      });
-
-      const filterSelect = document.getElementById("filter");
-      filterSelect.innerHTML = '<option value="">すべて表示</option>';
-      [...categories].sort().forEach(cat => {
-        const opt = document.createElement("option");
-        opt.value = cat;
-        opt.textContent = cat;
-        filterSelect.appendChild(opt);
-      });
-    }
-
-    window.addApp = async function () {
-      const label = document.getElementById("label").value.trim();
-      const icon = document.getElementById("icon").value.trim();
-      const page = document.getElementById("page").value.trim();
-      const category = document.getElementById("category").value.trim();
-      const description = document.getElementById("description").value.trim();
-      const sort = parseInt(document.getElementById("sort").value, 10);
-      if (!label || !page || !category) return alert("必須項目が未入力です");
-
-      await supabase.from("apps").insert([{ label, icon, page, category, description, sort, is_public: false }]);
-      document.querySelectorAll("input").forEach(el => el.value = "");
+    if (error) {
+      alert("更新に失敗しました");
+    } else {
       loadApps();
     }
+  }
 
-    window.deleteApp = async function (id) {
-      if (confirm("削除しますか？")) {
-        await supabase.from("apps").delete().eq("id", id);
-        loadApps();
-      }
-    }
-
-    window.togglePublic = async function (id, current) {
-      await supabase.from("apps").update({ is_public: !current }).eq("id", id);
-      loadApps();
-    }
-
-    window.editApp = async function (app) {
-      const label = prompt("表示名", app.label);
-      const icon = prompt("アイコン", app.icon);
-      const page = prompt("ページID", app.page);
-      const category = prompt("カテゴリ", app.category);
-      const description = prompt("説明", app.description);
-      const sort = parseInt(prompt("表示順", app.sort), 10);
-      if (!label || !page || !category) return alert("必須項目が未入力です");
-
-      await supabase.from("apps").update({ label, icon, page, category, description, sort }).eq("id", app.id);
-      loadApps();
-    }
-
-    init();
-  </script>
-</body>
-</html>
+  loadApps();
+</script>
