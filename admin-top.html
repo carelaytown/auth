@@ -56,7 +56,6 @@
     }
     .hidden { display: none; }
 
-    /* 認証画面用 */
     .login-container {
       max-width: 400px;
       margin: 100px auto;
@@ -96,7 +95,6 @@
 
 <header>管理人ダッシュボード</header>
 
-<!-- 管理者パスワード入力エリア -->
 <div id="authArea" class="login-container hidden">
   <h2>管理人室 入室</h2>
   <input type="password" id="adminPass" placeholder="管理人パスワードを入力">
@@ -104,7 +102,6 @@
   <div class="error" id="errorMsg"></div>
 </div>
 
-<!-- ダッシュボードエリア -->
 <div id="dashboard" class="main hidden">
   <div class="sidebar">
     <button id="tab-account" class="active" onclick="switchTab('account')">アカウント管理</button>
@@ -119,7 +116,7 @@
 
 <script>
   const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...";
 
   const userEmail = localStorage.getItem("carelayUser");
   const approved = localStorage.getItem("carelayApproved");
@@ -201,9 +198,13 @@
       const html = await res.text();
       content.innerHTML = html;
 
-      if (tab === "account" && typeof loadAccountList === "function") {
-        loadAccountList();
-      }
+      // ページ読み込み後に関数呼び出し（遅延して呼ぶ）
+      setTimeout(() => {
+        if (typeof window.loadAccountList === "function" && tab === "account") {
+          window.loadAccountList();
+        }
+      }, 200);
+
     } catch (e) {
       content.innerHTML = "読み込みに失敗しました。";
     }
@@ -213,6 +214,5 @@
     loadTab(tab);
   }
 </script>
-
 </body>
 </html>
