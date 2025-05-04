@@ -96,7 +96,6 @@
 
 <header>管理者ダッシュボード</header>
 
-<!-- 管理者パスワード入力 -->
 <div id="authArea" class="login-container hidden">
   <h2>管理者認証</h2>
   <input type="password" id="adminPass" placeholder="管理者パスワードを入力" />
@@ -104,7 +103,6 @@
   <div class="error" id="errorMsg"></div>
 </div>
 
-<!-- 管理ダッシュボード本体 -->
 <div id="dashboard" class="main hidden">
   <div class="sidebar">
     <button id="tab-account" class="active" onclick="switchTab('account')">アカウント管理</button>
@@ -115,13 +113,13 @@
 </div>
 
 <script>
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  // ✅ グローバル変数でSupabase情報を定義
+  window.CARELAY_SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  window.CARELAY_SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
   const userEmail = localStorage.getItem("carelayUser");
   const approved = localStorage.getItem("carelayApproved");
 
-  // 利用申請・承認済みチェック
   if (!userEmail || approved !== "ok") {
     alert("CARELAYタウンにログインしていません。");
     window.location.href = "index.html";
@@ -135,18 +133,24 @@
   }
 
   async function checkIsAdmin() {
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
-      headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`
+    try {
+      const res = await fetch(`${CARELAY_SUPABASE_URL}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
+        headers: {
+          apikey: CARELAY_SUPABASE_KEY,
+          Authorization: `Bearer ${CARELAY_SUPABASE_KEY}`
+        }
+      });
+      const data = await res.json();
+      if (!data[0]?.is_admin) {
+        alert("管理者権限がありません。");
+        window.location.href = "top.html";
+      } else {
+        document.getElementById("authArea").classList.remove("hidden");
       }
-    });
-    const data = await res.json();
-    if (data.length === 0 || data[0].is_admin !== true) {
-      alert("管理者権限がありません。");
+    } catch (e) {
+      console.error("認証エラー:", e);
+      alert("認証エラーが発生しました。");
       window.location.href = "top.html";
-    } else {
-      document.getElementById("authArea").classList.remove("hidden");
     }
   }
 
@@ -160,10 +164,10 @@
       return;
     }
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
+    const res = await fetch(`${CARELAY_SUPABASE_URL}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
       headers: {
-        apikey: supabaseKey,
-        Authorization: `Bearer ${supabaseKey}`
+        apikey: CARELAY_SUPABASE_KEY,
+        Authorization: `Bearer ${CARELAY_SUPABASE_KEY}`
       }
     });
     const data = await res.json();
@@ -202,19 +206,10 @@
 
       const script = document.createElement("script");
       script.src = `admin-${tab}.js`;
-      script.onload = () => {
-        if (typeof window[`load${capitalize(tab)}List`] === "function") {
-          window[`load${capitalize(tab)}List`]();
-        }
-      };
       document.body.appendChild(script);
     } catch {
       content.innerHTML = "読み込みに失敗しました。";
     }
-  }
-
-  function capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 </script>
 
