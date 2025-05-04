@@ -10,7 +10,8 @@
   <div id="login-area" class="flex flex-col items-center justify-center h-screen">
     <div class="bg-white p-8 rounded shadow w-96">
       <h2 class="text-xl font-bold mb-4">管理者ログイン</h2>
-      <input id="admin-password" type="password" placeholder="管理者パスワードを入力" class="border rounded w-full p-2 mb-4">
+      <input id="admin-email" type="email" placeholder="メールアドレス" class="border rounded w-full p-2 mb-4">
+      <input id="admin-password" type="password" placeholder="パスワード" class="border rounded w-full p-2 mb-4">
       <button id="login-btn" class="bg-blue-600 text-white w-full py-2 rounded">ログイン</button>
       <div id="login-msg" class="text-red-500 mt-3 text-center"></div>
     </div>
@@ -35,7 +36,7 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/+esm';
     const supabaseClient = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...（省略）'
@@ -46,25 +47,31 @@
     const loginArea = document.getElementById("login-area");
     const dashboardArea = document.getElementById("dashboard-area");
 
-    // 自動ログイン
-    if (localStorage.getItem("carelay_admin_auth") === "true") {
+    // 自動ログイン判定
+    const savedAuth = localStorage.getItem("carelay_admin_auth");
+    const savedEmail = localStorage.getItem("carelay_admin_email");
+    if (savedAuth === "true" && savedEmail) {
       showDashboard();
     }
 
     loginBtn.addEventListener("click", async () => {
+      const email = document.getElementById("admin-email").value.trim();
       const password = document.getElementById("admin-password").value.trim();
+
       const { data, error } = await supabaseClient
         .from("applications")
         .select("*")
+        .eq("email", email)
         .eq("is_admin", true)
         .single();
 
       if (!data) {
-        loginMsg.textContent = "管理者アカウントが見つかりません";
+        loginMsg.textContent = "管理者権限がありません";
       } else if (data.password !== password) {
         loginMsg.textContent = "パスワードが間違っています";
       } else {
         localStorage.setItem("carelay_admin_auth", "true");
+        localStorage.setItem("carelay_admin_email", email);
         showDashboard();
       }
     });
@@ -88,6 +95,7 @@
 
     document.getElementById("logout-btn").addEventListener("click", () => {
       localStorage.removeItem("carelay_admin_auth");
+      localStorage.removeItem("carelay_admin_email");
       location.reload();
     });
 
