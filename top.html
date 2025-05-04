@@ -1,222 +1,228 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>CARELAYタウン</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CARELAYタウン 利用開始</title>
   <style>
-    html, body {
-      height: 100%;
+    body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
       background: #f0f6ff;
+      color: #333;
     }
-    #header {
-      height: 50px;
-      background-color: #1b355d;
+
+    .header {
+      background-color: #2a6ebb;
       color: white;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-    }
-    #header-left {
-      display: flex;
-      align-items: center;
-    }
-    #header-logo {
+      padding: 20px;
+      text-align: center;
+      font-size: 24px;
       font-weight: bold;
-      margin-right: 15px;
     }
-    #orgLabel {
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      padding: 40px 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      width: 360px;
+      max-width: 90%;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      color: #2a6ebb;
+    }
+
+    input[type="text"], input[type="email"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
       font-size: 14px;
     }
-    #header-buttons button {
-      margin-left: 8px;
-      background: transparent;
-      color: white;
-      border: 1px solid white;
-      border-radius: 6px;
-      padding: 4px 8px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    #container {
-      display: flex;
-      height: calc(100% - 50px);
-    }
-    #menu {
-      width: 220px;
-      background-color: #ffe8b0;
-      padding: 10px;
-      overflow-y: auto;
-    }
-    .accordion-category {
-      margin-bottom: 10px;
-    }
-    .accordion-button {
-      width: 100%;
-      background-color: #1b355d;
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #2a6ebb;
       color: white;
       border: none;
-      padding: 8px;
+      border-radius: 6px;
       font-size: 14px;
       cursor: pointer;
-      border-radius: 6px;
     }
-    .accordion-content {
-      display: none;
-      flex-direction: column;
-      margin-top: 6px;
+
+    button:hover {
+      background-color: #1f5aa0;
     }
-    .accordion-content button {
-      background-color: white;
-      color: #1b355d;
-      border: 1px solid #1b355d;
-      padding: 6px;
+
+    .status {
+      margin-top: 15px;
+      font-weight: bold;
       font-size: 13px;
-      margin: 3px 0;
-      border-radius: 4px;
-      cursor: pointer;
     }
-    #main {
-      flex: 1;
-      padding: 0;
-      overflow: auto;
-      background-color: white;
-    }
-    #footer {
-      height: 30px;
-      text-align: center;
-      font-size: 12px;
-      padding: 6px;
-      background-color: #1b355d;
-      color: white;
-    }
+
+    .error { color: #c0392b; }
+    .success { color: #27ae60; }
+    .pending { color: #f39c12; }
   </style>
 </head>
-<body onload="initTopPage()">
-  <div id="header">
-    <div id="header-left">
-      <div id="header-logo">🏙️ CARELAYタウン</div>
-      <div id="orgLabel">(未登録)</div>
-    </div>
-    <div id="header-buttons">
-      <button onclick="loadMain('mypage.html')">マイページ</button>
-      <button onclick="loadMain('howto.html')">❓使い方</button>
-    </div>
-  </div>
-  <div id="container">
-    <div id="menu"></div>
-    <div id="main"></div>
-  </div>
-  <div id="footer">© 2025 CARELAY TOWN</div>
+<body>
+  <div class="header">CARELAY TOWN 利用開始</div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <div class="container">
+    <!-- 利用申し込み -->
+    <div class="card">
+      <h2>📝 利用申し込み</h2>
+      <input type="text" id="orgName" placeholder="事業所名" />
+      <input type="email" id="regEmail" placeholder="メールアドレス" />
+      <button onclick="submitApplication(event)">申請する</button>
+      <div id="applyStatus" class="status"></div>
+    </div>
+
+    <!-- ログイン -->
+    <div class="card">
+      <h2>🔐 ログイン</h2>
+      <input type="email" id="loginEmail" placeholder="メールアドレス" />
+      <button onclick="login()">ログイン</button>
+      <div id="loginStatus" class="status"></div>
+    </div>
+  </div>
+
   <script>
-    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-    let userEmail = "";
-    let userOrgName = "";
-    let isAdmin = false;
+  window.onload = () => {
+    const approved = localStorage.getItem("carelayApproved");
+    const email = localStorage.getItem("carelayUser");
+    if (approved === "ok" && email) {
+      window.location.href = "top.html";
+    }
+  };
 
-    async function initTopPage() {
-      const email = localStorage.getItem("carelayUser");
-      const approved = localStorage.getItem("carelayApproved");
-      if (!email || approved !== "ok") {
-        location.href = "index.html";
+  async function submitApplication(event) {
+    const orgName = document.getElementById("orgName").value.trim();
+    const email = document.getElementById("regEmail").value.trim().toLowerCase();
+    const statusDiv = document.getElementById("applyStatus");
+    const button = event.target;
+
+    statusDiv.innerText = "";
+    statusDiv.className = "status";
+
+    if (!orgName || !email) {
+      statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
+      statusDiv.classList.add("error");
+      return;
+    }
+
+    statusDiv.innerText = "⏳ 申請中です...";
+    button.disabled = true;
+    button.innerText = "申請中...";
+    button.style.backgroundColor = "#aaa";
+
+    try {
+      const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+        headers: {
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`
+        }
+      });
+      const existing = await checkRes.json();
+
+      if (existing.length > 0) {
+        statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
+        statusDiv.classList.add("error");
+        button.disabled = false;
+        button.innerText = "申請する";
+        button.style.backgroundColor = "#2a6ebb";
         return;
       }
 
-      userEmail = email.trim().toLowerCase();
-      await fetchUserInfo(userEmail);
+      const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": supabaseKey,
+          "Authorization": `Bearer ${supabaseKey}`,
+          "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+          org_name: orgName,
+          email: email,
+          status: "pending",
+          created_at: new Date().toISOString()
+        })
+      });
 
-      document.getElementById("orgLabel").textContent = userOrgName;
-      setupAccordionMenu();
-      loadMain("map.html");
+      if (!res.ok) throw new Error("申請失敗");
+
+      statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
+      statusDiv.classList.add("success");
+      document.getElementById("orgName").disabled = true;
+      document.getElementById("regEmail").disabled = true;
+      button.disabled = true;
+      button.innerText = "申請済み";
+      button.style.backgroundColor = "#aaa";
+
+    } catch (err) {
+      statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
+      statusDiv.classList.add("error");
+      button.disabled = false;
+      button.innerText = "申請する";
+      button.style.backgroundColor = "#2a6ebb";
+    }
+  }
+
+  async function login() {
+    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+    const statusDiv = document.getElementById("loginStatus");
+    statusDiv.innerText = "";
+    statusDiv.className = "status";
+
+    if (!email) {
+      statusDiv.innerText = "メールアドレスを入力してください。";
+      statusDiv.classList.add("error");
+      return;
     }
 
-    async function fetchUserInfo(email) {
-      const { data, error } = await supabase
-        .from("applications")
-        .select("org_name, is_admin")
-        .eq("email", email);
+    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
+      method: "GET",
+      headers: {
+        "apikey": supabaseKey,
+        "Authorization": `Bearer ${supabaseKey}`
+      }
+    });
 
-      if (data && data.length > 0) {
-        userOrgName = data[0].org_name || "(未登録)";
-        isAdmin = data[0].is_admin || false;
-        localStorage.setItem("carelayAdmin", isAdmin ? "true" : "false");
+    const data = await res.json();
+
+    if (data && data.length > 0) {
+      if (data[0].status === "approved") {
+        localStorage.setItem("carelayUser", email);
+        localStorage.setItem("carelayApproved", "ok");
+        window.location.href = "top.html";
       } else {
-        userOrgName = "(未登録)";
-        isAdmin = false;
+        statusDiv.innerText = "申請済みですが、まだ承認されていません。";
+        statusDiv.classList.add("pending");
       }
+    } else {
+      statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
+      statusDiv.classList.add("error");
     }
+  }
+</script>
 
-    function setupAccordionMenu() {
-      const categories = [
-        { id: "tools", label: "データ管理" },
-        { id: "work", label: "実務ツール" },
-        { id: "post", label: "便利ツール" },
-        { id: "message", label: "メッセージ便" },
-        { id: "bank", label: "金銭管理" },
-        { id: "material", label: "素材集" },
-        { id: "info", label: "商材紹介" },
-        { id: "office", label: "運営連絡", admin_only: true }
-      ];
-
-      const menu = document.getElementById("menu");
-      menu.innerHTML = "";
-
-      for (const cat of categories) {
-        if (cat.admin_only && !isAdmin) continue;
-
-        const wrapper = document.createElement("div");
-        wrapper.className = "accordion-category";
-
-        const button = document.createElement("button");
-        button.className = "accordion-button";
-        button.textContent = cat.label;
-        button.onclick = () => {
-          const content = wrapper.querySelector(".accordion-content");
-          content.style.display = content.style.display === "flex" ? "none" : "flex";
-        };
-
-        const content = document.createElement("div");
-        content.className = "accordion-content";
-
-        const listBtn = document.createElement("button");
-        listBtn.textContent = "アプリ一覧";
-        listBtn.onclick = () => loadMain(`${cat.id}-list.html`);
-        content.appendChild(listBtn);
-
-        wrapper.appendChild(button);
-        wrapper.appendChild(content);
-        menu.appendChild(wrapper);
-      }
-    }
-
-    function loadMain(path) {
-      fetch(path)
-        .then(res => res.text())
-        .then(html => {
-          const main = document.getElementById("main");
-          main.innerHTML = html;
-
-          const scripts = main.querySelectorAll("script");
-          scripts.forEach(oldScript => {
-            const newScript = document.createElement("script");
-            if (oldScript.src) {
-              newScript.src = oldScript.src;
-            } else {
-              newScript.textContent = oldScript.textContent;
-            }
-            document.body.appendChild(newScript);
-            oldScript.remove();
-          });
-        });
-    }
-  </script>
 </body>
 </html>
