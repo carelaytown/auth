@@ -7,7 +7,7 @@
   <style>
     body {
       font-family: sans-serif;
-      background: #f7faff;
+      background: #f0f6ff;
       padding: 30px;
     }
     h2 {
@@ -16,12 +16,21 @@
     }
     .toolbar {
       display: flex;
-      justify-content: center;
+      gap: 20px;
+      margin-bottom: 25px;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-bottom: 20px;
+      justify-content: center;
     }
-    .toolbar button {
+    .panel-group {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 6px rgba(0,0,0,0.1);
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .panel-group button {
       padding: 8px 16px;
       border: none;
       background-color: #2a6ebb;
@@ -30,7 +39,7 @@
       cursor: pointer;
       font-size: 14px;
     }
-    .toolbar button:hover {
+    .panel-group button:hover {
       background-color: #1f5aa0;
     }
     table {
@@ -62,12 +71,16 @@
 <h2>アカウント管理</h2>
 
 <div class="toolbar">
-  <button onclick="approveSelected()">承認</button>
-  <button onclick="rejectSelected()">解除</button>
-  <button onclick="deleteSelected()">削除</button>
-  <button onclick="applyFilter('all')">すべて</button>
-  <button onclick="applyFilter('approved')">承認済</button>
-  <button onclick="applyFilter('pending')">未承認</button>
+  <div class="panel-group">
+    <button onclick="approveSelected()">承認</button>
+    <button onclick="rejectSelected()">解除</button>
+    <button onclick="deleteSelected()">削除</button>
+  </div>
+  <div class="panel-group">
+    <button onclick="applyFilter('all')">すべて</button>
+    <button onclick="applyFilter('approved')">承認済</button>
+    <button onclick="applyFilter('pending')">未承認</button>
+  </div>
 </div>
 
 <table>
@@ -84,8 +97,8 @@
 </table>
 
 <script>
-const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co"; // ←ここを修正
-const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"; // ←ここも修正
+const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
 let allAccounts = [];
 
