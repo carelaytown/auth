@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>管理人ダッシュボード</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <title>管理者ダッシュボード</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     * { box-sizing: border-box; }
     body {
@@ -54,15 +54,16 @@
       background-color: #f9fbff;
       overflow-y: auto;
     }
-    .hidden { display: none; }
-
+    .hidden {
+      display: none;
+    }
     .login-container {
       max-width: 400px;
       margin: 100px auto;
       padding: 30px;
       background: white;
       border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
       text-align: center;
     }
     .login-container input {
@@ -93,32 +94,34 @@
 </head>
 <body>
 
-<header>管理人ダッシュボード</header>
+<header>管理者ダッシュボード</header>
 
+<!-- 管理者パスワード入力 -->
 <div id="authArea" class="login-container hidden">
-  <h2>管理人室 入室</h2>
-  <input type="password" id="adminPass" placeholder="管理人パスワードを入力">
+  <h2>管理者認証</h2>
+  <input type="password" id="adminPass" placeholder="管理者パスワードを入力" />
   <button onclick="verifyAdmin()">入室する</button>
   <div class="error" id="errorMsg"></div>
 </div>
 
+<!-- 管理ダッシュボード本体 -->
 <div id="dashboard" class="main hidden">
   <div class="sidebar">
     <button id="tab-account" class="active" onclick="switchTab('account')">アカウント管理</button>
     <button id="tab-menu" onclick="switchTab('menu')">メニュー管理</button>
     <button id="tab-apps" onclick="switchTab('apps')">アプリ管理</button>
   </div>
-
   <div class="content" id="tabContent">読み込み中...</div>
 </div>
 
 <script>
   const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJI..."; // 適切に省略
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
   const userEmail = localStorage.getItem("carelayUser");
   const approved = localStorage.getItem("carelayApproved");
 
+  // 利用申請・承認済みチェック
   if (!userEmail || approved !== "ok") {
     alert("CARELAYタウンにログインしていません。");
     window.location.href = "index.html";
@@ -180,24 +183,38 @@
     loadTab("account");
   }
 
+  function switchTab(tab) {
+    loadTab(tab);
+  }
+
   async function loadTab(tab) {
     const sections = ["account", "menu", "apps"];
     sections.forEach(s => document.getElementById(`tab-${s}`).classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
+
     const content = document.getElementById("tabContent");
     content.innerHTML = "読み込み中...";
+
     try {
-      const res = await fetch(`admin-${tab}.html`);
-      const html = await res.text();
-      content.innerHTML = html;
-      if (typeof loadAccountList === 'function') loadAccountList();
+      const htmlRes = await fetch(`admin-${tab}.html`);
+      const htmlText = await htmlRes.text();
+      content.innerHTML = htmlText;
+
+      const script = document.createElement("script");
+      script.src = `admin-${tab}.js`;
+      script.onload = () => {
+        if (typeof window[`load${capitalize(tab)}List`] === "function") {
+          window[`load${capitalize(tab)}List`]();
+        }
+      };
+      document.body.appendChild(script);
     } catch {
       content.innerHTML = "読み込みに失敗しました。";
     }
   }
 
-  function switchTab(tab) {
-    loadTab(tab);
+  function capitalize(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
   }
 </script>
 
