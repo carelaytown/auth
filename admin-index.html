@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理人室ログイン</title>
+  <style>
+    body {
+      background-color: #f0f6ff;
+      font-family: 'Noto Sans JP', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .box {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 30px;
+      width: 300px;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+      color: #2a6ebb;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      padding: 10px 20px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <h1>🔐 管理人室ログイン</h1>
+    <input type="password" id="adminPass" placeholder="管理者パスワード">
+    <button onclick="verifyPassword()">ログイン</button>
+    <div id="status" class="status"></div>
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
+  <script>
+    const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 省略してOK、実際は全体入れてください
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    async function verifyPassword() {
+      const pass = document.getElementById("adminPass").value.trim();
+      const status = document.getElementById("status");
+      status.textContent = "";
+
+      const email = localStorage.getItem("carelayUser");
+      const approved = localStorage.getItem("carelayApproved");
+      if (!email || approved !== "ok") {
+        status.textContent = "CARELAYタウンにログインしてください。";
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("applications")
+        .select("admin_pass")
+        .eq("email", email)
+        .eq("is_admin", true)
+        .single();
+
+      if (error || !data) {
+        status.textContent = "管理者アカウントではありません。";
+        return;
+      }
+
+      if (data.admin_pass === pass) {
+        localStorage.setItem("carelay_admin_auth", "true");
+        window.location.href = "admin-top.html";
+      } else {
+        status.textContent = "パスワードが正しくありません。";
+      }
+    }
+  </script>
+</body>
+</html>
