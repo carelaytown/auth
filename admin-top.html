@@ -109,14 +109,12 @@
     <button id="tab-apps" onclick="switchTab('apps')">アプリ管理</button>
   </div>
 
-  <div class="content" id="tabContent">
-    読み込み中...
-  </div>
+  <div class="content" id="tabContent">読み込み中...</div>
 </div>
 
 <script>
   const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...";
+  const supabaseKey = "eyJhbGciOiJI..."; // 適切に省略
 
   const userEmail = localStorage.getItem("carelayUser");
   const approved = localStorage.getItem("carelayApproved");
@@ -136,8 +134,8 @@
   async function checkIsAdmin() {
     const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=is_admin`, {
       headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
       }
     });
     const data = await res.json();
@@ -161,8 +159,8 @@
 
     const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${userEmail}&select=admin_pass`, {
       headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
       }
     });
     const data = await res.json();
@@ -184,28 +182,16 @@
 
   async function loadTab(tab) {
     const sections = ["account", "menu", "apps"];
-    sections.forEach(s => {
-      document.getElementById(`tab-${s}`).classList.remove("active");
-    });
+    sections.forEach(s => document.getElementById(`tab-${s}`).classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
-
     const content = document.getElementById("tabContent");
     content.innerHTML = "読み込み中...";
-
     try {
-      const file = `admin-${tab}.html`;
-      const res = await fetch(file);
+      const res = await fetch(`admin-${tab}.html`);
       const html = await res.text();
       content.innerHTML = html;
-
-      // ページ読み込み後に関数呼び出し（遅延して呼ぶ）
-      setTimeout(() => {
-        if (typeof window.loadAccountList === "function" && tab === "account") {
-          window.loadAccountList();
-        }
-      }, 200);
-
-    } catch (e) {
+      if (typeof loadAccountList === 'function') loadAccountList();
+    } catch {
       content.innerHTML = "読み込みに失敗しました。";
     }
   }
@@ -214,5 +200,6 @@
     loadTab(tab);
   }
 </script>
+
 </body>
 </html>
