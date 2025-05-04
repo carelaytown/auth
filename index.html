@@ -5,224 +5,125 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CARELAYタウン 利用開始</title>
   <style>
-    body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-      background: #f0f6ff;
-      color: #333;
+    body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: #f0f6ff; color: #333; }
+    .header { background-color: #2a6ebb; color: white; padding: 20px; text-align: center; font-size: 24px; font-weight: bold; }
+    .container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; padding: 40px 20px; }
+    .card { background: white; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); padding: 30px; width: 360px; max-width: 90%; }
+    .card h2 { margin-top: 0; font-size: 20px; color: #2a6ebb; }
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%; padding: 10px; margin-top: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px;
     }
-
-    .header {
-      background-color: #2a6ebb;
-      color: white;
-      padding: 20px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-
-    .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      padding: 40px 20px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 30px;
-      width: 360px;
-      max-width: 90%;
-    }
-
-    .card h2 {
-      margin-top: 0;
-      font-size: 20px;
-      color: #2a6ebb;
-    }
-
-    input[type="text"], input[type="email"] {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    button {
-      margin-top: 20px;
-      padding: 10px 20px;
-      background-color: #2a6ebb;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 14px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #1f5aa0;
-    }
-
-    .status {
-      margin-top: 15px;
-      font-weight: bold;
-      font-size: 13px;
-    }
-
+    button { margin-top: 20px; padding: 10px 20px; background-color: #2a6ebb; color: white; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; }
+    button:hover { background-color: #1f5aa0; }
+    .status { margin-top: 15px; font-weight: bold; font-size: 13px; }
     .error { color: #c0392b; }
     .success { color: #27ae60; }
     .pending { color: #f39c12; }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.6/dist/umd/supabase.min.js"></script>
 </head>
 <body>
-  <div class="header">CARELAY TOWN 利用開始</div>
-
-  <div class="container">
-    <!-- 利用申し込み -->
-    <div class="card">
-      <h2>📝 利用申し込み</h2>
-      <input type="text" id="orgName" placeholder="事業所名" />
-      <input type="email" id="regEmail" placeholder="メールアドレス" />
-      <button onclick="submitApplication(event)">申請する</button>
-      <div id="applyStatus" class="status"></div>
-    </div>
-
-    <!-- ログイン -->
-    <div class="card">
-      <h2>🔐 ログイン</h2>
-      <input type="email" id="loginEmail" placeholder="メールアドレス" />
-      <button onclick="login()">ログイン</button>
-      <div id="loginStatus" class="status"></div>
-    </div>
+<div class="header">CARELAY TOWN 利用開始</div>
+<div class="container">
+  <!-- 利用申し込み -->
+  <div class="card">
+    <h2>📝 利用申し込み</h2>
+    <input type="text" id="orgName" placeholder="事業所名" />
+    <input type="email" id="regEmail" placeholder="メールアドレス" />
+    <input type="password" id="regPassword" placeholder="パスワード（6文字以上）" />
+    <button onclick="submitApplication(event)">申請する</button>
+    <div id="applyStatus" class="status"></div>
   </div>
+  <!-- ログイン -->
+  <div class="card">
+    <h2>🔐 ログイン</h2>
+    <input type="email" id="loginEmail" placeholder="メールアドレス" />
+    <input type="password" id="loginPassword" placeholder="パスワード" />
+    <button onclick="login()">ログイン</button>
+    <div id="loginStatus" class="status"></div>
+  </div>
+</div>
+<script>
+const supabase = window.supabase.createClient(
+  "https://viihcgkjzzhkdiwdzdex.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+);
 
-  <script>
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+window.onload = async () => {
+  const session = await supabase.auth.getSession();
+  const approved = localStorage.getItem("carelayApproved");
+  const email = localStorage.getItem("carelayUser");
+  if (session.data.session && approved === "ok" && email) {
+    window.location.href = "top.html";
+  }
+};
 
-  window.onload = () => {
-    const approved = localStorage.getItem("carelayApproved");
-    const email = localStorage.getItem("carelayUser");
-    if (approved === "ok" && email) {
-      window.location.href = "top.html";
-    }
-  };
+async function submitApplication(e) {
+  const orgName = document.getElementById("orgName").value.trim();
+  const email = document.getElementById("regEmail").value.trim().toLowerCase();
+  const password = document.getElementById("regPassword").value.trim();
+  const statusDiv = document.getElementById("applyStatus");
+  const button = e.target;
 
-  async function submitApplication(event) {
-    const orgName = document.getElementById("orgName").value.trim();
-    const email = document.getElementById("regEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("applyStatus");
-    const button = event.target;
-
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
-
-    if (!orgName || !email) {
-      statusDiv.innerText = "❌ 事業所名とメールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
-    }
-
-    statusDiv.innerText = "⏳ 申請中です...";
-    button.disabled = true;
-    button.innerText = "申請中...";
-    button.style.backgroundColor = "#aaa";
-
-    try {
-      const checkRes = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-        headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`
-        }
-      });
-      const existing = await checkRes.json();
-
-      if (existing.length > 0) {
-        statusDiv.innerText = "⚠️ このメールアドレスはすでに申請されています。";
-        statusDiv.classList.add("error");
-        button.disabled = false;
-        button.innerText = "申請する";
-        button.style.backgroundColor = "#2a6ebb";
-        return;
-      }
-
-      const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`,
-          "Prefer": "return=representation"
-        },
-        body: JSON.stringify({
-          org_name: orgName,
-          email: email,
-          status: "pending",
-          created_at: new Date().toISOString()
-        })
-      });
-
-      if (!res.ok) throw new Error("申請失敗");
-
-      statusDiv.innerText = "✅ 申請が完了しました。承認までお待ちください。";
-      statusDiv.classList.add("success");
-      document.getElementById("orgName").disabled = true;
-      document.getElementById("regEmail").disabled = true;
-      button.disabled = true;
-      button.innerText = "申請済み";
-      button.style.backgroundColor = "#aaa";
-
-    } catch (err) {
-      statusDiv.innerText = "❌ 通信エラーが発生しました。しばらくしてから再試行してください。";
-      statusDiv.classList.add("error");
-      button.disabled = false;
-      button.innerText = "申請する";
-      button.style.backgroundColor = "#2a6ebb";
-    }
+  statusDiv.innerText = ""; statusDiv.className = "status";
+  if (!orgName || !email || password.length < 6) {
+    statusDiv.innerText = "❌ 必要情報を正しく入力してください。";
+    statusDiv.classList.add("error"); return;
   }
 
-  async function login() {
-    const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-    const statusDiv = document.getElementById("loginStatus");
-    statusDiv.innerText = "";
-    statusDiv.className = "status";
+  button.disabled = true; button.innerText = "申請中...";
 
-    if (!email) {
-      statusDiv.innerText = "メールアドレスを入力してください。";
-      statusDiv.classList.add("error");
-      return;
-    }
-
-    const res = await fetch(`${supabaseUrl}/rest/v1/applications?email=eq.${email}`, {
-      method: "GET",
-      headers: {
-        "apikey": supabaseKey,
-        "Authorization": `Bearer ${supabaseKey}`
-      }
-    });
-
-    const data = await res.json();
-
-    if (data && data.length > 0) {
-      if (data[0].status === "approved") {
-        localStorage.setItem("carelayUser", email);
-        localStorage.setItem("carelayApproved", "ok");
-        window.location.href = "top.html";
-      } else {
-        statusDiv.innerText = "申請済みですが、まだ承認されていません。";
-        statusDiv.classList.add("pending");
-      }
-    } else {
-      statusDiv.innerText = "申請が見つかりません。利用申込みを先に行ってください。";
-      statusDiv.classList.add("error");
-    }
+  const { error: signupError } = await supabase.auth.signUp({ email, password });
+  if (signupError) {
+    statusDiv.innerText = `❌ 登録失敗: ${signupError.message}`;
+    statusDiv.classList.add("error"); button.disabled = false; button.innerText = "申請する"; return;
   }
+
+  const { error: insertError } = await supabase.from("applications").insert({ email, org_name: orgName, status: "pending" });
+  if (insertError) {
+    statusDiv.innerText = "❌ 申請データ登録失敗。";
+    statusDiv.classList.add("error"); button.disabled = false; button.innerText = "申請する"; return;
+  }
+
+  statusDiv.innerText = "✅ 申請完了。承認をお待ちください。";
+  statusDiv.classList.add("success");
+  document.getElementById("orgName").disabled = true;
+  document.getElementById("regEmail").disabled = true;
+  document.getElementById("regPassword").disabled = true;
+}
+
+async function login() {
+  const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+  const password = document.getElementById("loginPassword").value.trim();
+  const statusDiv = document.getElementById("loginStatus");
+
+  statusDiv.innerText = ""; statusDiv.className = "status";
+  if (!email || !password) {
+    statusDiv.innerText = "❌ メールとパスワードを入力してください。";
+    statusDiv.classList.add("error"); return;
+  }
+
+  const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+  if (loginError) {
+    statusDiv.innerText = `❌ ログイン失敗: ${loginError.message}`;
+    statusDiv.classList.add("error"); return;
+  }
+
+  const { data, error } = await supabase.from("applications").select().eq("email", email);
+  if (error || !data || data.length === 0) {
+    statusDiv.innerText = "❌ アカウント情報が見つかりません。";
+    statusDiv.classList.add("error"); return;
+  }
+
+  if (data[0].status === "approved") {
+    localStorage.setItem("carelayUser", email);
+    localStorage.setItem("carelayApproved", "ok");
+    window.location.href = "top.html";
+  } else {
+    statusDiv.innerText = "⚠️ 承認待ちです。";
+    statusDiv.classList.add("pending");
+  }
+}
 </script>
-
 </body>
 </html>
