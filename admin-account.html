@@ -1,66 +1,22 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>アカウント管理</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f9fbff;
-      margin: 0;
-      padding: 20px;
-    }
-    h2 {
-      color: #2a6ebb;
-    }
-    .filters, .actions {
-      margin-bottom: 15px;
-    }
-    .filters button, .actions button {
-      margin-right: 10px;
-      padding: 6px 14px;
-      border: none;
-      border-radius: 6px;
-      background-color: #2a6ebb;
-      color: white;
-      cursor: pointer;
-    }
-    .filters button.active {
-      background-color: #1c4f91;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background-color: white;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: left;
-    }
-    th {
-      background-color: #2a6ebb;
-      color: white;
-    }
-  </style>
-</head>
-<body>
-  <h2>👤 アカウント管理</h2>
-  <div class="filters">
-    <button onclick="setFilter('all')" id="filter-all" class="active">すべて</button>
-    <button onclick="setFilter('approved')" id="filter-approved">承認済</button>
-    <button onclick="setFilter('pending')" id="filter-pending">未承認</button>
+<!-- admin-account.html 修正済みバージョン -->
+<div id="mainSection" style="padding: 20px; background-color: #f9fbff;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap;">
+    <div style="display: flex; gap: 10px;">
+      <button onclick="filterAccounts('all')">すべて</button>
+      <button onclick="filterAccounts('approved')">承認済</button>
+      <button onclick="filterAccounts('pending')">未承認</button>
+    </div>
+    <div style="display: flex; gap: 10px; margin-top: 10px;">
+      <button onclick="approveSelected()">承認</button>
+      <button onclick="rejectSelected()">解除</button>
+      <button onclick="deleteSelected()">削除</button>
+    </div>
   </div>
-  <div class="actions">
-    <button onclick="updateStatus('approved')">承認</button>
-    <button onclick="updateStatus('pending')">解除</button>
-    <button onclick="deleteSelected()">削除</button>
-  </div>
-  <table>
+
+  <table border="1" cellpadding="6" cellspacing="0" style="width:100%; background:white; border-collapse: collapse;">
     <thead>
-      <tr>
-        <th><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
+      <tr style="background-color:#2a6ebb; color:white;">
+        <th style="width: 30px;"><input type="checkbox" id="selectAll" onclick="toggleAll(this)"></th>
         <th>事業所名</th>
         <th>メールアドレス</th>
         <th>状態</th>
@@ -69,78 +25,98 @@
     </thead>
     <tbody id="accountTableBody"></tbody>
   </table>
+</div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+<script>
+const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...";
 
-    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    let allData = [];
-    let currentFilter = "all";
-
-    window.setFilter = function(filter) {
-      currentFilter = filter;
-      document.querySelectorAll(".filters button").forEach(btn => btn.classList.remove("active"));
-      document.getElementById("filter-" + filter).classList.add("active");
-      render();
-    };
-
-    function toggleAll(source) {
-      document.querySelectorAll("tbody input[type='checkbox']").forEach(cb => cb.checked = source.checked);
-    }
-
-    async function loadData() {
-      const { data, error } = await supabase.from("applications").select("*");
-      if (error) {
-        console.error("読み込み失敗:", error);
-        return;
+async function loadAccountList() {
+  try {
+    const res = await fetch(`${supabaseUrl}/rest/v1/applications`, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
       }
-      allData = data;
-      render();
-    }
+    });
+    const data = await res.json();
+    window.accountData = data;
+    renderAccounts("all");
+  } catch (e) {
+    console.error("データ取得に失敗", e);
+  }
+}
 
-    function render() {
-      const body = document.getElementById("accountTableBody");
-      body.innerHTML = "";
-      const filtered = allData.filter(row => {
-        if (currentFilter === "approved") return row.status === "approved";
-        if (currentFilter === "pending") return row.status === "pending";
-        return true;
-      });
-      for (const row of filtered) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" data-id="${row.id}"></td>
-          <td>${row.org_name}</td>
-          <td>${row.email}</td>
-          <td>${row.status}</td>
-          <td>${row.is_admin ? "✅" : ""}</td>
-        `;
-        body.appendChild(tr);
+function renderAccounts(filter) {
+  const tbody = document.getElementById("accountTableBody");
+  tbody.innerHTML = "";
+  const filtered = window.accountData.filter(row => {
+    if (filter === "approved") return row.status === "approved";
+    if (filter === "pending") return row.status === "pending";
+    return true;
+  });
+  filtered.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><input type="checkbox" data-id="${row.id}"></td>
+      <td>${row.org_name}</td>
+      <td>${row.email}</td>
+      <td>${row.status}</td>
+      <td>${row.is_admin ? "✅" : ""}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function filterAccounts(filter) {
+  renderAccounts(filter);
+}
+
+function toggleAll(source) {
+  const checkboxes = document.querySelectorAll("#accountTableBody input[type='checkbox']");
+  checkboxes.forEach(cb => cb.checked = source.checked);
+}
+
+async function updateSelected(status) {
+  const selected = [...document.querySelectorAll("#accountTableBody input[type='checkbox']:checked")];
+  for (const cb of selected) {
+    const id = cb.dataset.id;
+    await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({ status })
+    });
+  }
+  await loadAccountList();
+}
+
+async function deleteSelected() {
+  const selected = [...document.querySelectorAll("#accountTableBody input[type='checkbox']:checked")];
+  for (const cb of selected) {
+    const id = cb.dataset.id;
+    await fetch(`${supabaseUrl}/rest/v1/applications?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`
       }
-    }
+    });
+  }
+  await loadAccountList();
+}
 
-    async function updateStatus(status) {
-      const selected = [...document.querySelectorAll("tbody input[type='checkbox']:checked")];
-      for (const cb of selected) {
-        const id = cb.dataset.id;
-        await supabase.from("applications").update({ status }).eq("id", id);
-      }
-      await loadData();
-    }
+function approveSelected() {
+  updateSelected("approved");
+}
 
-    async function deleteSelected() {
-      const selected = [...document.querySelectorAll("tbody input[type='checkbox']:checked")];
-      for (const cb of selected) {
-        const id = cb.dataset.id;
-        await supabase.from("applications").delete().eq("id", id);
-      }
-      await loadData();
-    }
+function rejectSelected() {
+  updateSelected("pending");
+}
 
-    loadData();
-  </script>
-</body>
-</html>
+// 自動読み込み
+loadAccountList();
+</script>
