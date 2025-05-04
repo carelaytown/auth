@@ -1,93 +1,23 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>管理者ダッシュボード</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f0f6ff;
-    }
-    header {
-      background-color: #2a6ebb;
-      color: white;
-      padding: 15px 20px;
-      font-size: 20px;
-      font-weight: bold;
-    }
-    .login-container {
-      max-width: 400px;
-      margin: 100px auto;
-      padding: 30px;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .login-container input {
-      width: 90%;
-      padding: 10px;
-      margin: 15px 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 16px;
-    }
-    .login-container button {
-      background: #2a6ebb;
-      color: white;
-      padding: 10px 20px;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    .login-container button:hover {
-      background: #1f5aa0;
-    }
-    .error {
-      color: #c0392b;
-      margin-top: 10px;
-    }
-
-    .main {
-      display: flex;
-      height: calc(100vh - 60px);
-    }
-    .sidebar {
-      width: 200px;
-      background-color: #ffffff;
-      border-right: 1px solid #ccc;
-      display: flex;
-      flex-direction: column;
-      padding: 20px;
-    }
-    .sidebar button {
-      padding: 10px 15px;
-      margin-bottom: 10px;
-      background-color: #e6eef9;
-      border: none;
-      border-radius: 6px;
-      text-align: left;
-      cursor: pointer;
-      font-size: 14px;
-    }
-    .sidebar button.active {
-      background-color: #2a6ebb;
-      color: white;
-      font-weight: bold;
-    }
-    .content {
-      flex: 1;
-      padding: 30px;
-      background-color: #f9fbff;
-      overflow-y: auto;
-    }
-
-    .hidden {
-      display: none;
-    }
+    body { margin: 0; font-family: 'Noto Sans JP', sans-serif; background: #f0f6ff; }
+    header { background: #2a6ebb; color: #fff; padding: 15px 20px; font-size: 20px; font-weight: bold; }
+    .login-container { max-width: 400px; margin: 100px auto; padding: 30px; background: white; border-radius: 12px; box-shadow: 0 0 12px rgba(0, 0, 0, 0.1); text-align: center; }
+    .login-container input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 6px; font-size: 16px; }
+    .login-container button { background: #2a6ebb; color: white; padding: 10px 20px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; }
+    .login-container button:hover { background: #1f5aa0; }
+    .error { color: #c0392b; margin-top: 10px; }
+    .main { display: flex; height: calc(100vh - 60px); }
+    .sidebar { width: 200px; background: #ffffff; border-right: 1px solid #ccc; display: flex; flex-direction: column; padding: 20px; }
+    .sidebar button { padding: 10px 15px; margin-bottom: 10px; background: #e6eef9; border: none; border-radius: 6px; text-align: left; cursor: pointer; font-size: 14px; }
+    .sidebar button.active { background: #2a6ebb; color: white; font-weight: bold; }
+    .content { flex: 1; padding: 30px; background: #f9fbff; overflow-y: auto; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -115,9 +45,6 @@
   const SUPABASE_URL = "https://viihcgkjzzhkdiwdzdex.supabase.co";
   const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
 
-  window.CARELAY_SUPABASE_URL = SUPABASE_URL;
-  window.CARELAY_SUPABASE_KEY = SUPABASE_KEY;
-
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -132,25 +59,29 @@
       return;
     }
 
+    const sessionRes = await supabase.auth.getSession();
+    const token = sessionRes.data.session?.access_token;
+
+    if (!token) {
+      errorDiv.innerText = "ログインセッションが見つかりません。ログインし直してください。";
+      return;
+    }
+
     try {
-      const { data, error } = await supabase
-        .from("applications")
-        .select("admin_pass")
-        .eq("email", email)
-        .maybeSingle(); // ← 件数0件でも動作する
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/applications?select=admin_pass&email=eq.${email}`, {
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const result = await res.json();
 
-      if (error) {
-        console.error("取得エラー:", error.message);
-        errorDiv.innerText = "取得エラー：" + error.message;
-        return;
-      }
-
-      if (!data) {
+      if (!result || result.length === 0) {
         errorDiv.innerText = "該当する管理者が見つかりません。";
         return;
       }
-
-      if (pass === data.admin_pass) {
+      const storedPass = result[0].admin_pass;
+      if (pass === storedPass) {
         document.getElementById("authArea").classList.add("hidden");
         document.getElementById("dashboard").classList.remove("hidden");
         loadTab("account");
@@ -158,7 +89,7 @@
         errorDiv.innerText = "パスワードが正しくありません。";
       }
     } catch (err) {
-      console.error("catchエラー:", err);
+      console.error("認証失敗", err);
       errorDiv.innerText = "認証エラーが発生しました。";
     }
   };
@@ -171,15 +102,12 @@
     const tabs = ["account", "menu", "apps"];
     tabs.forEach(t => document.getElementById(`tab-${t}`).classList.remove("active"));
     document.getElementById(`tab-${tab}`).classList.add("active");
-
     const content = document.getElementById("tabContent");
     content.innerHTML = "読み込み中...";
-
     try {
       const html = await fetch(`admin-${tab}.html`);
       const htmlText = await html.text();
       content.innerHTML = htmlText;
-
       const script = document.createElement("script");
       script.src = `admin-${tab}.js`;
       document.body.appendChild(script);
