@@ -6,23 +6,18 @@
   <style>
     body {
       font-family: sans-serif;
-      background: #f5f5f5;
+      background: #f9f9f9;
       margin: 0;
       padding: 2em;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    h1 {
-      color: #333;
+      text-align: center;
     }
     .card {
       background: white;
+      max-width: 400px;
+      margin: 3em auto;
       padding: 2em;
       border-radius: 12px;
       box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      max-width: 400px;
-      width: 100%;
     }
     input, button {
       width: 100%;
@@ -36,7 +31,6 @@
       background: #2c7be5;
       color: white;
       border: none;
-      cursor: pointer;
     }
     button:hover {
       background: #1a5ec8;
@@ -44,6 +38,20 @@
     .error {
       color: red;
       margin-top: 1em;
+    }
+    #menu {
+      display: flex;
+      justify-content: center;
+      gap: 1em;
+      margin-top: 2em;
+    }
+    #menu button {
+      flex: 1;
+      max-width: 200px;
+    }
+    #main {
+      margin-top: 2em;
+      padding: 1em;
     }
   </style>
   <script type="module">
@@ -54,61 +62,65 @@
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
-    window.addEventListener('DOMContentLoaded', async () => {
-      const userEmail = localStorage.getItem("carelayUser");
-      const approved = localStorage.getItem("carelayApproved");
+    const user = await supabase.auth.getUser();
+    const email = user?.data?.user?.email;
+    const approved = localStorage.getItem("carelayApproved");
 
-      if (!userEmail || approved !== "ok") {
-        document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
-        return;
-      }
-
+    if (!email || approved !== "ok") {
+      document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
+    } else {
       const { data, error } = await supabase
         .from("applications")
-        .select("admin_pass")
-        .eq("email", userEmail)
-        .eq("is_admin", true)
+        .select("is_admin, admin_pass")
+        .eq("email", email)
         .single();
 
-      if (error || !data) {
+      if (error || !data || !data.is_admin) {
         document.body.innerHTML = "<p class='error'>管理者ではありません。</p>";
-        return;
-      }
-
-      const adminPass = data.admin_pass;
-
-      const form = document.getElementById("auth-form");
-      form.style.display = "block";
-
-      form.addEventListener("submit", (e) => {
-        e.preventDefault();
-        const input = document.getElementById("admin-password").value;
-        const err = document.getElementById("error-msg");
-
-        if (input === adminPass) {
-          localStorage.setItem("carelay_admin_auth", "true");
-          location.reload();
+      } else {
+        const saved = localStorage.getItem("carelay_admin_auth");
+        if (saved === "true") {
+          loadDashboard();
         } else {
-          err.textContent = "パスワードが違います。";
+          document.getElementById("auth-form").style.display = "block";
+          document.getElementById("auth-form").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const input = document.getElementById("admin-password").value;
+            const errorBox = document.getElementById("error-msg");
+            if (input === data.admin_pass) {
+              localStorage.setItem("carelay_admin_auth", "true");
+              loadDashboard();
+            } else {
+              errorBox.textContent = "管理者ではありません。";
+            }
+          });
         }
-      });
-
-      if (localStorage.getItem("carelay_admin_auth") === "true") {
-        loadAdminUI();
       }
-    });
+    }
 
-    function loadAdminUI() {
+    function loadDashboard() {
       document.body.innerHTML = `
         <h1>管理者ダッシュボード</h1>
-        <p>ここにUIを追加します（次ステップ）</p>
+        <div id="menu">
+          <button onclick="loadPage('admin-account.html')">アカウント管理</button>
+          <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
+          <button onclick="loadPage('admin-apps.html')">アプリ管理</button>
+        </div>
+        <div id="main">読み込み中...</div>
       `;
+      loadPage('admin-account.html');
+    }
+
+    window.loadPage = async function(path) {
+      const res = await fetch(path);
+      const html = await res.text();
+      document.getElementById("main").innerHTML = html;
     }
   </script>
 </head>
 <body>
   <div class="card" id="auth-form" style="display: none;">
-    <h1>管理者パスワード</h1>
+    <h2>管理者パスワード</h2>
     <form>
       <input type="password" id="admin-password" placeholder="パスワードを入力" required />
       <button type="submit">ログイン</button>
