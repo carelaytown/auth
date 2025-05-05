@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>管理者ダッシュボード - CARELAYタウン</title>
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+    const supabase = createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    );
+    window.supabase = supabase;
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const { data: user } = await supabase.auth.getUser();
+      const email = user?.user?.email;
+      const { data } = await supabase.from("applications").select("is_admin").eq("email", email).single();
+      if (!data?.is_admin) {
+        document.body.innerHTML = "<p>管理者権限がありません</p>";
+        return;
+      }
+      document.querySelectorAll("button.tab").forEach(btn => {
+        btn.onclick = async () => {
+          const target = btn.dataset.target;
+          const res = await fetch(target);
+          const html = await res.text();
+          document.getElementById("main").innerHTML = html;
+        };
+      });
+    });
+  </script>
+</head>
+<body>
+  <h1>CARELAYタウン 管理者ダッシュボード</h1>
+  <nav>
+    <button class="tab" data-target="admin-account.html">アカウント管理</button>
+    <button class="tab" data-target="admin-menu.html">カテゴリ管理</button>
+    <button class="tab" data-target="admin-apps.html">アプリ管理</button>
+  </nav>
+  <div id="main"></div>
+</body>
+</html>
