@@ -1,20 +1,18 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理者ダッシュボード</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
   <style>
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
     }
     header {
-      background-color: #223b68;
+      background-color: #1d3557;
       color: white;
       padding: 1rem 2rem;
       font-size: 1.4rem;
@@ -22,39 +20,39 @@
     }
     .container {
       display: flex;
-      flex: 1;
+      height: calc(100vh - 64px);
     }
     nav {
-      background-color: #f2f5fa;
       width: 220px;
+      background-color: #fff4e6;
       padding: 1rem;
-      box-shadow: 1px 0 4px rgba(0,0,0,0.1);
-      display: flex;
-      flex-direction: column;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
     nav button {
+      display: block;
+      width: 100%;
+      margin-bottom: 1rem;
+      padding: 0.6rem 1rem;
       background-color: white;
       color: #2a6ebb;
       border: 1px solid #ccc;
-      padding: 0.6rem 1rem;
-      margin: 0.4rem 0;
-      border-radius: 6px;
+      border-radius: 0.5rem;
+      font-size: 1rem;
       text-align: left;
       cursor: pointer;
       transition: background-color 0.3s, color 0.3s;
     }
     nav button:hover {
-      background-color: #d0e3f9;
+      background-color: #e3eefc;
     }
     nav button.active {
       background-color: #2a6ebb;
       color: white;
-      font-weight: bold;
     }
     main {
-      flex: 1;
+      flex-grow: 1;
       padding: 2rem;
-      background-color: #eef3f9;
+      background-color: #f1f5f9;
     }
   </style>
 </head>
@@ -62,40 +60,40 @@
   <header>管理者ダッシュボード</header>
   <div class="container">
     <nav>
-      <button id="accountBtn" class="active">アカウント管理</button>
-      <button id="menuBtn">メニュー管理</button>
-      <button id="appsBtn">アプリ管理</button>
-      <button id="logoutBtn">ログアウト</button>
+      <button class="menu-btn active" data-page="account">アカウント管理</button>
+      <button class="menu-btn" data-page="menu">メニュー管理</button>
+      <button class="menu-btn" data-page="apps">アプリ管理</button>
+      <button class="menu-btn" id="logout-btn">ログアウト</button>
     </nav>
-    <main id="mainContent">
+    <main id="content">
       <h2>アカウント管理</h2>
       <p>ここに認証済みJSを埋め込む</p>
     </main>
   </div>
 
-  <script type="module">
-    const buttons = {
-      accountBtn: { label: "アカウント管理", html: "<p>ここに認証済みJSを埋め込む</p>" },
-      menuBtn: { label: "メニュー管理", html: "<p>ここにメニュー管理のUIを表示</p>" },
-      appsBtn: { label: "アプリ管理", html: "<p>ここにアプリ管理のUIを表示</p>" },
-    };
+  <script>
+    const buttons = document.querySelectorAll('.menu-btn');
+    const content = document.getElementById('content');
 
-    const mainContent = document.getElementById("mainContent");
-    const navButtons = document.querySelectorAll("nav button");
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        buttons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
 
-    navButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        navButtons.forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-
-        const content = buttons[btn.id];
-        if (content) {
-          mainContent.innerHTML = `<h2>${content.label}</h2>` + content.html;
-        } else if (btn.id === "logoutBtn") {
-          localStorage.clear();
-          window.location.href = "admin-index.html";
+        const page = button.getAttribute('data-page');
+        if (page === 'account') {
+          content.innerHTML = '<h2>アカウント管理</h2><p>ここに認証済みJSを埋め込む</p>';
+        } else if (page === 'menu') {
+          content.innerHTML = '<h2>メニュー管理</h2><p>ここに認証済みJSを埋め込む</p>';
+        } else if (page === 'apps') {
+          content.innerHTML = '<h2>アプリ管理</h2><p>ここに認証済みJSを埋め込む</p>';
         }
       });
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      localStorage.removeItem('carelay_admin_auth');
+      window.location.href = 'admin-index.html';
     });
   </script>
 </body>
