@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -66,10 +67,9 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103 fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     document.getElementById("login-btn").addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
@@ -77,29 +77,30 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      console.log("📧 入力メール:", email);
-      console.log("🔑 入力パス:", password);
+      console.log("📧 Email:", email);
+      console.log("🔑 Password:", password);
 
       const { data, error } = await supabase
         .from("applications")
         .select("*")
         .eq("email", email)
-        .eq("admin_pass", password)
         .eq("is_admin", true)
         .single();
 
-      console.log("🟢 取得結果:", data);
-      console.log("🔴 エラー:", error);
-
       if (error || !data) {
-        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。";
+        console.log("🔴 管理者情報が見つかりません", error);
+        errorDiv.textContent = "❌ 管理者情報が見つかりません。";
         return;
       }
 
-      localStorage.setItem("carelayAdmin", "true");
-      localStorage.setItem("carelayUser", email);
-      localStorage.setItem("carelayApproved", "ok");
+      if (data.admin_pass !== password) {
+        console.log("🔴 パスワードが一致しません");
+        errorDiv.textContent = "❌ パスワードが一致しません。";
+        return;
+      }
 
+      console.log("🟢 認証成功");
+      localStorage.setItem("carelay_admin_auth", "true");
       window.location.href = "admin-top.html";
     });
   </script>
