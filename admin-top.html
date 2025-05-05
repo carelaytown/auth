@@ -2,95 +2,101 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>管理者ダッシュボード</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f2f6fc;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
     header {
-      background-color: #1c325c;
+      background-color: #223b68;
       color: white;
-      padding: 1rem;
-      font-size: 1.3rem;
+      padding: 1rem 2rem;
+      font-size: 1.4rem;
       font-weight: bold;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .container {
-      flex: 1;
       display: flex;
+      flex: 1;
     }
-    .sidebar {
+    nav {
+      background-color: #f2f5fa;
       width: 220px;
-      background-color: #ffffff;
-      box-shadow: 2px 0 5px rgba(0,0,0,0.05);
       padding: 1rem;
+      box-shadow: 1px 0 4px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
     }
-    .sidebar button {
-      background-color: #e7ecf3;
-      color: #1c325c;
-      border: none;
+    nav button {
+      background-color: white;
+      color: #2a6ebb;
+      border: 1px solid #ccc;
       padding: 0.6rem 1rem;
-      border-radius: 0.5rem;
-      font-size: 0.95rem;
+      margin: 0.4rem 0;
+      border-radius: 6px;
       text-align: left;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: background-color 0.3s, color 0.3s;
     }
-    .sidebar button:hover {
-      background-color: #d0d8e6;
+    nav button:hover {
+      background-color: #d0e3f9;
     }
-    .main {
+    nav button.active {
+      background-color: #2a6ebb;
+      color: white;
+      font-weight: bold;
+    }
+    main {
       flex: 1;
       padding: 2rem;
-      background-color: #f2f6fc;
-      overflow-y: auto;
+      background-color: #eef3f9;
     }
   </style>
 </head>
 <body>
   <header>管理者ダッシュボード</header>
   <div class="container">
-    <div class="sidebar">
-      <button onclick="loadPage('admin-account.html')">アカウント管理</button>
-      <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
-      <button onclick="loadPage('admin-apps.html')">アプリ管理</button>
-      <button onclick="logout()">ログアウト</button>
-    </div>
-    <div class="main" id="main-content">
+    <nav>
+      <button id="accountBtn" class="active">アカウント管理</button>
+      <button id="menuBtn">メニュー管理</button>
+      <button id="appsBtn">アプリ管理</button>
+      <button id="logoutBtn">ログアウト</button>
+    </nav>
+    <main id="mainContent">
       <h2>アカウント管理</h2>
       <p>ここに認証済みJSを埋め込む</p>
-    </div>
+    </main>
   </div>
 
-  <script>
-    async function loadPage(url) {
-      const container = document.getElementById('main-content');
-      try {
-        const res = await fetch(url);
-        const html = await res.text();
-        container.innerHTML = html;
-      } catch (err) {
-        container.innerHTML = `<p style='color:red;'>ページの読み込みに失敗しました。</p>`;
-      }
-    }
+  <script type="module">
+    const buttons = {
+      accountBtn: { label: "アカウント管理", html: "<p>ここに認証済みJSを埋め込む</p>" },
+      menuBtn: { label: "メニュー管理", html: "<p>ここにメニュー管理のUIを表示</p>" },
+      appsBtn: { label: "アプリ管理", html: "<p>ここにアプリ管理のUIを表示</p>" },
+    };
 
-    function logout() {
-      localStorage.removeItem("carelayAdmin");
-      localStorage.removeItem("carelayUser");
-      localStorage.removeItem("carelayApproved");
-      localStorage.removeItem("sb-viihcgkjzzhkdiwdzdex-auth-token");
-      location.href = "admin-index.html";
-    }
+    const mainContent = document.getElementById("mainContent");
+    const navButtons = document.querySelectorAll("nav button");
+
+    navButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        navButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const content = buttons[btn.id];
+        if (content) {
+          mainContent.innerHTML = `<h2>${content.label}</h2>` + content.html;
+        } else if (btn.id === "logoutBtn") {
+          localStorage.clear();
+          window.location.href = "admin-index.html";
+        }
+      });
+    });
   </script>
 </body>
 </html>
