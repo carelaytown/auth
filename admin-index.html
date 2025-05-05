@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -69,7 +68,7 @@
 
     const supabase = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp1'
     );
 
     document.getElementById("login-btn").addEventListener("click", async () => {
@@ -78,35 +77,23 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。";
-        return;
-      }
-
-      // セッションを取得してからSELECT
-      const { data: sessionData } = await supabase.auth.getSession();
-      const userEmail = sessionData?.session?.user?.email;
-      if (!userEmail) {
-        errorDiv.textContent = "セッション取得に失敗しました。";
-        return;
-      }
-
       const { data, error } = await supabase
         .from("applications")
         .select("*")
-        .eq("email", userEmail)
+        .eq("email", email)
+        .eq("admin_pass", password)
         .eq("is_admin", true)
         .single();
 
       if (error || !data) {
-        errorDiv.textContent = "管理者情報が見つかりません。";
+        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。";
         return;
       }
 
       localStorage.setItem("carelayAdmin", "true");
+      localStorage.setItem("carelayUser", email);
       localStorage.setItem("carelayApproved", "ok");
-      localStorage.setItem("carelayUser", userEmail);
+
       window.location.href = "admin-top.html";
     });
   </script>
