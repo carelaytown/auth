@@ -1,84 +1,158 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>アカウント管理</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f1f5f9;
+    }
+    h2 {
+      margin-bottom: 1rem;
+    }
+    .filter-group, .action-group {
+      display: inline-block;
+      margin-right: 2rem;
+    }
+    .filter-group label, .action-group button {
+      margin-right: 0.5rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background-color: #e0e7ff;
+    }
+    .status-pending {
+      color: red;
+      font-weight: bold;
+    }
+    .status-approved {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>アカウント管理</h2>
 
-<section class="account-panel">
-  <h2 class="panel-title">アカウント管理</h2>
-  <div class="panel-controls">
-    <div class="action-buttons">
-      <button id="approve-btn">✔ 承認</button>
-      <button id="revoke-btn">✖ 解除</button>
-      <button id="delete-btn">🗑 削除</button>
-    </div>
-    <div class="filter-options">
-      <label><input type="radio" name="status-filter" value="all" checked>すべて</label>
-      <label><input type="radio" name="status-filter" value="pending">未承認</label>
-      <label><input type="radio" name="status-filter" value="approved">承認済</label>
-    </div>
+  <div class="action-group">
+    <button onclick="updateStatus('approved')">✅ 承認</button>
+    <button onclick="updateStatus('pending')">⛔ 解除</button>
+    <button onclick="deleteSelected()">🗑️ 削除</button>
   </div>
-  <table class="account-table">
+
+  <div class="filter-group">
+    <label><input type="radio" name="filter" value="all" checked onchange="filterAccounts()"> 全て</label>
+    <label><input type="radio" name="filter" value="pending" onchange="filterAccounts()"> 未承認</label>
+    <label><input type="radio" name="filter" value="approved" onchange="filterAccounts()"> 承認済み</label>
+  </div>
+
+  <table id="account-table">
     <thead>
       <tr>
-        <th><input type="checkbox" id="select-all" /></th>
+        <th><input type="checkbox" onclick="toggleAll(this)"></th>
         <th>事業所名</th>
         <th>メールアドレス</th>
-        <th>ステータス</th>
-        <th>申請日時</th>
+        <th>状態</th>
       </tr>
     </thead>
-    <tbody id="account-table-body">
+    <tbody>
       <!-- JSで挿入 -->
     </tbody>
   </table>
-</section>
-<style>
-  .account-panel {
-    padding: 2rem;
-    background: #f9fcff;
-    height: 100%;
-  }
-  .panel-title {
-    color: #2a6ebb;
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-  }
-  .panel-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  .action-buttons button {
-    background-color: #2a6ebb;
-    color: white;
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 0.5rem;
-    margin-right: 0.5rem;
-    font-size: 0.9rem;
-    cursor: pointer;
-  }
-  .filter-options label {
-    margin-right: 1rem;
-    font-size: 0.9rem;
-  }
-  .account-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-  }
-  .account-table th, .account-table td {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    text-align: center;
-    font-size: 0.9rem;
-  }
-  .account-table th {
-    background: #eef6fb;
-  }
-  .status-pending {
-    color: red;
-    font-weight: bold;
-  }
-  .status-approved {
-    color: green;
-    font-weight: bold;
-  }
-</style>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const supabase = createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
+
+    let allData = [];
+
+    async function fetchAccounts() {
+      const { data, error } = await supabase.from("applications").select("*");
+      if (error) {
+        alert("読み込みエラー: " + error.message);
+        return;
+      }
+      allData = data;
+      renderTable(data);
+    }
+
+    function renderTable(data) {
+      const tbody = document.querySelector("#account-table tbody");
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" data-email="${row.email}"></td>
+          <td>${row.org_name || ""}</td>
+          <td>${row.email}</td>
+          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleAll(master) {
+      document.querySelectorAll("#account-table tbody input[type='checkbox']").forEach(cb => cb.checked = master.checked);
+    }
+
+    function filterAccounts() {
+      const filter = document.querySelector("input[name='filter']:checked").value;
+      if (filter === "all") {
+        renderTable(allData);
+      } else {
+        renderTable(allData.filter(row => row.status === filter));
+      }
+    }
+
+    async function updateStatus(newStatus) {
+      const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
+      if (selected.length === 0) return alert("対象が選択されていません");
+
+      const { error } = await supabase
+        .from("applications")
+        .update({ status: newStatus })
+        .in("email", selected);
+      if (error) {
+        alert("更新エラー: " + error.message);
+      } else {
+        fetchAccounts();
+      }
+    }
+
+    async function deleteSelected() {
+      const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
+      if (selected.length === 0) return alert("対象が選択されていません");
+
+      const { error } = await supabase
+        .from("applications")
+        .delete()
+        .in("email", selected);
+      if (error) {
+        alert("削除エラー: " + error.message);
+      } else {
+        fetchAccounts();
+      }
+    }
+
+    fetchAccounts();
+  </script>
+</body>
+</html>
