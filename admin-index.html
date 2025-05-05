@@ -1,44 +1,106 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>管理者ログイン - CARELAYタウン</title>
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabase = createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-    );
-    window.supabase = supabase;
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const form = document.querySelector("form");
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const email = form.email.value;
-        const password = form.password.value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) {
-          alert("ログインに失敗しました");
-          return;
-        }
-        const { data: app } = await supabase.from("applications").select("is_admin").eq("email", email).single();
-        if (app?.is_admin === true) {
-          localStorage.setItem("carelay_admin_auth", "true");
-          window.location.href = "admin-top.html";
-        } else {
-          alert("管理者権限がありません");
-        }
-      });
-    });
-  </script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CARELAYタウン 管理者ログイン</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #e0f0ff, #f9fcff);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .login-card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+      width: 90%;
+      text-align: center;
+    }
+    .login-card h1 {
+      color: #2a6ebb;
+      margin-bottom: 1.5rem;
+    }
+    .login-card input {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    .login-card button {
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    .error-message {
+      color: red;
+      margin-top: 1rem;
+    }
+  </style>
 </head>
 <body>
-  <h1>管理者ログイン</h1>
-  <form>
-    <input type="email" name="email" placeholder="メールアドレス" required><br>
-    <input type="password" name="password" placeholder="パスワード" required><br>
-    <button type="submit">ログイン</button>
-  </form>
+  <div class="login-card">
+    <h1>管理者ログイン</h1>
+    <input type="email" id="email" placeholder="メールアドレス" required />
+    <input type="password" id="password" placeholder="パスワード" required />
+    <button onclick="login()">ログイン</button>
+    <div id="error" class="error-message"></div>
+  </div>
+
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co'
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    async function login() {
+      const email = document.getElementById("email").value
+      const password = document.getElementById("password").value
+      const errorDiv = document.getElementById("error")
+      errorDiv.textContent = ""
+
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      })
+
+      if (authError || !authData.session) {
+        errorDiv.textContent = "ログインに失敗しました。"
+        return
+      }
+
+      const { data: adminRows, error: adminError } = await supabase
+        .from("applications")
+        .select("*")
+        .eq("email", email)
+        .eq("is_admin", true)
+        .single()
+
+      if (adminError || !adminRows || adminRows.admin_pass !== password) {
+        errorDiv.textContent = "管理者認証に失敗しました。"
+        return
+      }
+
+      localStorage.setItem("carelay_admin_auth", "true")
+      window.location.href = "admin-top.html"
+    }
+  </script>
 </body>
 </html>
