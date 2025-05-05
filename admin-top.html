@@ -1,102 +1,103 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>管理者ダッシュボード</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
   <style>
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f4f7fc;
+      background-color: #f0f4f8;
       display: flex;
       flex-direction: column;
       height: 100vh;
     }
+
     header {
-      background-color: #2a6ebb;
+      background-color: #1b355d;
       color: white;
       padding: 1rem 2rem;
       font-size: 1.5rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      font-weight: bold;
     }
+
     .container {
       display: flex;
       flex: 1;
-      overflow: hidden;
     }
-    nav {
-      width: 220px;
-      background-color: #fff;
-      border-right: 1px solid #ccc;
-      display: flex;
-      flex-direction: column;
-      padding: 1rem 0;
+
+    .sidebar {
+      background-color: #ffffff;
+      border-right: 1px solid #ddd;
+      width: 200px;
+      padding: 1rem;
       box-shadow: 2px 0 5px rgba(0,0,0,0.05);
     }
-    nav button {
-      padding: 0.8rem 1rem;
-      border: none;
-      background: none;
-      text-align: left;
+
+    .sidebar button {
+      display: block;
+      width: 100%;
+      background-color: #f0f4f8;
+      color: #1b355d;
+      border: 1px solid #1b355d;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      margin: 0.5rem 0;
       font-size: 1rem;
-      color: #2a6ebb;
+      text-align: left;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background-color 0.2s ease;
     }
-    nav button:hover {
-      background-color: #eaf2fb;
-      padding-left: 1.5rem;
+
+    .sidebar button:hover {
+      background-color: #1b355d;
+      color: white;
     }
-    main {
+
+    .main {
       flex: 1;
       padding: 2rem;
-      overflow-y: auto;
+      background-color: #eaf0f8;
+    }
+
+    .main h2 {
+      margin-top: 0;
+      color: #1b355d;
     }
   </style>
 </head>
 <body>
   <header>管理者ダッシュボード</header>
   <div class="container">
-    <nav>
-      <button data-page="admin-account.html">アカウント管理</button>
-      <button data-page="admin-menu.html">メニュー管理</button>
-      <button data-page="admin-apps.html">アプリ管理</button>
-      <button id="logout">ログアウト</button>
-    </nav>
-    <main id="content">ここに管理ページを表示します</main>
+    <div class="sidebar">
+      <button onclick="loadPage('admin-account.html')">アカウント管理</button>
+      <button onclick="loadPage('admin-menu.html')">メニュー管理</button>
+      <button onclick="loadPage('admin-apps.html')">アプリ管理</button>
+      <button onclick="logout()">ログアウト</button>
+    </div>
+    <div class="main" id="main-content">
+      <h2>アカウント管理</h2>
+      <div>ここに認証済みJSを埋め込む</div>
+    </div>
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-
-    const supabase = createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
-
-    if (localStorage.getItem("carelay_admin_auth") !== "true") {
-      window.location.href = "admin-index.html";
+    function loadPage(page) {
+      fetch(page)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById('main-content').innerHTML = html;
+        })
+        .catch(err => {
+          document.getElementById('main-content').innerHTML = '<p>読み込みに失敗しました。</p>';
+        });
     }
 
-    const content = document.getElementById("content");
-    const buttons = document.querySelectorAll("nav button[data-page]");
-
-    buttons.forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const page = btn.getAttribute("data-page");
-        const res = await fetch(page);
-        const html = await res.text();
-        content.innerHTML = html;
-      });
-    });
-
-    document.getElementById("logout").addEventListener("click", () => {
-      localStorage.removeItem("carelay_admin_auth");
+    function logout() {
+      localStorage.removeItem("carelayAdmin");
       window.location.href = "admin-index.html";
-    });
+    }
   </script>
 </body>
 </html>
