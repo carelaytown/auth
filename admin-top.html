@@ -24,7 +24,7 @@
     }
     nav {
       width: 220px;
-      background-color: #fff4e6;
+      background-color: #ffe8cc;
       padding: 1rem;
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
@@ -53,6 +53,7 @@
       flex-grow: 1;
       padding: 2rem;
       background-color: #f1f5f9;
+      overflow-y: auto;
     }
   </style>
 </head>
@@ -60,14 +61,13 @@
   <header>管理者ダッシュボード</header>
   <div class="container">
     <nav>
-      <button class="menu-btn active" data-page="account">アカウント管理</button>
-      <button class="menu-btn" data-page="menu">メニュー管理</button>
-      <button class="menu-btn" data-page="apps">アプリ管理</button>
+      <button class="menu-btn active" data-page="admin-account.html">アカウント管理</button>
+      <button class="menu-btn" data-page="admin-menu.html">メニュー管理</button>
+      <button class="menu-btn" data-page="admin-apps.html">アプリ管理</button>
       <button class="menu-btn" id="logout-btn">ログアウト</button>
     </nav>
     <main id="content">
-      <h2>アカウント管理</h2>
-      <p>ここに認証済みJSを埋め込む</p>
+      <p>読み込み中...</p>
     </main>
   </div>
 
@@ -75,19 +75,23 @@
     const buttons = document.querySelectorAll('.menu-btn');
     const content = document.getElementById('content');
 
+    async function loadPage(page) {
+      try {
+        const res = await fetch(page);
+        const html = await res.text();
+        content.innerHTML = html;
+      } catch (err) {
+        content.innerHTML = "<p>ページの読み込みに失敗しました。</p>";
+      }
+    }
+
     buttons.forEach(button => {
+      if (!button.dataset.page) return;
+
       button.addEventListener('click', () => {
         buttons.forEach(btn => btn.classList.remove('active'));
         button.classList.add('active');
-
-        const page = button.getAttribute('data-page');
-        if (page === 'account') {
-          content.innerHTML = '<h2>アカウント管理</h2><p>ここに認証済みJSを埋め込む</p>';
-        } else if (page === 'menu') {
-          content.innerHTML = '<h2>メニュー管理</h2><p>ここに認証済みJSを埋め込む</p>';
-        } else if (page === 'apps') {
-          content.innerHTML = '<h2>アプリ管理</h2><p>ここに認証済みJSを埋め込む</p>';
-        }
+        loadPage(button.dataset.page);
       });
     });
 
@@ -95,6 +99,8 @@
       localStorage.removeItem('carelay_admin_auth');
       window.location.href = 'admin-index.html';
     });
+
+    loadPage("admin-account.html");
   </script>
 </body>
 </html>
