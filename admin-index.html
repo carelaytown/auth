@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -67,31 +66,40 @@
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co'
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    const supabase = createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    );
 
     document.getElementById("login-btn").addEventListener("click", async () => {
-      const email = document.getElementById("email").value
-      const password = document.getElementById("password").value
-      const errorDiv = document.getElementById("error")
-      errorDiv.textContent = ""
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
 
+      // Supabase Auth ログイン
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) {
+        errorDiv.textContent = "認証に失敗しました（メールまたはパスワードに誤りがあります）。";
+        return;
+      }
+
+      // 管理者か確認
       const { data, error } = await supabase
         .from("applications")
         .select("*")
         .eq("email", email)
         .eq("is_admin", true)
-        .single()
+        .single();
 
-      if (error || !data || data.admin_pass !== password) {
-        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。"
-        return
+      if (error || !data) {
+        errorDiv.textContent = "管理者情報が見つかりません。";
+        return;
       }
 
-      localStorage.setItem("carelay_admin_auth", "true")
-      window.location.href = "admin-top.html"
-    })
+      localStorage.setItem("carelay_admin_auth", "true");
+      window.location.href = "admin-top.html";
+    });
   </script>
 </body>
 </html>
