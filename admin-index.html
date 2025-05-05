@@ -64,11 +64,11 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
     const supabase = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' // ← 本番では環境変数等に
     );
 
     document.getElementById("login-btn").addEventListener("click", async () => {
@@ -77,29 +77,21 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      // Supabase Auth ログイン
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-      if (signInError) {
-        errorDiv.textContent = "認証に失敗しました（メールまたはパスワードに誤りがあります）。";
-        return;
-      }
-
-      // 管理者か確認
       const { data, error } = await supabase
         .from("applications")
         .select("*")
         .eq("email", email)
+        .eq("admin_pass", password)
         .eq("is_admin", true)
+        .eq("status", "approved")
         .single();
 
       if (error || !data) {
-        errorDiv.textContent = "管理者情報が見つかりません。";
+        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。";
         return;
       }
 
       localStorage.setItem("carelay_admin_auth", "true");
-      localStorage.setItem("carelayUser", email);
-      localStorage.setItem("carelayApproved", "ok");
       window.location.href = "admin-top.html";
     });
   </script>
