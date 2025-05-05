@@ -24,7 +24,7 @@
     }
     nav {
       width: 220px;
-      background-color: #ffe8cc;
+      background-color: #fff4e6;
       padding: 1rem;
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
@@ -51,9 +51,8 @@
     }
     main {
       flex-grow: 1;
-      padding: 2rem;
+      padding: 0;
       background-color: #f1f5f9;
-      overflow-y: auto;
     }
   </style>
 </head>
@@ -61,13 +60,13 @@
   <header>管理者ダッシュボード</header>
   <div class="container">
     <nav>
-      <button class="menu-btn active" data-page="admin-account.html">アカウント管理</button>
-      <button class="menu-btn" data-page="admin-menu.html">メニュー管理</button>
-      <button class="menu-btn" data-page="admin-apps.html">アプリ管理</button>
+      <button class="menu-btn active" data-page="account">アカウント管理</button>
+      <button class="menu-btn" data-page="menu">メニュー管理</button>
+      <button class="menu-btn" data-page="apps">アプリ管理</button>
       <button class="menu-btn" id="logout-btn">ログアウト</button>
     </nav>
     <main id="content">
-      <p>読み込み中...</p>
+      <!-- 初期読み込み用 -->
     </main>
   </div>
 
@@ -76,31 +75,41 @@
     const content = document.getElementById('content');
 
     async function loadPage(page) {
+      const map = {
+        account: "admin-account.html",
+        menu: "admin-menu.html",
+        apps: "admin-apps.html",
+      };
+      if (!map[page]) return;
       try {
-        const res = await fetch(page);
+        const res = await fetch(map[page]);
         const html = await res.text();
         content.innerHTML = html;
+        // 必要なら初期化関数をページごとに呼び出し
+        if (page === "account" && typeof initAccount === "function") initAccount();
+        if (page === "menu" && typeof initMenu === "function") initMenu();
+        if (page === "apps" && typeof initApps === "function") initApps();
       } catch (err) {
         content.innerHTML = "<p>ページの読み込みに失敗しました。</p>";
       }
     }
 
     buttons.forEach(button => {
-      if (!button.dataset.page) return;
-
-      button.addEventListener('click', () => {
-        buttons.forEach(btn => btn.classList.remove('active'));
-        button.classList.add('active');
-        loadPage(button.dataset.page);
+      button.addEventListener("click", () => {
+        buttons.forEach(btn => btn.classList.remove("active"));
+        button.classList.add("active");
+        const page = button.getAttribute("data-page");
+        if (page) loadPage(page);
       });
     });
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      localStorage.removeItem('carelay_admin_auth');
-      window.location.href = 'admin-index.html';
+    document.getElementById("logout-btn").addEventListener("click", () => {
+      localStorage.removeItem("carelay_admin_auth");
+      window.location.href = "admin-index.html";
     });
 
-    loadPage("admin-account.html");
+    // 初期読み込み
+    loadPage("account");
   </script>
 </body>
 </html>
