@@ -68,7 +68,7 @@
 
     const supabase = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp1'
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiwicmVmIjoidmlpaGNna2p6emhrZGl3ZHpkZXgiLCJyb2xlIjoiYW5vbiIsImlhdCI6MTc0NjA3MTgwOSwiZXhwIjoyMDYxNjQ3ODA5fQ.3SMdVvDEp103 fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
 
     document.getElementById("login-btn").addEventListener("click", async () => {
@@ -77,6 +77,9 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
+      console.log("📧 入力メール:", email);
+      console.log("🔑 入力パス:", password);
+
       const { data, error } = await supabase
         .from("applications")
         .select("*")
@@ -84,6 +87,9 @@
         .eq("admin_pass", password)
         .eq("is_admin", true)
         .single();
+
+      console.log("🟢 取得結果:", data);
+      console.log("🔴 エラー:", error);
 
       if (error || !data) {
         errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。";
