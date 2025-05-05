@@ -1,1 +1,96 @@
-<div><h2>アカウント管理</h2><p>ここに認証済みJSを埋め込む</p></div>
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>アカウント管理</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f0f4f8;
+      margin: 0;
+      padding: 1rem;
+    }
+    h2 {
+      margin-bottom: 1rem;
+      color: #1d3557;
+    }
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .controls .buttons button {
+      background-color: #1d3557;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin-right: 0.5rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .controls .buttons button:hover {
+      background-color: #457b9d;
+    }
+    .controls .filters label {
+      margin-right: 1rem;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #ccc;
+      text-align: left;
+    }
+    th {
+      background-color: #f1f1f1;
+    }
+    .status-pending {
+      color: red;
+      font-weight: bold;
+    }
+    .status-approved {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h2>アカウント管理</h2>
+  <div class="controls">
+    <div class="buttons">
+      <button id="approve-btn">承認</button>
+      <button id="reject-btn">承認解除</button>
+      <button id="delete-btn">削除</button>
+    </div>
+    <div class="filters">
+      <label><input type="radio" name="status-filter" value="all" checked>すべて</label>
+      <label><input type="radio" name="status-filter" value="pending">pending</label>
+      <label><input type="radio" name="status-filter" value="approved">approved</label>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="select-all"></th>
+        <th>事業所名</th>
+        <th>メールアドレス</th>
+        <th>ステータス</th>
+        <th>登録日時</th>
+      </tr>
+    </thead>
+    <tbody id="account-table-body">
+      <!-- JSで挿入 -->
+    </tbody>
+  </table>
+</body>
+</html>
