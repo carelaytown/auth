@@ -30,22 +30,22 @@
       margin-bottom: 1.5rem;
     }
     .login-card input {
-      width: 100%;
-      padding: 0.75rem;
+      width: 80%;
+      padding: 0.5rem;
       margin: 0.5rem 0;
       border: 1px solid #ccc;
       border-radius: 0.5rem;
       font-size: 1rem;
+      text-align: center;
     }
     .login-card button {
       background-color: #2a6ebb;
       color: white;
       border: none;
-      padding: 0.75rem 1rem;
+      padding: 0.4rem 1rem;
       border-radius: 0.5rem;
-      font-size: 1rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      width: 100%;
       margin-top: 1rem;
     }
     .error-message {
@@ -59,7 +59,8 @@
     <h1>管理者ログイン</h1>
     <input type="email" id="email" placeholder="メールアドレス" required />
     <input type="password" id="password" placeholder="パスワード" required />
-    <button onclick="login()">ログイン</button>
+    <br />
+    <button id="login-btn">ログイン</button>
     <div id="error" class="error-message"></div>
   </div>
 
@@ -70,7 +71,7 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
     const supabase = createClient(supabaseUrl, supabaseKey)
 
-    async function login() {
+    document.getElementById("login-btn").addEventListener("click", async () => {
       const email = document.getElementById("email").value
       const password = document.getElementById("password").value
       const errorDiv = document.getElementById("error")
@@ -100,7 +101,7 @@
 
       localStorage.setItem("carelay_admin_auth", "true")
       window.location.href = "admin-top.html"
-    }
+    })
   </script>
 </body>
 </html>
