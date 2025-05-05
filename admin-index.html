@@ -65,6 +65,10 @@
   </div>
 
   <script type="module">
+    // 自動ログイン判定（セッション維持）
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      window.location.href = "admin-top.html";
+    }
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
