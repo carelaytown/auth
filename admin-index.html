@@ -77,25 +77,15 @@
       const errorDiv = document.getElementById("error")
       errorDiv.textContent = ""
 
-      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-
-      if (authError || !authData.session) {
-        errorDiv.textContent = "ログインに失敗しました。"
-        return
-      }
-
-      const { data: adminRows, error: adminError } = await supabase
+      const { data, error } = await supabase
         .from("applications")
         .select("*")
         .eq("email", email)
         .eq("is_admin", true)
         .single()
 
-      if (adminError || !adminRows || adminRows.admin_pass !== password) {
-        errorDiv.textContent = "管理者認証に失敗しました。"
+      if (error || !data || data.admin_pass !== password) {
+        errorDiv.textContent = "認証に失敗しました。メールまたはパスワードが正しくありません。"
         return
       }
 
