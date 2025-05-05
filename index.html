@@ -109,7 +109,7 @@ async function login() {
     statusDiv.classList.add("error"); return;
   }
 
-  const { data, error } = await supabase.from("applications").select().eq("email", email);
+  const { data, error } = await supabase.from("applications").select().eq("email", email).eq("status", "approved");
   if (error || !data || data.length === 0) {
     statusDiv.innerText = "❌ アカウント情報が見つかりません。";
     statusDiv.classList.add("error"); return;
