@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -71,6 +70,11 @@
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
+
+    // ログイン済みの場合に自動的にトップページへ遷移
+    if (localStorage.getItem("carelay_admin_auth") === "true") {
+      window.location.href = "admin-top.html";
+    }
 
     document.getElementById("login-btn").addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
