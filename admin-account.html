@@ -82,9 +82,7 @@
       <th><input type="checkbox" onclick="toggleAll(this)"></th>
       <th>事業所名</th>
       <th>メールアドレス</th>
-      <th>管理者</th>
-      <th>状態</th>
-     </tr>
+      <th>状態</th>  <th>管理者</th>  </tr>
     </thead>
     <tbody>
      </tbody>
@@ -117,9 +115,7 @@
           <td><input type="checkbox" data-email="${row.email}"></td>
           <td>${row.org_name || ""}</td>
           <td>${row.email}</td>
-          <td>${row.as_admin ? "管理者" : ""}</td>
-          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
-        `;
+          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>  <td>${row.is_admin ? "✅" : ""}</td>  `;
         tbody.appendChild(tr);
       });
     }
