@@ -140,8 +140,7 @@
       window.updateStatus = async function (newStatus) {
         const emails = window.getSelectedEmails();
         if (emails.length === 0) return;
-        const condition = emails.map(e => `email.eq.${e}`).join(',');
-        const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
+        const { error } = await supabase.from('applications').update({ status: newStatus }).in('email', emails);
         if (error) {
           console.error(error);
         } else {
@@ -152,8 +151,7 @@
       window.deleteSelected = async function () {
         const emails = window.getSelectedEmails();
         if (emails.length === 0) return;
-        const condition = emails.map(e => `email.eq.${e}`).join(',');
-        const { error } = await supabase.from('applications').delete().or(condition);
+        const { error } = await supabase.from('applications').delete().in('email', emails);
         if (error) {
           console.error(error);
         } else {
