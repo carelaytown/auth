@@ -73,10 +73,9 @@
         <tr>
           <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
           <th>メニュー名</th>
-          <th>テキスト</th>
           <th>ページ</th>
           <th>順番</th>
-          <th>表示</th>
+          <th>管理者のみ</th>
         </tr>
       </thead>
       <tbody id="menuTableBody">
@@ -110,10 +109,9 @@
           tr.innerHTML = `
             <td><input type="checkbox" value="${row.id}"></td>
             <td><input type="text" value="${row.label || ''}" data-id="${row.id}" data-field="label"></td>
-            <td><input type="text" value="${row.text || ''}" data-id="${row.id}" data-field="text"></td>
             <td><input type="text" value="${row.page || ''}" data-id="${row.id}" data-field="page"></td>
             <td><input type="number" value="${row.sort || 0}" data-id="${row.id}" data-field="sort"></td>
-            <td><input type="checkbox" ${row.show ? 'checked' : ''} data-id="${row.id}" data-field="show"></td>
+            <td><input type="checkbox" ${row.admin_only ? 'checked' : ''} data-id="${row.id}" data-field="admin_only"></td>
           `;
           tbody.appendChild(tr);
         });
@@ -126,7 +124,7 @@
       };
 
       window.addMenu = async function () {
-        const { data, error } = await supabase.from('menu_config').insert([{ label: '', text: '', page: '', sort: 999, show: true }]);
+        const { data, error } = await supabase.from('menu_config').insert([{ label: '', page: '', sort: 999, admin_only: false }]);
         if (error) {
           console.error(error);
         } else {
