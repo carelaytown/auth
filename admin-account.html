@@ -9,10 +9,9 @@
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f1f5f9;
-      color: #333;
+      background-color: transparent;
     }
-    .wrapper {
+    .account-wrapper {
       padding: 2rem;
     }
     h2 {
@@ -23,40 +22,42 @@
     .control-panel {
       display: flex;
       justify-content: space-between;
+      align-items: center;
       flex-wrap: wrap;
       margin-bottom: 1rem;
       gap: 1rem;
     }
     .control-panel .buttons button {
       margin-right: 0.5rem;
-      background-color: #2a6ebb;
-      color: white;
-      border: none;
-      padding: 0.5rem 1rem;
+      background-color: white;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 0.4rem 0.8rem;
       border-radius: 0.5rem;
       cursor: pointer;
       font-size: 0.9rem;
     }
     .control-panel .buttons button:hover {
-      background-color: #1d4f91;
+      background-color: #e2e8f0;
     }
     .control-panel .filters label {
       margin-right: 1rem;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      font-size: 0.85rem;
     }
     th, td {
-      padding: 0.75rem;
+      padding: 0.5rem;
       border: 1px solid #e2e8f0;
       text-align: left;
     }
     th {
-      background-color: #edf2f7;
+      background-color: #f1f5f9;
     }
     .status-approved {
       color: green;
@@ -69,13 +70,13 @@
   </style>
 </head>
 <body>
-  <div class="wrapper">
+  <div class="account-wrapper">
     <h2>アカウント管理</h2>
     <div class="control-panel">
       <div class="buttons">
-        <button onclick="updateStatus('approved')">承認</button>
-        <button onclick="updateStatus('pending')">解除</button>
-        <button onclick="deleteSelected()">削除</button>
+        <button onclick="updateStatus('approved')">✅ 承認</button>
+        <button onclick="updateStatus('pending')">🛑 解除</button>
+        <button onclick="deleteSelected()">🗑️ 削除</button>
       </div>
       <div class="filters">
         <label><input type="radio" name="statusFilter" value="all" checked onchange="filterAccounts()"> 全て</label>
@@ -125,8 +126,8 @@
           <td><input type="checkbox" value="\${row.email}"></td>
           <td>\${row.org_name}</td>
           <td>\${row.email}</td>
-          <td class="\${row.status === 'approved' ? 'status-approved' : 'status-pending'}">\${row.status}</td>
-          <td>\${row.is_admin ? '○' : ''}</td>
+          <td class="\${row.status === 'approved' ? 'status-approved' : 'status-pending'}">\${row.status === 'approved' ? '承認済' : '未承認'}</td>
+          <td style="text-align: center;">\${row.is_admin ? '✅' : ''}</td>
         \`;
         tbody.appendChild(tr);
       });
@@ -139,25 +140,27 @@
     async function updateStatus(newStatus) {
       const emails = getSelectedEmails();
       if (emails.length === 0) return;
-      const condition = emails.map(e => \`email.eq.\${e}\`).join(',');
-      const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
-      if (error) {
-        console.error(error);
-      } else {
-        loadAccounts();
+      for (const email of emails) {
+        const { error } = await supabase
+          .from('applications')
+          .update({ status: newStatus })
+          .eq('email', email);
+        if (error) console.error(error);
       }
+      loadAccounts();
     }
 
     async function deleteSelected() {
       const emails = getSelectedEmails();
       if (emails.length === 0) return;
-      const condition = emails.map(e => \`email.eq.\${e}\`).join(',');
-      const { error } = await supabase.from('applications').delete().or(condition);
-      if (error) {
-        console.error(error);
-      } else {
-        loadAccounts();
+      for (const email of emails) {
+        const { error } = await supabase
+          .from('applications')
+          .delete()
+          .eq('email', email);
+        if (error) console.error(error);
       }
+      loadAccounts();
     }
 
     function toggleAll(master) {
