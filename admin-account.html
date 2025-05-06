@@ -1,65 +1,167 @@
-<!-- admin-account.html（修正版） -->
-<div class="content" style="margin: 30px 40px 30px 260px;">
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>アカウント管理</title>
+  <style>
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      padding: 2rem;
+      background-color: #f8fafc;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .toolbar .buttons button {
+      margin-right: 0.5rem;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .toolbar .buttons button:hover {
+      background-color: #1d4f91;
+    }
+    .toolbar .filters label {
+      margin-right: 1rem;
+      font-size: 0.95rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    th {
+      background-color: #edf2f7;
+    }
+    .status-approved {
+      color: green;
+      font-weight: bold;
+    }
+    .status-pending {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
   <h2>アカウント管理</h2>
-  <div style="margin-bottom: 10px;">
-    <button onclick="updateStatus('approved')">承認</button>
-    <button onclick="updateStatus('pending')">解除</button>
-    <button onclick="deleteSelected()">削除</button>
-  </div>
-  <div style="margin-bottom: 15px;">
-    <label><input type="radio" name="filter" value="all" checked onchange="filterRows(this)"> すべて</label>
-    <label><input type="radio" name="filter" value="pending" onchange="filterRows(this)"> 未承認のみ</label>
-    <label><input type="radio" name="filter" value="approved" onchange="filterRows(this)"> 承認済みのみ</label>
+  <div class="toolbar">
+    <div class="buttons">
+      <button onclick="updateStatus('approved')">承認</button>
+      <button onclick="updateStatus('pending')">解除</button>
+      <button onclick="deleteSelected()">削除</button>
+    </div>
+    <div class="filters">
+      <label><input type="radio" name="statusFilter" value="all" checked onchange="filterAccounts()"> 全て</label>
+      <label><input type="radio" name="statusFilter" value="pending" onchange="filterAccounts()"> 未承認のみ</label>
+      <label><input type="radio" name="statusFilter" value="approved" onchange="filterAccounts()"> 承認済のみ</label>
+    </div>
   </div>
   <table id="accountTable">
     <thead>
       <tr>
-        <th><input type="checkbox" onclick="toggleAll(this)"></th>
+        <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
         <th>事業所名</th>
         <th>メールアドレス</th>
         <th>状態</th>
         <th>管理者</th>
       </tr>
     </thead>
-    <tbody id="accountTableBody"></tbody>
+    <tbody id="accountTableBody">
+      <!-- JSで行を挿入 -->
+    </tbody>
   </table>
-</div>
 
-<script>
-async function updateStatus(newStatus) {
-  const selected = Array.from(document.querySelectorAll('#accountTableBody input[type="checkbox"]:checked'));
-  const ids = selected.map(cb => cb.dataset.id);
-  if (ids.length === 0) return alert('1件以上選択してください');
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-  const { data, error } = await supabase
-    .from('applications')
-    .update({ status: newStatus })
-    .in('id', ids);
-  if (error) return alert('更新失敗: ' + error.message);
-  location.reload();
-}
+    async function loadAccounts() {
+      const { data, error } = await supabase.from('applications').select('*').order('id', { ascending: true });
+      if (error) {
+        console.error(error);
+        return;
+      }
+      window.allAccounts = data;
+      renderTable(data);
+    }
 
-async function deleteSelected() {
-  const selected = Array.from(document.querySelectorAll('#accountTableBody input[type="checkbox"]:checked'));
-  const ids = selected.map(cb => cb.dataset.id);
-  if (ids.length === 0) return alert('1件以上選択してください');
+    function renderTable(data) {
+      const tbody = document.getElementById('accountTableBody');
+      tbody.innerHTML = '';
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="checkbox" value="${row.email}"></td>
+          <td>${row.org_name}</td>
+          <td>${row.email}</td>
+          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
+          <td>${row.is_admin ? '○' : ''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
 
-  const { error } = await supabase.from('applications').delete().in('id', ids);
-  if (error) return alert('削除失敗: ' + error.message);
-  location.reload();
-}
+    function getSelectedEmails() {
+      return Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked')).map(cb => cb.value);
+    }
 
-function toggleAll(master) {
-  document.querySelectorAll('#accountTableBody input[type="checkbox"]').forEach(cb => {
-    cb.checked = master.checked;
-  });
-}
+    async function updateStatus(newStatus) {
+      const emails = getSelectedEmails();
+      if (emails.length === 0) return;
+      const condition = emails.map(e => `email.eq.${e}`).join(',');
+      const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
+      if (error) {
+        console.error(error);
+      } else {
+        loadAccounts();
+      }
+    }
 
-function filterRows(radio) {
-  const rows = document.querySelectorAll('#accountTableBody tr');
-  rows.forEach(row => {
-    const status = row.dataset.status;
-    row.style.display = radio.value === 'all' || status === radio.value ? '' : 'none';
-  });
-}
-</script>
+    async function deleteSelected() {
+      const emails = getSelectedEmails();
+      if (emails.length === 0) return;
+      const condition = emails.map(e => `email.eq.${e}`).join(',');
+      const { error } = await supabase.from('applications').delete().or(condition);
+      if (error) {
+        console.error(error);
+      } else {
+        loadAccounts();
+      }
+    }
+
+    function toggleAll(master) {
+      document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
+    }
+
+    function filterAccounts() {
+      const filter = document.querySelector('input[name="statusFilter"]:checked').value;
+      if (filter === 'all') {
+        renderTable(window.allAccounts);
+      } else {
+        renderTable(window.allAccounts.filter(a => a.status === filter));
+      }
+    }
+
+    loadAccounts();
+  </script>
+</body>
+</html>
