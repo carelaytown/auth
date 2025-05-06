@@ -1,118 +1,120 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>アカウント管理</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
   <style>
     body {
-      margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: transparent;
-    }
-    .account-wrapper {
       padding: 2rem;
+      background-color: #f8fafc;
     }
+
     h2 {
       font-size: 1.5rem;
       margin-bottom: 1rem;
-      color: #1d3557;
     }
+
     .toolbar {
       display: flex;
       justify-content: space-between;
-      flex-wrap: wrap;
       margin-bottom: 1rem;
-      gap: 1rem;
     }
+
     .toolbar .buttons button {
       margin-right: 0.5rem;
-      background-color: white;
-      color: #333;
-      border: 1px solid #ccc;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
       padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
+      border-radius: 5px;
       cursor: pointer;
-      font-size: 0.9rem;
     }
+
     .toolbar .buttons button:hover {
-      background-color: #e2e8f0;
+      background-color: #1d4f91;
     }
+
     .toolbar .filters label {
       margin-right: 1rem;
       font-size: 0.95rem;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
       background: white;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      font-size: 0.85rem;
     }
-    th, td {
-      padding: 0.5rem;
+
+    th,
+    td {
+      padding: 0.75rem;
       border: 1px solid #e2e8f0;
       text-align: left;
     }
+
     th {
-      background-color: #e0e7ef;
+      background-color: #edf2f7;
     }
+
     .status-approved {
       color: green;
       font-weight: bold;
     }
+
     .status-pending {
       color: red;
       font-weight: bold;
     }
   </style>
 </head>
+
 <body>
-  <div class="account-wrapper">
-    <h2>アカウント管理</h2>
-    <div class="toolbar">
-      <div class="buttons">
-        <button onclick="updateStatus('approved')">✅ 承認</button>
-        <button onclick="updateStatus('pending')">🛑 解除</button>
-        <button onclick="deleteSelected()">🗑️ 削除</button>
-      </div>
-      <div class="filters">
-        <label><input type="radio" name="statusFilter" value="all" checked onchange="filterAccounts()"> 全て</label>
-        <label><input type="radio" name="statusFilter" value="pending" onchange="filterAccounts()"> 未承認のみ</label>
-        <label><input type="radio" name="statusFilter" value="approved" onchange="filterAccounts()"> 承認済のみ</label>
-      </div>
+  <h2>アカウント管理</h2>
+  <div class="toolbar">
+    <div class="buttons">
+      <button onclick="updateStatus('approved')">承認</button>
+      <button onclick="updateStatus('pending')">解除</button>
+      <button onclick="deleteSelected()">削除</button>
     </div>
-    <table id="accountTable">
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
-          <th>事業所名</th>
-          <th>メールアドレス</th>
-          <th>状態</th>
-          <th>管理者</th>
-        </tr>
-      </thead>
-      <tbody id="accountTableBody">
-        <!-- JSで行を挿入 -->
-      </tbody>
-    </table>
+    <div class="filters">
+      <label><input type="radio" name="statusFilter" value="all" checked onchange="filterAccounts()"> 全て</label>
+      <label><input type="radio" name="statusFilter" value="pending" onchange="filterAccounts()"> 未承認のみ</label>
+      <label><input type="radio" name="statusFilter" value="approved" onchange="filterAccounts()"> 承認済のみ</label>
+    </div>
   </div>
+  <table id="accountTable">
+    <thead>
+      <tr>
+        <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+        <th>事業所名</th>
+        <th>メールアドレス</th>
+        <th>状態</th>
+        <th>管理者</th>
+      </tr>
+    </thead>
+    <tbody id="accountTableBody">
+      </tbody>
+  </table>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz...
-    );
+    import { supabase } from './admin-top.js'; // 相対パスでadmin-top.jsをインポート
+
+    let allAccounts = []; // モジュール内で変数を宣言
 
     async function loadAccounts() {
-      const { data, error } = await supabase.from('applications').select('*').order('id', { ascending: true });
+      const { data, error } = await supabase
+        .from("applications")
+        .select("*")
+        .order("id", { ascending: true });
       if (error) {
-        console.error(error);
+        console.error("Error loading accounts:", error); // より詳細なエラーログ
         return;
       }
-      window.allAccounts = data;
+      allAccounts = data;
       renderTable(data);
     }
 
@@ -125,9 +127,10 @@
           <td><input type="checkbox" value="${row.email}"></td>
           <td>${row.org_name}</td>
           <td>${row.email}</td>
-          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status === 'approved' ? '承認済' : '未承認'}</td>
-          <td style="text-align: center;">${row.is_admin ? '✅' : ''}</td>
+          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status}</td>
+          <td>${row.is_admin ? '○' : ''}</td>
         `;
+
         tbody.appendChild(tr);
       });
     }
@@ -137,24 +140,34 @@
     }
 
     async function updateStatus(newStatus) {
-      const emails = getSelectedEmails();
-      if (emails.length === 0) return;
-      const condition = emails.map(e => `email.eq.${e}`).join(',');
-      const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
-      if (error) {
-        console.error(error);
-      } else {
-        loadAccounts();
-      }
+      await updateOrDelete('update', {
+        status: newStatus
+      });
     }
 
     async function deleteSelected() {
+      await updateOrDelete('delete');
+    }
+
+    async function updateOrDelete(operation, updateData = {}) {
       const emails = getSelectedEmails();
       if (emails.length === 0) return;
-      const condition = emails.map(e => `email.eq.${e}`).join(',');
-      const { error } = await supabase.from('applications').delete().or(condition);
+
+      const condition = emails.map((e) => `email.eq.${e}`).join(",");
+      let query = supabase.from("applications");
+
+      if (operation === 'update') {
+        query = query.update(updateData).or(condition);
+      } else if (operation === 'delete') {
+        query = query.delete().or(condition);
+      }
+
+      const {
+        error
+      } = await query;
+
       if (error) {
-        console.error(error);
+        console.error("Error updating/deleting accounts:", error);
       } else {
         loadAccounts();
       }
@@ -167,13 +180,14 @@
     function filterAccounts() {
       const filter = document.querySelector('input[name="statusFilter"]:checked').value;
       if (filter === 'all') {
-        renderTable(window.allAccounts);
+        renderTable(allAccounts);
       } else {
-        renderTable(window.allAccounts.filter(a => a.status === filter));
+        renderTable(allAccounts.filter((a) => a.status === filter));
       }
     }
 
     loadAccounts();
   </script>
 </body>
+
 </html>
