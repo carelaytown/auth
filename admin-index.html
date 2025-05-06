@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CARELAYタウン 管理者ログイン</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
   <style>
@@ -15,6 +16,7 @@
       align-items: center;
       height: 100vh;
     }
+
     .login-card {
       background: #fff;
       padding: 2rem;
@@ -24,10 +26,12 @@
       width: 90%;
       text-align: center;
     }
+
     .login-card h1 {
       color: #2a6ebb;
       margin-bottom: 1.5rem;
     }
+
     .login-card input {
       width: 80%;
       padding: 0.5rem;
@@ -37,6 +41,7 @@
       font-size: 1rem;
       text-align: center;
     }
+
     .login-card button {
       background-color: #2a6ebb;
       color: white;
@@ -47,12 +52,14 @@
       cursor: pointer;
       margin-top: 1rem;
     }
+
     .error-message {
       color: red;
       margin-top: 1rem;
     }
   </style>
 </head>
+
 <body>
   <div class="login-card">
     <h1>管理者ログイン</h1>
@@ -64,7 +71,9 @@
   </div>
 
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    import {
+      createClient
+    } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
     const supabase = createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
@@ -82,13 +91,25 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const {
+        data: {
+          user
+        },
+        error: signInError
+      } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       if (signInError || !user) {
         errorDiv.textContent = "認証に失敗しました（メールまたはパスワードに誤りがあります）。";
         return;
       }
 
-      const { data, error } = await supabase
+
+      const {
+        data,
+        error
+      } = await supabase
         .from("applications")
         .select("*")
         .eq("email", email)
@@ -105,4 +126,5 @@
     });
   </script>
 </body>
+
 </html>
