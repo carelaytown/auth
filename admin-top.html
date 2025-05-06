@@ -1,115 +1,117 @@
-
 <!DOCTYPE html>
-<html lang="ja">
-<head>
+ <html lang="ja">
+ <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>管理者ダッシュボード</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
   <style>
-    body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-    }
-    header {
-      background-color: #1d3557;
-      color: white;
-      padding: 1rem 2rem;
-      font-size: 1.4rem;
-      font-weight: bold;
-    }
-    .container {
-      display: flex;
-      height: calc(100vh - 64px);
-    }
-    nav {
-      width: 220px;
-      background-color: #fff4e6;
-      padding: 1rem;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
-    }
-    nav button {
-      display: block;
-      width: 100%;
-      margin-bottom: 1rem;
-      padding: 0.6rem 1rem;
-      background-color: white;
-      color: #2a6ebb;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      font-size: 1rem;
-      text-align: left;
-      cursor: pointer;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    nav button:hover {
-      background-color: #e3eefc;
-    }
-    nav button.active {
-      background-color: #2a6ebb;
-      color: white;
-    }
-    main {
-      flex-grow: 1;
-      padding: 0;
-      background-color: #f1f5f9;
-    }
+   body {
+    margin: 0;
+    font-family: 'Noto Sans JP', sans-serif;
+   }
+   header {
+    background-color: #1d3557;
+    color: white;
+    padding: 1rem 2rem;
+    font-size: 1.4rem;
+    font-weight: bold;
+   }
+   .container {
+    display: flex;
+    height: calc(100vh - 64px);
+   }
+   nav {
+    width: 220px;
+    background-color: #fff4e6;
+    padding: 1rem;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+   }
+   nav button {
+    display: block;
+    width: 100%;
+    margin-bottom: 1rem;
+    padding: 0.6rem 1rem;
+    background-color: white;
+    color: #2a6ebb;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s;
+   }
+   nav button:hover {
+    background-color: #e3eefc;
+   }
+   nav button.active {
+    background-color: #2a6ebb;
+    color: white;
+   }
+   main {
+    flex-grow: 1;
+    padding: 0;
+    background-color: #f1f5f9;
+   }
   </style>
-</head>
-<body>
+ </head>
+ <body>
   <header>管理者ダッシュボード</header>
   <div class="container">
-    <nav>
-      <button class="menu-btn active" data-page="account">アカウント管理</button>
-      <button class="menu-btn" data-page="menu">メニュー管理</button>
-      <button class="menu-btn" data-page="apps">アプリ管理</button>
-      <button class="menu-btn" id="logout-btn">ログアウト</button>
-    </nav>
-    <main id="content">
-      <!-- 初期読み込み用 -->
+   <nav>
+    <button class="menu-btn active" data-page="account">アカウント管理</button>
+    <button class="menu-btn" data-page="menu">メニュー管理</button>
+    <button class="menu-btn" data-page="apps">アプリ管理</button>
+    <button class="menu-btn" id="logout-btn">ログアウト</button>
+   </nav>
+   <main id="content">
     </main>
   </div>
-
   <script>
-    const buttons = document.querySelectorAll('.menu-btn');
-    const content = document.getElementById('content');
-
-    async function loadPage(page) {
-      const map = {
-        account: "admin-account.html",
-        menu: "admin-menu.html",
-        apps: "admin-apps.html",
+   const buttons = document.querySelectorAll('.menu-btn');
+   const content = document.getElementById('content');
+   async function loadPage(page) {
+    const map = {
+     account: "admin-account.html",
+     menu: "admin-menu.html",
+     apps: "admin-apps.html",
+    };
+    if (!map[page]) return;
+    try {
+     const res = await fetch(map[page]);
+     const html = await res.text();
+     content.innerHTML = html;
+     // scriptタグを実行するためにcreateElementで再生成して追加
+     const scripts = content.querySelectorAll('script');
+     scripts.forEach(oldScript => {
+      const newScript = document.createElement('script');
+      Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+      newScript.text = oldScript.text;
+      oldScript.onload = () => {
+       if (page === "account" && typeof fetchAccounts === "function") fetchAccounts();
+       if (page === "menu" && typeof initMenu === "function") initMenu();
+       if (page === "apps" && typeof initApps === "function") initApps();
       };
-      if (!map[page]) return;
-      try {
-        const res = await fetch(map[page]);
-        const html = await res.text();
-        content.innerHTML = html;
-        // 必要なら初期化関数をページごとに呼び出し
-        if (page === "account" && typeof initAccount === "function") initAccount();
-        if (page === "menu" && typeof initMenu === "function") initMenu();
-        if (page === "apps" && typeof initApps === "function") initApps();
-      } catch (err) {
-        content.innerHTML = "<p>ページの読み込みに失敗しました。</p>";
-      }
+      oldScript.parentNode.replaceChild(newScript, oldScript);
+     });
+    } catch (err) {
+     content.innerHTML = "<p>ページの読み込みに失敗しました。</p>";
     }
-
-    buttons.forEach(button => {
-      button.addEventListener("click", () => {
-        buttons.forEach(btn => btn.classList.remove("active"));
-        button.classList.add("active");
-        const page = button.getAttribute("data-page");
-        if (page) loadPage(page);
-      });
+   }
+   buttons.forEach(button => {
+    button.addEventListener("click", () => {
+     buttons.forEach(btn => btn.classList.remove("active"));
+     button.classList.add("active");
+     const page = button.getAttribute("data-page");
+     if (page) loadPage(page);
     });
-
-    document.getElementById("logout-btn").addEventListener("click", () => {
-      localStorage.removeItem("carelay_admin_auth");
-      window.location.href = "admin-index.html";
-    });
-
-    // 初期読み込み
-    loadPage("account");
+   });
+   document.getElementById("logout-btn").addEventListener("click", () => {
+    localStorage.removeItem("carelay_admin_auth");
+    window.location.href = "admin-index.html";
+   });
+   // 初期読み込み
+   loadPage("account");
   </script>
-</body>
-</html>
+ </body>
+ </html>
