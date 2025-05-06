@@ -111,7 +111,12 @@
     window.location.href = "admin-index.html";
    });
    // 初期読み込み
-   loadPage("account");
+   // ログインしていなければログインページへ
+   if (localStorage.getItem("carelay_admin_auth") !== "true") {
+    window.location.href = "admin-index.html";
+   } else {
+    loadPage("account");
+   }
   </script>
  </body>
  </html>
