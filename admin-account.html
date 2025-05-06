@@ -101,7 +101,6 @@
 
   <script>
     (async () => {
-      // SupabaseクライアントをCDNからimport
       const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
       const supabase = createClient(
         'https://viihcgkjzzhkdiwdzdex.supabase.co',
@@ -109,10 +108,7 @@
       );
 
       async function loadAccounts() {
-        const { data, error } = await supabase
-          .from('applications')
-          .select('*')
-          .order('id', { ascending: true });
+        const { data, error } = await supabase.from('applications').select('*').order('id', { ascending: true });
         if (error) {
           console.error(error);
           return;
@@ -130,9 +126,7 @@
             <td><input type="checkbox" value="${row.email}"></td>
             <td>${row.org_name}</td>
             <td>${row.email}</td>
-            <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">
-              ${row.status === 'approved' ? '承認済' : '未承認'}
-            </td>
+            <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status === 'approved' ? '承認済' : '未承認'}</td>
             <td style="text-align: center;">${row.is_admin ? '✅' : ''}</td>
           `;
           tbody.appendChild(tr);
@@ -140,18 +134,14 @@
       }
 
       window.getSelectedEmails = function () {
-        return Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked'))
-          .map(cb => cb.value);
+        return Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked')).map(cb => cb.value);
       };
 
       window.updateStatus = async function (newStatus) {
         const emails = window.getSelectedEmails();
         if (emails.length === 0) return;
         const condition = emails.map(e => `email.eq.${e}`).join(',');
-        const { error } = await supabase
-          .from('applications')
-          .update({ status: newStatus })
-          .or(condition);
+        const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
         if (error) {
           console.error(error);
         } else {
@@ -163,10 +153,7 @@
         const emails = window.getSelectedEmails();
         if (emails.length === 0) return;
         const condition = emails.map(e => `email.eq.${e}`).join(',');
-        const { error } = await supabase
-          .from('applications')
-          .delete()
-          .or(condition);
+        const { error } = await supabase.from('applications').delete().or(condition);
         if (error) {
           console.error(error);
         } else {
@@ -175,9 +162,7 @@
       };
 
       window.toggleAll = function (master) {
-        document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => {
-          cb.checked = master.checked;
-        });
+        document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
       };
 
       window.filterAccounts = function () {
