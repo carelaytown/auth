@@ -1,1 +1,174 @@
-<div><h2>カテゴリ管理</h2><p>ここにカテゴリJSを埋め込む</p></div>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>メニュー管理</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: transparent;
+    }
+    .menu-wrapper {
+      padding: 2rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #1d3557;
+    }
+    .toolbar {
+      margin-bottom: 1rem;
+    }
+    .toolbar button {
+      margin-right: 0.5rem;
+      background-color: white;
+      color: #333;
+      border: 1px solid #ccc;
+      padding: 0.5rem 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .toolbar button:hover {
+      background-color: #e2e8f0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      font-size: 0.85rem;
+    }
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+    }
+    th {
+      background-color: #e0e7ef;
+    }
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 0.3rem;
+      box-sizing: border-box;
+    }
+    input[type="checkbox"] {
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-wrapper">
+    <h2>メニュー管理</h2>
+    <div class="toolbar">
+      <button onclick="addMenu()">➕ メニュー追加</button>
+      <button onclick="deleteSelected()">🗑️ 削除</button>
+      <button onclick="saveMenus()">💾 更新</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+          <th>メニュー名</th>
+          <th>テキスト</th>
+          <th>ページ</th>
+          <th>順番</th>
+          <th>表示</th>
+        </tr>
+      </thead>
+      <tbody id="menuTableBody">
+        <!-- データ行をここに挿入 -->
+      </tbody>
+    </table>
+  </div>
+
+  <script>
+    (async () => {
+      const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+      const supabase = createClient(
+        'https://viihcgkjzzhkdiwdzdex.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+      );
+
+      async function loadMenus() {
+        const { data, error } = await supabase.from('menu_config').select('*').order('sort', { ascending: true });
+        if (error) {
+          console.error(error);
+          return;
+        }
+        renderTable(data);
+      }
+
+      function renderTable(data) {
+        const tbody = document.getElementById('menuTableBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><input type="checkbox" value="${row.id}"></td>
+            <td><input type="text" value="${row.label || ''}" data-id="${row.id}" data-field="label"></td>
+            <td><input type="text" value="${row.text || ''}" data-id="${row.id}" data-field="text"></td>
+            <td><input type="text" value="${row.page || ''}" data-id="${row.id}" data-field="page"></td>
+            <td><input type="number" value="${row.sort || 0}" data-id="${row.id}" data-field="sort"></td>
+            <td><input type="checkbox" ${row.show ? 'checked' : ''} data-id="${row.id}" data-field="show"></td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      window.toggleAll = function (master) {
+        document.querySelectorAll('#menuTableBody input[type="checkbox"]').forEach(cb => {
+          if (cb !== master) cb.checked = master.checked;
+        });
+      };
+
+      window.addMenu = async function () {
+        const { data, error } = await supabase.from('menu_config').insert([{ label: '', text: '', page: '', sort: 999, show: true }]);
+        if (error) {
+          console.error(error);
+        } else {
+          loadMenus();
+        }
+      };
+
+      window.deleteSelected = async function () {
+        const ids = Array.from(document.querySelectorAll('#menuTableBody input[type="checkbox"]:checked')).map(cb => cb.value);
+        if (ids.length === 0) return;
+        const { error } = await supabase.from('menu_config').delete().in('id', ids);
+        if (error) {
+          console.error(error);
+        } else {
+          loadMenus();
+        }
+      };
+
+      window.saveMenus = async function () {
+        const inputs = document.querySelectorAll('#menuTableBody input[data-id]');
+        const grouped = {};
+        inputs.forEach(input => {
+          const id = input.dataset.id;
+          const field = input.dataset.field;
+          if (!grouped[id]) grouped[id] = {};
+          if (input.type === 'checkbox') {
+            grouped[id][field] = input.checked;
+          } else if (input.type === 'number') {
+            grouped[id][field] = Number(input.value);
+          } else {
+            grouped[id][field] = input.value;
+          }
+        });
+
+        for (const [id, fields] of Object.entries(grouped)) {
+          await supabase.from('menu_config').update(fields).eq('id', id);
+        }
+        loadMenus();
+      };
+
+      loadMenus();
+    })();
+  </script>
+</body>
+</html>
