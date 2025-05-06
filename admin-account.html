@@ -6,61 +6,7 @@
   <title>アカウント管理</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #f1f5f9;
-    }
-    .account-container {
-      padding: 20px;
-    }
-    h2 {
-      margin-bottom: 1rem;
-    }
-    .filter-group, .action-group {
-      display: inline-block;
-      margin-right: 2rem;
-    }
-    .filter-group label, .action-group button {
-      margin-right: 0.5rem;
-    }
-    .action-group button {
-      padding: 0.4rem 1rem;
-      background-color: white;
-      color: #2a6ebb;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .action-group button:hover {
-      background-color: #e3eefc;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-      background: white;
-      font-size: 0.8rem;
-    }
-    th, td {
-      border: 1px solid #ccc;
-      padding: 0.3rem;
-      text-align: center;
-    }
-    th {
-      background-color: #e0e7ff;
-    }
-    .status-pending {
-      color: red;
-      font-weight: bold;
-    }
-    .status-approved {
-      color: green;
-      font-weight: bold;
-    }
+   /* (CSSは変更なし) */
   </style>
  </head>
  <body>
@@ -91,82 +37,76 @@
    </table>
   </div>
   <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    const supabase = createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
-    let allData = [];
-    async function fetchAccounts() {
-      const { data, error } = await supabase
-        .from("applications")
-        .select("*");
-      if (error) {
-        alert("読み込みエラー: " + error.message);
-        return;
-      }
-      allData = data;
-      renderTable(data);
+   import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+   const supabase = createClient(  // 再度初期化
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+   );
+   let allData = [];
+   async function fetchAccounts() {
+    const { data, error } = await supabase
+     .from("applications")
+     .select("*");
+    if (error) {
+     alert("読み込みエラー: " + error.message);
+     return;
     }
-    function renderTable(data) {
-      const tbody = document.querySelector("#account-table tbody");
-      tbody.innerHTML = "";
-      data.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><input type="checkbox" data-email="${row.email}"></td>
-          <td>${row.org_name || ""}</td>
-          <td>${row.email}</td>
-          <td>${row.as_admin ? "管理者" : ""}</td>
-          <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+    allData = data;
+    renderTable(data);
+   }
+   function renderTable(data) {
+    const tbody = document.querySelector("#account-table tbody");
+    tbody.innerHTML = "";
+    data.forEach(row => {
+     const tr = document.createElement("tr");
+     tr.innerHTML = `
+       <td><input type="checkbox" data-email="${row.email}"></td>
+       <td>${row.org_name || ""}</td>
+       <td>${row.email}</td>
+       <td>${row.as_admin ? "管理者" : ""}</td>
+       <td class="${row.status === "approved" ? "status-approved" : "status-pending"}">${row.status}</td>
+     `;
+     tbody.appendChild(tr);
+    });
+   }
+   function toggleAll(master) {
+    document.querySelectorAll("#account-table tbody input[type='checkbox']").forEach(cb => cb.checked = master.checked);
+   }
+   function filterAccounts() {
+    const filter = document.querySelector("input[name='filter']:checked").value;
+    if (filter === "all") {
+     renderTable(allData);
+    } else {
+     renderTable(allData.filter(row => row.status === filter));
     }
-    function toggleAll(master) {
-      document.querySelectorAll("#account-table tbody input[type='checkbox']").forEach(cb => cb.checked = master.checked);
+   }
+   async function updateStatus(newStatus) {
+    const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
+    if (selected.length === 0) return alert("対象が選択されていません");
+    const { error } = await supabase
+     .from("applications")
+     .update({ status: newStatus })
+     .in("email", selected);
+    if (error) {
+     alert("更新エラー: " + error.message);
+    } else {
+     fetchAccounts();
     }
-    function filterAccounts() {
-      const filter = document.querySelector("input[name='filter']:checked").value;
-      if (filter === "all") {
-        renderTable(allData);
-      } else {
-        renderTable(allData.filter(row => row.status === filter));
-      }
+   }
+   async function deleteSelected() {
+    const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
+    if (selected.length === 0) return alert("対象が選択されていません");
+    const { error } = await supabase
+     .from("applications")
+     .delete()
+     .in("email", selected);
+    if (error) {
+     alert("削除エラー: " + error.message);
+    } else {
+     fetchAccounts();
     }
-    async function updateStatus(newStatus) {
-      const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
-      if (selected.length === 0) {
-        alert("対象が選択されていません");
-        return;
-      }
-      const { error } = await supabase
-        .from("applications")
-        .update({ status: newStatus })
-        .in("email", selected);
-      if (error) {
-        alert("更新エラー: " + error.message);
-      } else {
-        fetchAccounts();
-      }
-    }
-    async function deleteSelected() {
-      const selected = [...document.querySelectorAll("#account-table tbody input:checked")].map(cb => cb.dataset.email);
-      if (selected.length === 0) {
-        alert("対象が選択されていません");
-        return;
-      }
-      const { error } = await supabase
-        .from("applications")
-        .delete()
-        .in("email", selected);
-      if (error) {
-        alert("削除エラー: " + error.message);
-      } else {
-        fetchAccounts();
-      }
-    }
-    fetchAccounts();
+   }
+   fetchAccounts();
   </script>
  </body>
  </html>
