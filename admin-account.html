@@ -99,81 +99,83 @@
     </table>
   </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+  <script>
+    (async () => {
+      const {{ createClient }} = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm');
+      const supabase = createClient(
+        'https://viihcgkjzzhkdiwdzdex.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+      );
 
-    async function loadAccounts() {
-      const { data, error } = await supabase.from('applications').select('*').order('id', { ascending: true });
-      if (error) {
-        console.error(error);
-        return;
+      async function loadAccounts() {
+        const { data, error } = await supabase.from('applications').select('*').order('id', { ascending: true });
+        if (error) {
+          console.error(error);
+          return;
+        }
+        window.allAccounts = data;
+        renderTable(data);
       }
-      window.allAccounts = data;
-      renderTable(data);
-    }
 
-    function renderTable(data) {
-      const tbody = document.getElementById('accountTableBody');
-      tbody.innerHTML = '';
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><input type="checkbox" value="${row.email}"></td>
-          <td>${row.org_name}</td>
-          <td>${row.email}</td>
-          <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status === 'approved' ? '承認済' : '未承認'}</td>
-          <td style="text-align: center;">${row.is_admin ? '✅' : ''}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function getSelectedEmails() {
-      return Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked')).map(cb => cb.value);
-    }
-
-    async function updateStatus(newStatus) {
-      const emails = getSelectedEmails();
-      if (emails.length === 0) return;
-      const condition = emails.map(e => `email.eq.${e}`).join(',');
-      const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
-      if (error) {
-        console.error(error);
-      } else {
-        loadAccounts();
+      function renderTable(data) {
+        const tbody = document.getElementById('accountTableBody');
+        tbody.innerHTML = '';
+        data.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><input type="checkbox" value="${row.email}"></td>
+            <td>${row.org_name}</td>
+            <td>${row.email}</td>
+            <td class="${row.status === 'approved' ? 'status-approved' : 'status-pending'}">${row.status === 'approved' ? '承認済' : '未承認'}</td>
+            <td style="text-align: center;">${row.is_admin ? '✅' : ''}</td>
+          `;
+          tbody.appendChild(tr);
+        });
       }
-    }
 
-    async function deleteSelected() {
-      const emails = getSelectedEmails();
-      if (emails.length === 0) return;
-      const condition = emails.map(e => `email.eq.${e}`).join(',');
-      const { error } = await supabase.from('applications').delete().or(condition);
-      if (error) {
-        console.error(error);
-      } else {
-        loadAccounts();
-      }
-    }
+      window.getSelectedEmails = function () {
+        return Array.from(document.querySelectorAll('tbody input[type="checkbox"]:checked')).map(cb => cb.value);
+      };
 
-    function toggleAll(master) {
-      document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
-    }
+      window.updateStatus = async function (newStatus) {
+        const emails = window.getSelectedEmails();
+        if (emails.length === 0) return;
+        const condition = emails.map(e => `email.eq.${e}`).join(',');
+        const { error } = await supabase.from('applications').update({ status: newStatus }).or(condition);
+        if (error) {
+          console.error(error);
+        } else {
+          loadAccounts();
+        }
+      };
 
-    function filterAccounts() {
-      const filter = document.querySelector('input[name="statusFilter"]:checked').value;
-      if (filter === 'all') {
-        renderTable(window.allAccounts);
-      } else {
-        renderTable(window.allAccounts.filter(a => a.status === filter));
-      }
-    }
+      window.deleteSelected = async function () {
+        const emails = window.getSelectedEmails();
+        if (emails.length === 0) return;
+        const condition = emails.map(e => `email.eq.${e}`).join(',');
+        const { error } = await supabase.from('applications').delete().or(condition);
+        if (error) {
+          console.error(error);
+        } else {
+          loadAccounts();
+        }
+      };
 
-    loadAccounts();
+      window.toggleAll = function (master) {
+        document.querySelectorAll('tbody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
+      };
+
+      window.filterAccounts = function () {
+        const filter = document.querySelector('input[name="statusFilter"]:checked').value;
+        if (filter === 'all') {
+          renderTable(window.allAccounts);
+        } else {
+          renderTable(window.allAccounts.filter(a => a.status === filter));
+        }
+      };
+
+      loadAccounts();
+    })();
   </script>
 </body>
 </html>
