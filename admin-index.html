@@ -65,15 +65,12 @@
   </div>
 
   <script type="module">
-    // 自動ログイン判定（セッション維持）
-    if (localStorage.getItem("carelay_admin_auth") === "true") {
-      window.location.href = "admin-top.html";
-    }
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-    const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    );
 
     document.getElementById("login-btn").addEventListener("click", async () => {
       const email = document.getElementById("email").value.trim();
@@ -81,8 +78,11 @@
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      console.log("📧 Email:", email);
-      console.log("🔑 Password:", password);
+      const { data: { user }, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError || !user) {
+        errorDiv.textContent = "認証に失敗しました（メールまたはパスワードに誤りがあります）。";
+        return;
+      }
 
       const { data, error } = await supabase
         .from("applications")
@@ -92,18 +92,10 @@
         .single();
 
       if (error || !data) {
-        console.log("🔴 管理者情報が見つかりません", error);
-        errorDiv.textContent = "❌ 管理者情報が見つかりません。";
+        errorDiv.textContent = "管理者情報が見つかりません。";
         return;
       }
 
-      if (data.admin_pass !== password) {
-        console.log("🔴 パスワードが一致しません");
-        errorDiv.textContent = "❌ パスワードが一致しません。";
-        return;
-      }
-
-      console.log("🟢 認証成功");
       localStorage.setItem("carelay_admin_auth", "true");
       window.location.href = "admin-top.html";
     });
