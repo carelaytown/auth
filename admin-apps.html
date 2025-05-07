@@ -1,237 +1,222 @@
 <!DOCTYPE html>
-<html lang="ja">
-
-<head>
-  <meta charset="UTF-8">
-  <title>アプリ管理</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
-  <style>
-    body {
-      margin: 0;
-      font-family: 'Noto Sans JP', sans-serif;
-      background-color: transparent;
-    }
-
-    .app-wrapper {
-      padding: 2rem;
-    }
-
-    h2 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-      color: #1d3557;
-    }
-
-    .toolbar {
-      margin-bottom: 1rem;
-    }
-
-    .toolbar button {
-      margin-right: 0.5rem;
-      background-color: white;
-      color: #333;
-      border: 1px solid #ccc;
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .toolbar button:hover {
-      background-color: #e2e8f0;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-      font-size: 0.85rem;
-    }
-
-    th,
-    td {
-      padding: 0.5rem;
-      border: 1px solid #e2e8f0;
-      text-align: left;
-    }
-
-    th {
-      background-color: #e0e7ef;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      padding: 0.3rem;
-      box-sizing: border-box;
-    }
-
-    input[type="checkbox"] {
-      transform: scale(1.2);
-    }
-  </style>
-</head>
-
-<body>
-  <div class="app-wrapper">
-    <h2>アプリ管理</h2>
-    <div class="toolbar">
-      <button onclick="addApp()">➕ アプリ追加</button>
-      <button onclick="deleteSelected()">🗑️ 削除</button>
-      <button onclick="saveApps()">💾 更新</button>
-      <select id="categoryFilter">
-        <option value="">全てのカテゴリ</option>
-      </select>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
-          <th>名前</th>
-          <th>ページ</th>
-          <th>カテゴリ</th>
-          <th>アイコン</th>
-          <th>順番</th>
-          <th>公開</th>
-        </tr>
-      </thead>
-      <tbody id="appTableBody">
-        </tbody>
-    </table>
-  </div>
-
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
-
-    async function loadApps() {
-      const { data, error } = await supabase.from('apps').select('*').order('sort', { ascending: true });
-      if (error) {
-        console.error(error);
-        return;
-      }
-      window.allApps = data; // データをグローバル変数に格納
-      renderTable(data);
-      loadCategories(); // カテゴリをロード
-    }
-
-    function renderTable(data) {
-      const tbody = document.getElementById('appTableBody');
-      tbody.innerHTML = '';
-      data.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><input type="checkbox" value="${row.id}"></td>
-          <td><input type="text" value="${row.label || ''}" data-id="${row.id}" data-field="label"></td>
-          <td><input type="text" value="${row.page || ''}" data-id="${row.id}" data-field="page"></td>
-          <td><input type="text" value="${row.category || ''}" data-id="${row.id}" data-field="category"></td>
-          <td><input type="text" value="${row.icon || ''}" data-id="${row.id}" data-field="icon"></td>
-          <td><input type="number" value="${row.sort || 0}" data-id="${row.id}" data-field="sort"></td>
-          <td><input type="checkbox" ${row.is_public ? 'checked' : ''} data-id="${row.id}" data-field="is_public"></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.toggleAll = function (master) {
-      document.querySelectorAll('#appTableBody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
-    };
-
-    window.updateApp = async function (id, field, value) {
-      const updates = {};
-      updates[field] = value;
-      const { error } = await supabase.from('apps').update(updates).eq('id', id);
-      if (error) {
-        console.error(error);
-      }
-    };
-
-    window.addApp = async function () {
-      const { error } = await supabase.from('apps').insert([{ label: '', page: '', category: '', icon: '', sort: 999, is_public: false }]);
-      if (error) {
-        console.error(error);
-      } else {
-        loadApps();
-      }
-    };
-
-    window.deleteSelected = async function () {
-      const ids = Array.from(document.querySelectorAll('#appTableBody input[type="checkbox"]:checked')).map(cb => cb.value);
-      if (ids.length === 0) return;
-      const { error } = await supabase.from('apps').delete().in('id', ids);
-      if (error) {
-        console.error(error);
-      } else {
-        loadApps();
-      }
-    };
-
-    window.saveApps = async function () {
-      const inputs = document.querySelectorAll('#appTableBody input[data-id]');
-      const grouped = {};
-      inputs.forEach(input => {
-        const id = input.dataset.id;
-        const field = input.dataset.field;
-        if (!grouped[id]) grouped[id] = {};
-        if (input.type === 'checkbox') {
-          grouped[id][field] = input.checked;
-        } else if (input.type === 'number') {
-          grouped[id][field] = Number(input.value);
-        } else {
-          grouped[id][field] = input.value;
+    <html lang="ja">
+    <head>
+      <meta charset="UTF-8">
+      <title>アプリ管理</title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
+      <style>
+        body {
+          margin: 0;
+          font-family: 'Noto Sans JP', sans-serif;
+          background-color: transparent;
         }
-      });
-
-      const updates = Object.entries(grouped).map(([id, values]) => ({ id: Number(id), ...values }));
-      const { error } = await supabase.from('apps').upsert(updates);
-      if (error) {
-        console.error(error);
-      } else {
+        .app-wrapper {
+          padding: 2rem;
+        }
+        h2 {
+          font-size: 1.5rem;
+          margin-bottom: 1rem;
+          color: #1d3557;
+        }
+        .toolbar {
+          margin-bottom: 1rem;
+        }
+        .toolbar button {
+          margin-right: 0.5rem;
+          background-color: white;
+          color: #333;
+          border: 1px solid #ccc;
+          padding: 0.5rem 1rem;
+          border-radius: 0.5rem;
+          cursor: pointer;
+          font-size: 0.9rem;
+        }
+        .toolbar button:hover {
+          background-color: #e2e8f0;
+        }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          background: white;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+          font-size: 0.85rem;
+        }
+        th, td {
+          padding: 0.5rem;
+          border: 1px solid #e2e8f0;
+          text-align: left;
+        }
+        th {
+          background-color: #e0e7ef;
+        }
+        input[type="text"], input[type="number"] {
+          width: 100%;
+          padding: 0.3rem;
+          box-sizing: border-box;
+        }
+        input[type="checkbox"] {
+          transform: scale(1.2);
+        }
+      </style>
+    </head>
+    <body>
+      <div class="app-wrapper">
+        <h2>アプリ管理</h2>
+        <div class="toolbar">
+          <button onclick="addApp()">➕ アプリ追加</button>
+          <button onclick="deleteSelected()">🗑️ 削除</button>
+          <button onclick="saveApps()">💾 更新</button>
+          <select id="categoryFilter">
+            <option value="">全てのカテゴリ</option>
+          </select>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
+              <th>名前</th>
+              <th>ページ</th>
+              <th>カテゴリ</th>
+              <th>アイコン</th>
+              <th>順番</th>
+              <th>公開</th>
+            </tr>
+          </thead>
+          <tbody id="appTableBody">
+            </tbody>
+        </table>
+      </div>
+    
+      <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        const supabase = createClient(
+          'https://viihcgkjzzhkdiwdzdex.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+        );
+    
+        async function loadApps() {
+          const { data, error } = await supabase.from('apps').select('*').order('sort', { ascending: true });
+          if (error) {
+            console.error(error);
+            return;
+          }
+          window.allApps = data; // データをグローバル変数に格納
+          renderTable(data);
+          loadCategories(); // カテゴリをロード
+        }
+    
+        function renderTable(data) {
+          const tbody = document.getElementById('appTableBody');
+          tbody.innerHTML = '';
+          data.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><input type="checkbox" value="${row.id}"></td>
+              <td><input type="text" value="${row.label || ''}" data-id="${row.id}" data-field="label"></td>
+              <td><input type="text" value="${row.page || ''}" data-id="${row.id}" data-field="page"></td>
+              <td><input type="text" value="${row.category || ''}" data-id="${row.id}" data-field="category"></td>
+              <td><input type="text" value="${row.icon || ''}" data-id="${row.id}" data-field="icon"></td>
+              <td><input type="number" value="${row.sort || 0}" data-id="${row.id}" data-field="sort"></td>
+              <td><input type="checkbox" ${row.is_public ? 'checked' : ''} data-id="${row.id}" data-field="is_public"></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+    
+        window.toggleAll = function (master) {
+          document.querySelectorAll('#appTableBody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
+        };
+    
+        window.updateApp = async function (id, field, value) {
+          const updates = {};
+          updates[field] = value;
+          const { error } = await supabase.from('apps').update(updates).eq('id', id);
+          if (error) {
+            console.error(error);
+          }
+        };
+    
+        window.addApp = async function () {
+          const { error } = await supabase.from('apps').insert([{ label: '', page: '', category: '', icon: '', sort: 999, is_public: false }]);
+          if (error) {
+            console.error(error);
+          } else {
+            loadApps();
+          }
+        };
+    
+        window.deleteSelected = async function () {
+          const ids = Array.from(document.querySelectorAll('#appTableBody input[type="checkbox"]:checked')).map(cb => cb.value);
+          if (ids.length === 0) return;
+          const { error } = await supabase.from('apps').delete().in('id', ids);
+          if (error) {
+            console.error(error);
+          } else {
+            loadApps();
+          }
+        };
+    
+        window.saveApps = async function () {
+          const inputs = document.querySelectorAll('#appTableBody input[data-id]');
+          const grouped = {};
+          inputs.forEach(input => {
+            const id = input.dataset.id;
+            const field = input.dataset.field;
+            if (!grouped[id]) grouped[id] = {};
+            if (input.type === 'checkbox') {
+              grouped[id][field] = input.checked;
+            } else if (input.type === 'number') {
+              grouped[id][field] = Number(input.value);
+            } else {
+              grouped[id][field] = input.value;
+            }
+          });
+    
+          const updates = Object.entries(grouped).map(([id, values]) => ({ id: Number(id), ...values }));
+          const { error } = await supabase.from('apps').upsert(updates);
+          if (error) {
+            console.error(error);
+          } else {
+            loadApps();
+          }
+        };
+    
+        async function loadCategories() {
+          const { data, error } = await supabase
+            .from('apps')
+            .select('category')
+            .distinct('category');
+    
+          if (error) {
+            console.error('カテゴリの読み込みエラー:', error);
+            return;
+          }
+    
+          const filter = document.getElementById('categoryFilter');
+          data.forEach(item => {
+            const option = document.createElement('option');
+            option.value = item.category;
+            option.textContent = item.category;
+            filter.appendChild(option);
+          });
+    
+          filter.addEventListener('change', () => {
+            filterApps(filter.value);
+          });
+        }
+    
+        function filterApps(category) {
+          let filteredData;
+          if (category === '') {
+            filteredData = window.allApps; //  loadApps()で取得したデータを参照するように変更
+          } else {
+            filteredData = window.allApps.filter(app => app.category === category); //  loadApps()で取得したデータを参照するように変更
+          }
+          renderTable(filteredData);
+        }
+    
         loadApps();
-      }
-    };
-
-    async function loadCategories() {
-      const { data, error } = await supabase
-        .from('apps')
-        .select('category')
-        .distinct('category');
-
-      if (error) {
-        console.error('カテゴリの読み込みエラー:', error);
-        return;
-      }
-
-      const filter = document.getElementById('categoryFilter');
-      data.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item.category;
-        option.textContent = item.category;
-        filter.appendChild(option);
-      });
-
-      filter.addEventListener('change', () => {
-        filterApps(filter.value);
-      });
-    }
-
-    function filterApps(category) {
-      let filteredData;
-      if (category === '') {
-        filteredData = window.allApps; //  loadApps()で取得したデータを参照するように変更
-      } else {
-        filteredData = window.allApps.filter(app => app.category === category); //  loadApps()で取得したデータを参照するように変更
-      }
-      renderTable(filteredData);
-    }
-
-    loadApps();
-  </script>
-</body>
-
-</html>
+      </script>
+    </body>
+    </html>
