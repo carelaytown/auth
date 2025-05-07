@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -20,10 +21,13 @@
       color: #1d3557;
     }
     .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
       margin-bottom: 1rem;
     }
     .toolbar button {
-      margin-right: 0.5rem;
       background-color: white;
       color: #333;
       border: 1px solid #ccc;
@@ -38,6 +42,15 @@
     .toolbar select {
       padding: 0.5rem;
       font-size: 0.9rem;
+    }
+    #notice {
+      margin-left: auto;
+      padding: 0.4rem 0.8rem;
+      background-color: #007bff;
+      color: white;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      display: none;
     }
     table {
       width: 100%;
@@ -75,6 +88,7 @@
       <select id="categoryFilter" onchange="loadApps()">
         <option value="all">すべて</option>
       </select>
+      <div id="notice">✅ 更新しました</div>
     </div>
     <table>
       <thead>
@@ -88,9 +102,7 @@
           <th>公開</th>
         </tr>
       </thead>
-      <tbody id="appTableBody">
-        <!-- データ行をここに挿入 -->
-      </tbody>
+      <tbody id="appTableBody"></tbody>
     </table>
   </div>
 
@@ -149,6 +161,15 @@
       });
     }
 
+    function showNotice(message) {
+      const notice = document.getElementById('notice');
+      notice.textContent = message;
+      notice.style.display = 'inline-block';
+      setTimeout(() => {
+        notice.style.display = 'none';
+      }, 3000);
+    }
+
     window.toggleAll = function (master) {
       document.querySelectorAll('#appTableBody input[type="checkbox"]').forEach(cb => {
         if (cb !== master) cb.checked = master.checked;
@@ -161,6 +182,7 @@
         console.error(error);
       } else {
         loadApps();
+        showNotice('➕ 追加しました');
       }
     };
 
@@ -172,6 +194,7 @@
         console.error(error);
       } else {
         loadApps();
+        showNotice('🗑️ 削除しました');
       }
     };
 
@@ -195,6 +218,7 @@
         await supabase.from('apps').update(fields).eq('id', id);
       }
       loadApps();
+      showNotice('💾 更新しました');
     };
 
     loadCategories();
