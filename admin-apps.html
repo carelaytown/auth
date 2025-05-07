@@ -96,7 +96,6 @@
           <th><input type="checkbox" id="checkAll" onclick="toggleAll(this)"></th>
           <th>名前</th>
           <th>ページ</th>
-          <th>説明</th>
           <th>カテゴリ</th>
           <th>アイコン</th>
           <th>順番</th>
@@ -153,7 +152,6 @@
           <td><input type="checkbox" value="${row.id}"></td>
           <td><input type="text" value="${row.label || ''}" data-id="${row.id}" data-field="label"></td>
           <td><input type="text" value="${row.page || ''}" data-id="${row.id}" data-field="page"></td>
-          <td><input type="text" value="${row.description || ''}" data-id="${row.id}" data-field="description"></td>
           <td><input type="text" value="${row.category || ''}" data-id="${row.id}" data-field="category"></td>
           <td><input type="text" value="${row.icon || ''}" data-id="${row.id}" data-field="icon"></td>
           <td><input type="number" value="${row.sort || 0}" data-id="${row.id}" data-field="sort"></td>
@@ -179,7 +177,7 @@
     };
 
     window.addApp = async function () {
-      const { error } = await supabase.from('apps').insert([{ label: '', page: '', description: '', category: '', icon: '', sort: 999, is_public: false }]);
+      const { error } = await supabase.from('apps').insert([{ label: '', page: '', category: '', icon: '', sort: 999, is_public: false }]);
       if (error) {
         console.error(error);
       } else {
