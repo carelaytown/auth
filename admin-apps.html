@@ -35,6 +35,10 @@
     .toolbar button:hover {
       background-color: #e2e8f0;
     }
+    .toolbar select {
+      padding: 0.5rem;
+      font-size: 0.9rem;
+    }
     table {
       width: 100%;
       border-collapse: collapse;
@@ -49,6 +53,7 @@
     }
     th {
       background-color: #e0e7ef;
+      white-space: nowrap;
     }
     input[type="text"], input[type="number"] {
       width: 100%;
@@ -67,6 +72,9 @@
       <button onclick="addApp()">➕ アプリ追加</button>
       <button onclick="deleteSelected()">🗑️ 削除</button>
       <button onclick="saveApps()">💾 更新</button>
+      <select id="categoryFilter" onchange="loadApps()">
+        <option value="all">すべて</option>
+      </select>
     </div>
     <table>
       <thead>
@@ -94,12 +102,33 @@
     );
 
     async function loadApps() {
-      const { data, error } = await supabase.from('apps').select('*').order('sort', { ascending: true });
+      const selectedCategory = document.getElementById('categoryFilter')?.value || 'all';
+      let query = supabase.from('apps').select('*');
+      if (selectedCategory !== 'all') {
+        query = query.eq('category', selectedCategory);
+      }
+      const { data, error } = await query.order('sort', { ascending: true });
       if (error) {
         console.error(error);
         return;
       }
       renderTable(data);
+    }
+
+    async function loadCategories() {
+      const { data, error } = await supabase.from('apps').select('category');
+      if (error) {
+        console.error(error);
+        return;
+      }
+      const categories = [...new Set(data.map(item => item.category).filter(Boolean))];
+      const select = document.getElementById('categoryFilter');
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        select.appendChild(option);
+      });
     }
 
     function renderTable(data) {
@@ -168,6 +197,7 @@
       loadApps();
     };
 
+    loadCategories();
     loadApps();
   </script>
 </body>
