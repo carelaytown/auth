@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <title>アプリ管理</title>
@@ -11,17 +12,21 @@
       font-family: 'Noto Sans JP', sans-serif;
       background-color: transparent;
     }
+
     .app-wrapper {
       padding: 2rem;
     }
+
     h2 {
       font-size: 1.5rem;
       margin-bottom: 1rem;
       color: #1d3557;
     }
+
     .toolbar {
       margin-bottom: 1rem;
     }
+
     .toolbar button {
       margin-right: 0.5rem;
       background-color: white;
@@ -32,9 +37,11 @@
       cursor: pointer;
       font-size: 0.9rem;
     }
+
     .toolbar button:hover {
       background-color: #e2e8f0;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -42,24 +49,31 @@
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
       font-size: 0.85rem;
     }
-    th, td {
+
+    th,
+    td {
       padding: 0.5rem;
       border: 1px solid #e2e8f0;
       text-align: left;
     }
+
     th {
       background-color: #e0e7ef;
     }
-    input[type="text"], input[type="number"] {
+
+    input[type="text"],
+    input[type="number"] {
       width: 100%;
       padding: 0.3rem;
       box-sizing: border-box;
     }
+
     input[type="checkbox"] {
       transform: scale(1.2);
     }
   </style>
 </head>
+
 <body>
   <div class="app-wrapper">
     <h2>アプリ管理</h2>
@@ -67,6 +81,9 @@
       <button onclick="addApp()">➕ アプリ追加</button>
       <button onclick="deleteSelected()">🗑️ 削除</button>
       <button onclick="saveApps()">💾 更新</button>
+      <select id="categoryFilter">
+        <option value="">全てのカテゴリ</option>
+      </select>
     </div>
     <table>
       <thead>
@@ -81,8 +98,7 @@
         </tr>
       </thead>
       <tbody id="appTableBody">
-        <!-- データ行をここに挿入 -->
-      </tbody>
+        </tbody>
     </table>
   </div>
 
@@ -99,7 +115,9 @@
         console.error(error);
         return;
       }
+      window.allApps = data; // データをグローバル変数に格納
       renderTable(data);
+      loadCategories(); // カテゴリをロード
     }
 
     function renderTable(data) {
@@ -121,9 +139,16 @@
     }
 
     window.toggleAll = function (master) {
-      document.querySelectorAll('#appTableBody input[type="checkbox"]').forEach(cb => {
-        if (cb !== master) cb.checked = master.checked;
-      });
+      document.querySelectorAll('#appTableBody input[type="checkbox"]').forEach(cb => cb.checked = master.checked);
+    };
+
+    window.updateApp = async function (id, field, value) {
+      const updates = {};
+      updates[field] = value;
+      const { error } = await supabase.from('apps').update(updates).eq('id', id);
+      if (error) {
+        console.error(error);
+      }
     };
 
     window.addApp = async function () {
@@ -162,13 +187,51 @@
         }
       });
 
-      for (const [id, fields] of Object.entries(grouped)) {
-        await supabase.from('apps').update(fields).eq('id', id);
+      const updates = Object.entries(grouped).map(([id, values]) => ({ id: Number(id), ...values }));
+      const { error } = await supabase.from('apps').upsert(updates);
+      if (error) {
+        console.error(error);
+      } else {
+        loadApps();
       }
-      loadApps();
     };
+
+    async function loadCategories() {
+      const { data, error } = await supabase
+        .from('apps')
+        .select('category')
+        .distinct('category');
+
+      if (error) {
+        console.error('カテゴリの読み込みエラー:', error);
+        return;
+      }
+
+      const filter = document.getElementById('categoryFilter');
+      data.forEach(item => {
+        const option = document.createElement('option');
+        option.value = item.category;
+        option.textContent = item.category;
+        filter.appendChild(option);
+      });
+
+      filter.addEventListener('change', () => {
+        filterApps(filter.value);
+      });
+    }
+
+    function filterApps(category) {
+      let filteredData;
+      if (category === '') {
+        filteredData = window.allApps; //  loadApps()で取得したデータを参照するように変更
+      } else {
+        filteredData = window.allApps.filter(app => app.category === category); //  loadApps()で取得したデータを参照するように変更
+      }
+      renderTable(filteredData);
+    }
 
     loadApps();
   </script>
 </body>
+
 </html>
