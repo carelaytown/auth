@@ -1,1 +1,123 @@
-<div><h2>アプリ管理</h2><p>ここにアプリJSを埋め込む</p></div>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>アプリ管理</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; background: #f0f2f5; }
+    .container { padding: 2rem; }
+    h2 { margin-bottom: 1rem; }
+    table { width: 100%; border-collapse: collapse; background: white; }
+    th, td { padding: 0.5rem; border: 1px solid #ccc; text-align: center; }
+    th { background-color: #f8f8f8; }
+    input[type="text"], input[type="number"] { width: 90%; }
+    button { margin-right: 0.5rem; padding: 0.4rem 1rem; }
+    .controls { margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>アプリ管理</h2>
+    <div class="controls">
+      <button onclick="addRow()">➕ メニュー追加</button>
+      <button onclick="deleteRows()">🗑 削除</button>
+      <button onclick="updateApps()">💾 更新</button>
+    </div>
+    <table id="appsTable">
+      <thead>
+        <tr>
+          <th></th>
+          <th>名前</th>
+          <th>ページ</th>
+          <th>カテゴリ</th>
+          <th>アイコン</th>
+          <th>順番</th>
+          <th>公開</th>
+        </tr>
+      </thead>
+      <tbody id="appsBody"></tbody>
+    </table>
+  </div>
+
+  <script>
+    const supabase = supabase.createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzIiw...'
+    );
+
+    async function loadApps() {
+      const { data, error } = await supabase.from('apps').select('*').order('sort', { ascending: true });
+      if (error) {
+        alert('読み込みエラー: ' + error.message);
+        return;
+      }
+      const tbody = document.getElementById('appsBody');
+      tbody.innerHTML = '';
+      data.forEach(app => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox" data-id="${app.id}"></td>
+          <td><input type="text" value="${app.label || ''}"></td>
+          <td><input type="text" value="${app.page || ''}"></td>
+          <td><input type="text" value="${app.category || ''}"></td>
+          <td><input type="text" value="${app.icon || ''}"></td>
+          <td><input type="number" value="${app.sort || 0}"></td>
+          <td><input type="checkbox" ${app.is_public ? 'checked' : ''}></td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    function addRow() {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td><input type="checkbox" data-id=""></td>
+        <td><input type="text" value=""></td>
+        <td><input type="text" value=""></td>
+        <td><input type="text" value=""></td>
+        <td><input type="text" value=""></td>
+        <td><input type="number" value="0"></td>
+        <td><input type="checkbox"></td>
+      `;
+      document.getElementById('appsBody').appendChild(row);
+    }
+
+    async function deleteRows() {
+      const rows = [...document.querySelectorAll('#appsBody tr')];
+      for (const row of rows) {
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const id = checkbox.dataset.id;
+        if (checkbox.checked && id) {
+          await supabase.from('apps').delete().eq('id', id);
+        }
+      }
+      loadApps();
+    }
+
+    async function updateApps() {
+      const rows = [...document.querySelectorAll('#appsBody tr')];
+      for (const row of rows) {
+        const [checkbox, label, page, category, icon, sort, isPublic] = row.querySelectorAll('input');
+        const id = checkbox.dataset.id;
+        const data = {
+          label: label.value,
+          page: page.value,
+          category: category.value,
+          icon: icon.value,
+          sort: parseInt(sort.value),
+          is_public: isPublic.checked
+        };
+        if (id) {
+          await supabase.from('apps').update(data).eq('id', id);
+        } else {
+          await supabase.from('apps').insert(data);
+        }
+      }
+      loadApps();
+    }
+
+    loadApps();
+  </script>
+</body>
+</html>
