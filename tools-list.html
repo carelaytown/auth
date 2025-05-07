@@ -1,131 +1,208 @@
-
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>生活支援アプリ一覧</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <title>ホームセンター | CARELAYタウン</title>
   <style>
     body {
-      font-family: 'Noto Sans JP', sans-serif;
       margin: 0;
-      padding: 2rem;
-      background-color: #f4f4f9;
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f0f6ff;
     }
-    h2 {
-      color: #2a4365;
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
     }
-    .app-list {
+    .intro {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .intro img {
+      width: 100px;
+      margin-right: 20px;
+      border-radius: 10px;
+    }
+    .intro h2 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    .intro p {
+      font-size: 14px;
+      color: #333;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+    .app-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 1rem;
-      margin-top: 1rem;
+      gap: 20px;
+      justify-content: flex-start;
     }
     .app-card {
-      background: white;
-      border: 1px solid #e2e8f0;
-      border-radius: 0.75rem;
-      padding: 1rem;
-      width: 260px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      width: calc(33% - 20px);
+      background-color: #fffdf5;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     .app-card h3 {
-      margin: 0;
-      font-size: 1.1rem;
-    }
-    .app-card .icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
+      margin: 0 0 10px;
+      font-size: 16px;
     }
     .app-card p {
-      flex-grow: 1;
-      font-size: 0.9rem;
-      color: #4a5568;
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 12px;
     }
     .app-card button {
-      margin-top: 0.8rem;
-      padding: 0.5rem;
-      font-size: 0.9rem;
+      padding: 6px 12px;
+      font-size: 13px;
       border: none;
-      border-radius: 0.5rem;
+      border-radius: 6px;
       cursor: pointer;
-    }
-    .add-btn {
-      background-color: #4299e1;
+      background-color: #2a6ebb;
       color: white;
     }
-    .remove-btn {
-      background-color: #e53e3e;
-      color: white;
+    .app-card button.remove {
+      background-color: #c0392b;
+    }
+    .modal-bg {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+    .modal-box {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      width: 300px;
+      text-align: center;
+    }
+    .modal-box p {
+      margin-bottom: 20px;
+    }
+    .modal-box button {
+      margin: 0 10px;
+      padding: 6px 14px;
     }
   </style>
 </head>
 <body>
-  <h2>生活支援アプリ一覧</h2>
-  <div class="app-list" id="appList"></div>
+  <div class="container">
+    <div class="intro">
+      <img src="img/toolcenter.jpg" alt="ホームセンター">
+      <div>
+        <h2>🏪 ホームセンター</h2>
+        <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
+      </div>
+    </div>
+    <hr>
+    <div class="app-grid">
+      <div class="app-card" data-id="toolcalc">
+        <h3>🧮 電卓</h3>
+        <p>シンプルで使いやすい計算機です。</p>
+        <button onclick="toggleApp(this, 'toolcalc')">追加する</button>
+      </div>
+      <div class="app-card" data-id="tooldays">
+        <h3>📅 日数計算</h3>
+        <p>開始日と終了日から日数を自動計算します。</p>
+        <button onclick="toggleApp(this, 'tooldays')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolcheck">
+        <h3>📋 チェック表</h3>
+        <p>日々の作業を確認できるチェックリストです。</p>
+        <button onclick="toggleApp(this, 'toolcheck')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolmemo">
+        <h3>📝 メモ帳</h3>
+        <p>ちょっとしたメモを取るための簡易ノート。</p>
+        <button onclick="toggleApp(this, 'toolmemo')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolcalendar">
+        <h3>📅 カレンダー</h3>
+        <p>予定の確認や管理ができるカレンダーです。</p>
+        <button onclick="toggleApp(this, 'toolcalendar')">追加する</button>
+      </div>
+    </div>
+  </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+  <!-- モーダル -->
+  <div class="modal-bg" id="modal">
+    <div class="modal-box">
+      <p id="modalMessage"></p>
+      <button onclick="applyAction()">OK</button>
+      <button onclick="closeModal()">キャンセル</button>
+    </div>
+  </div>
 
-    const storageKey = 'carelayTools';
+  <script>
+    let targetId = "";
+    let actionType = "";
+    let targetButton = null;
 
-    function getStoredApps() {
-      return JSON.parse(localStorage.getItem(storageKey) || '[]');
+    function getToolList() {
+      return JSON.parse(localStorage.getItem("carelayTools") || "[]");
     }
 
-    function saveStoredApps(list) {
-      localStorage.setItem(storageKey, JSON.stringify(list));
+    function toggleApp(btn, id) {
+      const list = getToolList();
+      targetId = id;
+      targetButton = btn;
+      if (list.includes(id)) {
+        actionType = "remove";
+        document.getElementById("modalMessage").textContent = "このアプリを解除しますか？";
+      } else {
+        actionType = "add";
+        document.getElementById("modalMessage").textContent = "このアプリを追加しますか？";
+      }
+      document.getElementById("modal").style.display = "flex";
     }
 
-    function isAppStored(page) {
-      return getStoredApps().includes(page);
-    }
-
-    function toggleApp(page) {
-      const current = getStoredApps();
-      const exists = current.includes(page);
-      const updated = exists ? current.filter(p => p !== page) : [...current, page];
-      saveStoredApps(updated);
-      if (window.parent?.setupAccordionMenu) {
+    function applyAction() {
+      const list = getToolList();
+      if (actionType === "add") {
+        if (!list.includes(targetId)) list.unshift(targetId);
+        targetButton.textContent = "解除する";
+        targetButton.classList.add("remove");
+      } else {
+        const idx = list.indexOf(targetId);
+        if (idx >= 0) list.splice(idx, 1);
+        targetButton.textContent = "追加する";
+        targetButton.classList.remove("remove");
+      }
+      localStorage.setItem("carelayTools", JSON.stringify(list));
+      closeModal();
+      if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
         window.parent.setupAccordionMenu();
       }
-      renderApps(); // 再描画
     }
 
-    async function renderApps() {
-      const { data, error } = await supabase.from('apps').select('*').eq('category', 'tools').eq('is_public', true).order('sort', { ascending: true });
-      if (error) {
-        console.error(error);
-        return;
-      }
-      const list = document.getElementById('appList');
-      list.innerHTML = '';
-      data.forEach(app => {
-        const card = document.createElement('div');
-        card.className = 'app-card';
-        card.innerHTML = `
-          <div class="icon">${app.icon || '🛠️'}</div>
-          <h3>${app.label || '(無題)'}</h3>
-          <p>${app.description || ''}</p>
-          <button class="${isAppStored(app.page) ? 'remove-btn' : 'add-btn'}"
-            onclick="toggleApp('${app.page}')">
-            ${isAppStored(app.page) ? '解除する' : '追加する'}
-          </button>
-        `;
-        list.appendChild(card);
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    window.onload = () => {
+      const list = getToolList();
+      document.querySelectorAll(".app-card").forEach(card => {
+        const id = card.getAttribute("data-id");
+        const btn = card.querySelector("button");
+        if (list.includes(id)) {
+          btn.textContent = "解除する";
+          btn.classList.add("remove");
+        }
       });
-    }
-
-    window.toggleApp = toggleApp;
-    renderApps();
+    };
   </script>
 </body>
 </html>
