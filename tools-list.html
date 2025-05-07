@@ -107,3 +107,102 @@
         <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
       </div>
     </div>
+    <hr>
+    <div class="app-grid">
+      <div class="app-card" data-id="toolcalc">
+        <h3>🧮 電卓</h3>
+        <p>シンプルで使いやすい計算機です。</p>
+        <button onclick="toggleApp(this, 'toolcalc')">追加する</button>
+      </div>
+      <div class="app-card" data-id="tooldays">
+        <h3>📅 日数計算</h3>
+        <p>開始日と終了日から日数を自動計算します。</p>
+        <button onclick="toggleApp(this, 'tooldays')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolcheck">
+        <h3>📋 チェック表</h3>
+        <p>日々の作業を確認できるチェックリストです。</p>
+        <button onclick="toggleApp(this, 'toolcheck')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolmemo">
+        <h3>📝 メモ帳</h3>
+        <p>ちょっとしたメモを取るための簡易ノート。</p>
+        <button onclick="toggleApp(this, 'toolmemo')">追加する</button>
+      </div>
+      <div class="app-card" data-id="toolcalendar">
+        <h3>📅 カレンダー</h3>
+        <p>予定の確認や管理ができるカレンダーです。</p>
+        <button onclick="toggleApp(this, 'toolcalendar')">追加する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル -->
+  <div class="modal-bg" id="modal">
+    <div class="modal-box">
+      <p id="modalMessage"></p>
+      <button onclick="applyAction()">OK</button>
+      <button onclick="closeModal()">キャンセル</button>
+    </div>
+  </div>
+
+  <script>
+    let targetId = "";
+    let actionType = "";
+    let targetButton = null;
+
+    function getToolList() {
+      return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+    }
+
+    function toggleApp(btn, id) {
+      const list = getToolList();
+      targetId = id;
+      targetButton = btn;
+      if (list.includes(id)) {
+        actionType = "remove";
+        document.getElementById("modalMessage").textContent = "このアプリを解除しますか？";
+      } else {
+        actionType = "add";
+        document.getElementById("modalMessage").textContent = "このアプリを追加しますか？";
+      }
+      document.getElementById("modal").style.display = "flex";
+    }
+
+    function applyAction() {
+      const list = getToolList();
+      if (actionType === "add") {
+        if (!list.includes(targetId)) list.unshift(targetId);
+        targetButton.textContent = "解除する";
+        targetButton.classList.add("remove");
+      } else {
+        const idx = list.indexOf(targetId);
+        if (idx >= 0) list.splice(idx, 1);
+        targetButton.textContent = "追加する";
+        targetButton.classList.remove("remove");
+      }
+      localStorage.setItem("carelayTools", JSON.stringify(list));
+      closeModal();
+      if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
+        window.parent.setupAccordionMenu();
+      }
+    }
+
+    function closeModal() {
+      document.getElementById("modal").style.display = "none";
+    }
+
+    window.onload = () => {
+      const list = getToolList();
+      document.querySelectorAll(".app-card").forEach(card => {
+        const id = card.getAttribute("data-id");
+        const btn = card.querySelector("button");
+        if (list.includes(id)) {
+          btn.textContent = "解除する";
+          btn.classList.add("remove");
+        }
+      });
+    };
+  </script>
+</body>
+</html>
