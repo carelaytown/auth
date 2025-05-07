@@ -89,7 +89,7 @@
       </div>
     
       <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@latest/+esm'; // ★ latestを指定
         const supabase = createClient(
           'https://viihcgkjzzhkdiwdzdex.supabase.co',
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
@@ -101,9 +101,9 @@
             console.error(error);
             return;
           }
-          window.allApps = data; // データをグローバル変数に格納
+          window.allApps = data;
           renderTable(data);
-          loadCategories(); // カテゴリをロード
+          await loadCategories(); // await を追加
         }
     
         function renderTable(data) {
@@ -193,11 +193,13 @@
             return;
           }
     
+          const categories = [...new Set(data.map(item => item.category))]; // 重複排除
+    
           const filter = document.getElementById('categoryFilter');
-          data.forEach(item => {
+          categories.forEach(category => {
             const option = document.createElement('option');
-            option.value = item.category;
-            option.textContent = item.category;
+            option.value = category;
+            option.textContent = category;
             filter.appendChild(option);
           });
     
@@ -209,9 +211,9 @@
         function filterApps(category) {
           let filteredData;
           if (category === '') {
-            filteredData = window.allApps; //  loadApps()で取得したデータを参照するように変更
+            filteredData = window.allApps;
           } else {
-            filteredData = window.allApps.filter(app => app.category === category); //  loadApps()で取得したデータを参照するように変更
+            filteredData = window.allApps.filter(app => app.category === category);
           }
           renderTable(filteredData);
         }
