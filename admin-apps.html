@@ -138,11 +138,11 @@
         };
     
         window.addApp = async function () {
-          const { error } = await supabase.from('apps').insert([{ label: '', page: '', category: '', icon: '', sort: 999, is_public: false }]);
+          const { data, error } = await supabase.from('apps').insert([{ label: '', page: '', category: '', icon: '', sort: 999, is_public: false }]).select('*'); // selectを追加
           if (error) {
             console.error(error);
           } else {
-            loadApps();
+            renderTable([data[0]]); // 追加した行のみを反映
           }
         };
     
@@ -174,12 +174,16 @@
           });
     
           const updates = Object.entries(grouped).map(([id, values]) => ({ id: Number(id), ...values }));
-          const { error } = await supabase.from('apps').upsert(updates);
-          if (error) {
-            console.error(error);
-          } else {
-            loadApps();
+          for (const update of updates) {
+            const { error } = await supabase
+              .from('apps')
+              .update(update)
+              .eq('id', update.id); // idで更新
+            if (error) {
+              console.error(error);
+            }
           }
+          loadApps();
         };
     
         async function loadCategories() {
@@ -193,7 +197,7 @@
             return;
           }
     
-          const categories = [...new Set(data.map(item => item.category))]; // 重複排除
+          const categories = [...new Set(data.map(item => item.category))];
     
           const filter = document.getElementById('categoryFilter');
           categories.forEach(category => {
