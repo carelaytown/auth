@@ -6,6 +6,12 @@
   <title>アプリ管理</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
   <style>
+    .filter-box {
+      margin-bottom: 1rem;
+    }
+    .filter-box label {
+      margin-right: 0.5rem;
+    }
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
@@ -65,6 +71,12 @@
   <div class="apps-wrapper">
     <h2>アプリ管理</h2>
     <div class="toolbar">
+    <div class="filter-box">
+      <label for="categoryFilter">カテゴリで絞り込み:</label>
+      <select id="categoryFilter" onchange="filterByCategory()">
+        <option value="all">すべて表示</option>
+      </select>
+    </div>
       <button onclick="addApp()">➕ アプリ追加</button>
       <button onclick="deleteSelected()">🗑️ 削除</button>
       <button onclick="saveApps()">💾 更新</button>
@@ -103,6 +115,8 @@
       }
 
       function renderTable(data) {
+        const tr = document.createElement("tr");
+        tr.setAttribute("data-category", row.category || "");
         const tbody = document.getElementById('appTableBody');
         tbody.innerHTML = '';
         data.forEach(row => {
