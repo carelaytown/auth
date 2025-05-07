@@ -6,12 +6,6 @@
   <title>アプリ管理</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP&display=swap" rel="stylesheet" />
   <style>
-    .filter-box {
-      margin-bottom: 1rem;
-    }
-    .filter-box label {
-      margin-right: 0.5rem;
-    }
     body {
       margin: 0;
       font-family: 'Noto Sans JP', sans-serif;
@@ -71,12 +65,22 @@
   <div class="apps-wrapper">
     <h2>アプリ管理</h2>
     <div class="toolbar">
-    <div class="filter-box">
-      <label for="categoryFilter">カテゴリで絞り込み:</label>
-      <select id="categoryFilter" onchange="filterByCategory()">
-        <option value="all">すべて表示</option>
-      </select>
-    </div>
+<div class="filter-row" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1rem;">
+  <div>
+    <label for="categoryFilter">カテゴリ：</label>
+    <select id="categoryFilter" onchange="applyFilters()">
+      <option value="">すべて</option>
+    </select>
+  </div>
+  <div>
+    <label for="visibilityFilter">公開：</label>
+    <select id="visibilityFilter" onchange="applyFilters()">
+      <option value="">すべて</option>
+      <option value="true">公開</option>
+      <option value="false">非公開</option>
+    </select>
+  </div>
+</div>
       <button onclick="addApp()">➕ アプリ追加</button>
       <button onclick="deleteSelected()">🗑️ 削除</button>
       <button onclick="saveApps()">💾 更新</button>
@@ -115,8 +119,6 @@
       }
 
       function renderTable(data) {
-        const tr = document.createElement("tr");
-        tr.setAttribute("data-category", row.category || "");
         const tbody = document.getElementById('appTableBody');
         tbody.innerHTML = '';
         data.forEach(row => {
@@ -186,4 +188,36 @@
     })();
   </script>
 </body>
+<script>
+  let fullAppList = [];
+
+  function populateFilters(data) {
+    fullAppList = data;
+    const categories = [...new Set(data.map(app => app.category).filter(Boolean))].sort();
+    const categorySelect = document.getElementById("categoryFilter");
+    categorySelect.innerHTML = '<option value="">すべて</option>' + categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const selectedCategory = document.getElementById("categoryFilter").value;
+    const selectedVisibility = document.getElementById("visibilityFilter").value;
+    const filtered = fullAppList.filter(app => {
+      const matchCategory = !selectedCategory || app.category === selectedCategory;
+      const matchVisibility = selectedVisibility === "" || String(app.is_public) === selectedVisibility;
+      return matchCategory && matchVisibility;
+    });
+    renderTable(filtered);
+  }
+
+  const originalLoadApps = loadApps;
+  loadApps = async function () {
+    const { data, error } = await supabase.from("apps").select("*").order("sort", { ascending: true });
+    if (error) {
+      console.error(error);
+      return;
+    }
+    populateFilters(data);
+  };
+</script>
 </html>
