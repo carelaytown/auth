@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <title>ホームセンター | CARELAYタウン</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm"></script>
   <style>
     body {
       margin: 0;
@@ -73,17 +72,24 @@
     .app-card button.remove {
       background-color: #c0392b;
     }
-    .message {
-      margin-left: 10px;
-      color: green;
-      font-size: 14px;
+    .toast {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      display: none;
+      z-index: 10000;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <div class="container">
     <div class="intro">
-      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images//samplehomecenter.png" alt="ホームセンター">
+      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png" alt="ホームセンター">
       <div>
         <h2>🏪 ホームセンター</h2>
         <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
@@ -92,76 +98,102 @@
     <hr>
     <div class="app-grid" id="appGrid"></div>
   </div>
+  <div class="toast" id="toast"></div>
 
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-    const supabase = createClient(
+  <script>
+    const supabase = window.supabase.createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpIa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTUxMjI0NDMsImV4cCI6MjAzMDY5ODQ0M30.Eg_VBgLTIqG-9mAGQhItBkaTr0ZSvJqVa8Z9zH7L4lU"
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
     );
 
+    const appGrid = document.getElementById("appGrid");
+    const toast = document.getElementById("toast");
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.style.display = "block";
+      setTimeout(() => {
+        toast.style.display = "none";
+      }, 2000);
+    }
+
+    function getLocalTools() {
+      return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+    }
+
+    function updateLocalTools(id, add) {
+      const tools = getLocalTools();
+      if (add) {
+        if (!tools.includes(id)) tools.unshift(id);
+        showToast("追加されました");
+      } else {
+        const idx = tools.indexOf(id);
+        if (idx >= 0) tools.splice(idx, 1);
+        showToast("解除されました");
+      }
+      localStorage.setItem("carelayTools", JSON.stringify(tools));
+      if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
+        window.parent.setupAccordionMenu();
+      }
+    }
+
+    function toggleApp(button, id) {
+      const isAdded = button.classList.contains("remove");
+      if (isAdded) {
+        button.textContent = "追加する";
+        button.classList.remove("remove");
+        updateLocalTools(id, false);
+      } else {
+        button.textContent = "解除する";
+        button.classList.add("remove");
+        updateLocalTools(id, true);
+      }
+    }
+
     async function loadApps() {
+      const session = await supabase.auth.getSession();
+      if (!session.data.session) {
+        console.error("未認証です");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("apps")
         .select("*")
         .eq("category", "tools")
         .eq("is_public", true)
-        .order("sort", { ascending: true });
+        .order("sort");
 
       if (error) {
-        console.error("アプリ取得エラー:", error.message);
+        console.error("アプリ取得エラー:", error);
         return;
       }
 
-      const appGrid = document.getElementById("appGrid");
-      const localList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
-
+      const added = getLocalTools();
       data.forEach(app => {
         const card = document.createElement("div");
         card.className = "app-card";
-        card.innerHTML = `
-          <h3>${app.icon || "🔧"} ${app.label}</h3>
-          <p>${app.description || "説明がありません。"}</p>
-          <button data-id="${app.page}" class="${localList.includes(app.page) ? "remove" : ""}">
-            ${localList.includes(app.page) ? "解除する" : "追加する"}
-          </button>
-        `;
-        appGrid.appendChild(card);
+        card.setAttribute("data-id", app.page);
 
-        const btn = card.querySelector("button");
-        btn.addEventListener("click", () => {
-          const id = btn.getAttribute("data-id");
-          const list = JSON.parse(localStorage.getItem("carelayTools") || "[]");
-          const isAdd = !list.includes(id);
-          if (isAdd) {
-            list.unshift(id);
-            btn.textContent = "解除する";
-            btn.classList.add("remove");
-            showMessage("追加しました");
-          } else {
-            const idx = list.indexOf(id);
-            if (idx > -1) list.splice(idx, 1);
-            btn.textContent = "追加する";
-            btn.classList.remove("remove");
-            showMessage("解除しました");
-          }
-          localStorage.setItem("carelayTools", JSON.stringify(list));
-          if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
-            window.parent.setupAccordionMenu();
-          }
-        });
+        const h3 = document.createElement("h3");
+        h3.innerHTML = `${app.icon || ""} ${app.label}`;
+
+        const p = document.createElement("p");
+        p.textContent = app.description || "";
+
+        const button = document.createElement("button");
+        button.textContent = added.includes(app.page) ? "解除する" : "追加する";
+        if (added.includes(app.page)) button.classList.add("remove");
+        button.onclick = () => toggleApp(button, app.page);
+
+        card.appendChild(h3);
+        card.appendChild(p);
+        card.appendChild(button);
+        appGrid.appendChild(card);
       });
     }
 
-    function showMessage(text) {
-      const msg = document.createElement("div");
-      msg.className = "message";
-      msg.textContent = text;
-      document.querySelector(".container").appendChild(msg);
-      setTimeout(() => msg.remove(), 2000);
-    }
-
-    loadApps();
+    window.onload = loadApps;
   </script>
 </body>
 </html>
