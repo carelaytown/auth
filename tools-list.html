@@ -101,7 +101,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const supabase = window.supabase;
+    const supabase = window.supabaseClient || window.supabase;
     
     function showToast(message) {
       const toast = document.getElementById("toast");
