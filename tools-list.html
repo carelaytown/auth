@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
   <meta charset="UTF-8" />
   <title>ホームセンター | CARELAYタウン</title>
@@ -10,68 +9,57 @@
       font-family: 'Noto Sans JP', sans-serif;
       background-color: #f0f6ff;
     }
-
     .container {
       max-width: 1000px;
       margin: 0 auto;
       padding: 20px;
     }
-
     .intro {
       display: flex;
       align-items: center;
       margin-bottom: 10px;
     }
-
     .intro img {
       width: 100px;
       margin-right: 20px;
       border-radius: 10px;
     }
-
     .intro h2 {
       font-size: 22px;
       margin-bottom: 5px;
     }
-
     .intro p {
       font-size: 14px;
       color: #333;
     }
-
     hr {
       margin: 20px 0;
       border: none;
       border-top: 1px solid #ccc;
     }
-
     .app-grid {
       display: flex;
       flex-wrap: wrap;
       gap: 20px;
       justify-content: flex-start;
     }
-
     .app-card {
       width: calc(33% - 20px);
       background-color: #fffdf5;
       border: 1px solid #ccc;
       border-radius: 10px;
       padding: 15px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
-
     .app-card h3 {
       margin: 0 0 10px;
       font-size: 16px;
     }
-
     .app-card p {
       font-size: 13px;
       color: #555;
       margin-bottom: 12px;
     }
-
     .app-card button {
       padding: 6px 12px;
       font-size: 13px;
@@ -81,11 +69,9 @@
       background-color: #2a6ebb;
       color: white;
     }
-
     .app-card button.remove {
       background-color: #c0392b;
     }
-
     .toast {
       position: fixed;
       top: 15px;
@@ -100,12 +86,10 @@
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
-
 <body>
   <div class="container">
     <div class="intro">
-      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png"
-        alt="ホームセンター">
+      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png" alt="ホームセンター">
       <div>
         <h2>🏪 ホームセンター</h2>
         <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
@@ -117,7 +101,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const supabase = window.parent.supabaseClient || window.supabase.createClient(
+    const supabase = window.supabaseClient || window.supabase.createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
     );
@@ -171,10 +155,7 @@
         .eq("category", "tools")
         .eq("is_public", true)
         .order("sort")
-        .then(({
-          data,
-          error
-        }) => {
+        .then(({ data, error }) => {
           if (error) {
             console.error("アプリ取得エラー:", error);
             return;
@@ -197,4 +178,19 @@
             if (added.includes(app.page)) button.classList.add("remove");
             button.onclick = () => toggleApp(button, app.page);
 
-            card.appendChild
+            card.appendChild(h3);
+            card.appendChild(p);
+            card.appendChild(button);
+            appGrid.appendChild(card);
+          });
+        });
+    }
+
+    if (window.waitForSupabaseReady) {
+      window.waitForSupabaseReady(loadApps);
+    } else {
+      window.addEventListener("DOMContentLoaded", loadApps);
+    }
+  </script>
+</body>
+</html>
