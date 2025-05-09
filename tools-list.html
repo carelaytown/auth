@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ホームセンター | CARELAYタウン</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -100,15 +102,10 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    if (!window.supabase) {
-      window.supabase = window.parent?.supabase || window.supabase;
-    }
-    const supabase = window.supabase;
-
-    const appGrid = document.getElementById("appGrid");
-    const toast = document.getElementById("toast");
+    const supabase = window.parent?.supabaseClient || window.supabaseClient;
 
     function showToast(message) {
+      const toast = document.getElementById("toast");
       toast.textContent = message;
       toast.style.display = "block";
       setTimeout(() => {
@@ -149,50 +146,59 @@
       }
     }
 
-    async function loadApps() {
-      const session = await supabase.auth.getSession();
-      if (!session.data.session) {
-        console.error("未認証です");
-        return;
-      }
+    function waitForSessionAndLoadApps() {
+      let tries = 0;
+      const interval = setInterval(async () => {
+        const session = await supabase.auth.getSession();
+        if (session?.data?.session) {
+          clearInterval(interval);
+          loadApps();
+        } else if (++tries > 10) {
+          clearInterval(interval);
+          console.warn("セッション確立に失敗しました");
+        }
+      }, 300);
+    }
 
-      const { data, error } = await supabase
+    function loadApps() {
+      supabase
         .from("apps")
         .select("*")
         .eq("category", "tools")
         .eq("is_public", true)
-        .order("sort");
+        .order("sort")
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("アプリ取得エラー:", error);
+            return;
+          }
+          const appGrid = document.getElementById("appGrid");
+          const added = getLocalTools();
+          data.forEach(app => {
+            const card = document.createElement("div");
+            card.className = "app-card";
+            card.setAttribute("data-id", app.page);
 
-      if (error) {
-        console.error("アプリ取得エラー:", error);
-        return;
-      }
+            const h3 = document.createElement("h3");
+            h3.innerHTML = `${app.icon || ""} ${app.label}`;
 
-      const added = getLocalTools();
-      data.forEach(app => {
-        const card = document.createElement("div");
-        card.className = "app-card";
-        card.setAttribute("data-id", app.page);
+            const p = document.createElement("p");
+            p.textContent = app.description || "";
 
-        const h3 = document.createElement("h3");
-        h3.innerHTML = `${app.icon || ""} ${app.label}`;
+            const button = document.createElement("button");
+            button.textContent = added.includes(app.page) ? "解除する" : "追加する";
+            if (added.includes(app.page)) button.classList.add("remove");
+            button.onclick = () => toggleApp(button, app.page);
 
-        const p = document.createElement("p");
-        p.textContent = app.description || "";
-
-        const button = document.createElement("button");
-        button.textContent = added.includes(app.page) ? "解除する" : "追加する";
-        if (added.includes(app.page)) button.classList.add("remove");
-        button.onclick = () => toggleApp(button, app.page);
-
-        card.appendChild(h3);
-        card.appendChild(p);
-        card.appendChild(button);
-        appGrid.appendChild(card);
-      });
+            card.appendChild(h3);
+            card.appendChild(p);
+            card.appendChild(button);
+            appGrid.appendChild(card);
+          });
+        });
     }
 
-    window.onload = loadApps;
+    waitForSessionAndLoadApps();
   </script>
 </body>
 </html>
