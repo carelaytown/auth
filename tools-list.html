@@ -101,14 +101,10 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const checkReady = setInterval(() => {
-        if (window.supabase) {
-          clearInterval(checkReady);
-          initApp();
-        }
-      }, 100);
-    });
+    const supabase = window.supabase.createClient(
+      "https://viihcgkjzzhkdiwdzdex.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+    );
 
     function showToast(message) {
       const toast = document.getElementById("toast");
@@ -152,12 +148,7 @@
       }
     }
 
-    function initApp() {
-      const supabase = window.supabase.createClient(
-        "https://viihcgkjzzhkdiwdzdex.supabase.co",
-        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-      );
-
+    function loadApps() {
       supabase
         .from("apps")
         .select("*")
@@ -193,6 +184,13 @@
             appGrid.appendChild(card);
           });
         });
+    }
+
+    // 呼び出し：waitForSupabaseReadyがあるかどうかチェックして実行
+    if (window.waitForSupabaseReady) {
+      window.waitForSupabaseReady(loadApps);
+    } else {
+      window.addEventListener("DOMContentLoaded", loadApps);
     }
   </script>
 </body>
