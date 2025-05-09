@@ -2,7 +2,9 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ホームセンター | CARELAYタウン</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -84,7 +86,6 @@
       z-index: 10000;
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
 </head>
 <body>
   <div class="container">
@@ -101,10 +102,7 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const supabase = window.supabaseClient || window.supabase.createClient(
-      "https://viihcgkjzzhkdiwdzdex.supabase.co",
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-    );
+    const supabase = window.parent?.supabaseClient || window.supabaseClient;
 
     function showToast(message) {
       const toast = document.getElementById("toast");
@@ -148,6 +146,20 @@
       }
     }
 
+    function waitForSessionAndLoadApps() {
+      let tries = 0;
+      const interval = setInterval(async () => {
+        const session = await supabase.auth.getSession();
+        if (session?.data?.session) {
+          clearInterval(interval);
+          loadApps();
+        } else if (++tries > 10) {
+          clearInterval(interval);
+          console.warn("セッション確立に失敗しました");
+        }
+      }, 300);
+    }
+
     function loadApps() {
       supabase
         .from("apps")
@@ -186,11 +198,7 @@
         });
     }
 
-    if (window.waitForSupabaseReady) {
-      window.waitForSupabaseReady(loadApps);
-    } else {
-      window.addEventListener("DOMContentLoaded", loadApps);
-    }
+    waitForSessionAndLoadApps();
   </script>
 </body>
 </html>
