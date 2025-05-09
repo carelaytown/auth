@@ -83,7 +83,7 @@
   <script>
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.supabase = window.supabase || window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     let userOrgName = "";
 
     async function initTopPage() {
@@ -101,7 +101,7 @@
 
     async function fetchUserInfo(email) {
       const query = email.trim().toLowerCase();
-      const { data, error } = await supabase
+      const { data, error } = await window.supabase
         .from("applications")
         .select("org_name, is_admin")
         .eq("email", query);
@@ -121,7 +121,7 @@
 
     async function setupAccordionMenu() {
       const isAdmin = localStorage.getItem("carelayAdmin") === "true";
-      const { data, error } = await supabase
+      const { data, error } = await window.supabase
         .from("menu_config")
         .select("label, page, show, admin_only")
         .order("sort");
@@ -150,12 +150,11 @@
         appListBtn.onclick = () => loadMain(`${row.page}-list`);
         submenu.appendChild(appListBtn);
 
-        // アプリ取得と表示
         const storageKey = "carelay" + row.page.charAt(0).toUpperCase() + row.page.slice(1);
         const addedApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
 
         if (addedApps.length > 0) {
-          const { data: apps } = await supabase
+          const { data: apps } = await window.supabase
             .from("apps")
             .select("page, label, icon")
             .in("page", addedApps);
