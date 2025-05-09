@@ -165,24 +165,27 @@
         appListBtn.onclick = () => loadMain(`${row.page}-list`);
         submenu.appendChild(appListBtn);
 
-        if (row.page === "tools") {
-          const appNameMap = {
-            toolcalc: "🧮 電卓",
-            tooldays: "📅 日数計算",
-            toolcheck: "📋 チェック表",
-            toolmemo: "📝 メモ帳",
-            toolcalendar: "📅 カレンダー"
-          };
-          const toolList = JSON.parse(localStorage.getItem("carelayTools") || "[]");
-          toolList.forEach(id => {
-            if (appNameMap[id]) {
-              const toolBtn = document.createElement("button");
-              toolBtn.textContent = appNameMap[id];
-              toolBtn.onclick = () => loadMain(id);
-              submenu.appendChild(toolBtn);
-            }
+        // tools だけでなく任意のカテゴリに対応
+        supabase
+          .from("apps")
+          .select("page, label, icon")
+          .eq("category", row.page)
+          .eq("is_public", true)
+          .order("sort")
+          .then(({ data, error }) => {
+            if (error || !data) return;
+            const savedList = JSON.parse(localStorage.getItem(`carelay${row.page.charAt(0).toUpperCase() + row.page.slice(1)}`) || "[]");
+        
+            data.forEach(app => {
+              if (savedList.includes(app.page)) {
+                const toolBtn = document.createElement("button");
+                toolBtn.textContent = `${app.icon || ""} ${app.label}`;
+                toolBtn.onclick = () => loadMain(app.page);
+                submenu.appendChild(toolBtn);
+              }
+            });
           });
-        }
+
 
         block.appendChild(title);
         block.appendChild(submenu);
