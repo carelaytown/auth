@@ -84,7 +84,6 @@
       z-index: 10000;
     }
   </style>
-
 </head>
 <body>
   <div class="container">
@@ -101,7 +100,10 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const supabase = window.parent?.supabase || window.supabase;
+    if (!window.supabase) {
+      window.supabase = window.parent?.supabase || window.supabase;
+    }
+    const supabase = window.supabase;
 
     const appGrid = document.getElementById("appGrid");
     const toast = document.getElementById("toast");
