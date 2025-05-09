@@ -1,204 +1,198 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ホームセンター | CARELAYタウン</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CARELAYタウン</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
   <style>
-    body {
-      margin: 0;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; background-color: #f9f9f9;
       font-family: 'Noto Sans JP', sans-serif;
-      background-color: #f0f6ff;
+      display: flex; flex-direction: column;
     }
-    .container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
+    header {
+      background-color: #1b355d; color: white; padding: 5px 20px;
+      display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;
     }
-    .intro {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
+    .logo-button {
+      background: none; border: 2px solid white; color: white;
+      padding: 6px 12px; border-radius: 6px; font-weight: bold;
+      cursor: pointer; margin-right: 10px;
     }
-    .intro img {
-      width: 100px;
-      margin-right: 20px;
-      border-radius: 10px;
+    .account-name {
+      color: white; font-weight: bold; font-size: 14px;
     }
-    .intro h2 {
-      font-size: 22px;
-      margin-bottom: 5px;
+    .header-buttons button {
+      background: none; border: 2px solid white; color: white;
+      padding: 6px 12px; margin-left: 10px; border-radius: 6px;
+      font-weight: bold; cursor: pointer;
     }
-    .intro p {
-      font-size: 14px;
-      color: #333;
+    #layout {
+      display: flex; flex: 1; overflow: hidden;
     }
-    hr {
-      margin: 20px 0;
-      border: none;
-      border-top: 1px solid #ccc;
+    #sidebar {
+      width: 200px; background-color: #ffe5b4; border-right: 1px solid #ccc;
+      overflow-y: auto; padding: 10px 0;
     }
-    .app-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-      justify-content: flex-start;
+    .category-block {
+      margin: 10px; background: white;
+      border: 2px solid #999; border-radius: 6px;
     }
-    .app-card {
-      width: calc(33% - 20px);
-      background-color: #fffdf5;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      padding: 15px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    .category-title {
+      background: #2a6ebb; color: white;
+      padding: 10px; font-weight: bold;
+      cursor: pointer; border-radius: 6px 6px 0 0;
     }
-    .app-card h3 {
-      margin: 0 0 10px;
-      font-size: 16px;
+    .submenu {
+      display: none; padding: 5px 10px;
     }
-    .app-card p {
-      font-size: 13px;
-      color: #555;
-      margin-bottom: 12px;
+    .submenu button {
+      width: 100%; margin-top: 5px; padding: 8px;
+      background: white; border: 1px solid #ccc;
+      border-radius: 4px; font-weight: bold; cursor: pointer;
     }
-    .app-card button {
-      padding: 6px 12px;
-      font-size: 13px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      background-color: #2a6ebb;
-      color: white;
+    #main {
+      flex-grow: 1; overflow-y: auto; padding: 20px; background-color: #fff;
     }
-    .app-card button.remove {
-      background-color: #c0392b;
-    }
-    .toast {
-      position: fixed;
-      top: 15px;
-      right: 20px;
-      background: #333;
-      color: white;
-      padding: 10px 16px;
-      border-radius: 6px;
-      display: none;
-      z-index: 10000;
+    footer {
+      background-color: #1b355d; color: white;
+      text-align: center; padding: 10px;
+      font-size: 12px; flex-shrink: 0;
     }
   </style>
 </head>
-<body>
-  <div class="container">
-    <div class="intro">
-      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png" alt="ホームセンター">
-      <div>
-        <h2>🏪 ホームセンター</h2>
-        <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
-      </div>
+<body onload="initTopPage()">
+  <header>
+    <div style="display: flex; align-items: center;">
+      <button class="logo-button" onclick="loadMain('map')">🏡 CARELAYタウン</button>
+      <div class="account-name" id="orgLabel"></div>
     </div>
-    <hr>
-    <div class="app-grid" id="appGrid"></div>
+    <div class="header-buttons">
+      <button onclick="loadMain('mypage')">👤 マイページ</button>
+      <button onclick="loadMain('howto')">❓ 使い方</button>
+    </div>
+  </header>
+  <div id="layout">
+    <div id="sidebar"></div>
+    <div id="main">読み込み中...</div>
   </div>
-  <div class="toast" id="toast"></div>
+  <footer>© 2025 CARELAY TOWN</footer>
 
   <script>
-    const supabase = window.parent?.supabaseClient || window.supabaseClient;
+    const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    let userOrgName = "";
 
-    function showToast(message) {
-      const toast = document.getElementById("toast");
-      toast.textContent = message;
-      toast.style.display = "block";
-      setTimeout(() => {
-        toast.style.display = "none";
-      }, 2000);
+    async function initTopPage() {
+      const approved = localStorage.getItem("carelayApproved");
+      const email = localStorage.getItem("carelayUser");
+      if (approved !== "ok" || !email) {
+        window.location.href = "index.html";
+        return;
+      }
+      await fetchUserInfo(email);
+      document.getElementById("orgLabel").textContent = userOrgName;
+      await setupAccordionMenu();
+      loadMain("map");
     }
 
-    function getLocalTools() {
-      return JSON.parse(localStorage.getItem("carelayTools") || "[]");
-    }
-
-    function updateLocalTools(id, add) {
-      const tools = getLocalTools();
-      if (add) {
-        if (!tools.includes(id)) tools.unshift(id);
-        showToast("追加されました");
+    async function fetchUserInfo(email) {
+      const query = email.trim().toLowerCase();
+      const { data, error } = await supabase
+        .from("applications")
+        .select("org_name, is_admin")
+        .eq("email", query);
+      if (error || !data || data.length === 0) {
+        userOrgName = "(未登録)";
+        localStorage.removeItem("carelayAdmin");
       } else {
-        const idx = tools.indexOf(id);
-        if (idx >= 0) tools.splice(idx, 1);
-        showToast("解除されました");
-      }
-      localStorage.setItem("carelayTools", JSON.stringify(tools));
-      if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
-        window.parent.setupAccordionMenu();
-      }
-    }
-
-    function toggleApp(button, id) {
-      const isAdded = button.classList.contains("remove");
-      if (isAdded) {
-        button.textContent = "追加する";
-        button.classList.remove("remove");
-        updateLocalTools(id, false);
-      } else {
-        button.textContent = "解除する";
-        button.classList.add("remove");
-        updateLocalTools(id, true);
-      }
-    }
-
-    function waitForSessionAndLoadApps() {
-      let tries = 0;
-      const interval = setInterval(async () => {
-        const session = await supabase.auth.getSession();
-        if (session?.data?.session) {
-          clearInterval(interval);
-          loadApps();
-        } else if (++tries > 10) {
-          clearInterval(interval);
-          console.warn("セッション確立に失敗しました");
+        const row = data[0];
+        userOrgName = row.org_name || "(不明)";
+        if (row.is_admin === true || row.is_admin === 'TRUE') {
+          localStorage.setItem("carelayAdmin", "true");
+        } else {
+          localStorage.removeItem("carelayAdmin");
         }
-      }, 300);
+      }
     }
 
-    function loadApps() {
-      supabase
-        .from("apps")
-        .select("*")
-        .eq("category", "tools")
-        .eq("is_public", true)
-        .order("sort")
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("アプリ取得エラー:", error);
-            return;
-          }
-          const appGrid = document.getElementById("appGrid");
-          const added = getLocalTools();
-          data.forEach(app => {
-            const card = document.createElement("div");
-            card.className = "app-card";
-            card.setAttribute("data-id", app.page);
+    async function setupAccordionMenu() {
+      const isAdmin = localStorage.getItem("carelayAdmin") === "true";
+      const { data, error } = await supabase
+        .from("menu_config")
+        .select("label, page, show, admin_only")
+        .order("sort");
 
-            const h3 = document.createElement("h3");
-            h3.innerHTML = `${app.icon || ""} ${app.label}`;
+      if (error || !data) return;
+      const sidebar = document.getElementById("sidebar");
+      sidebar.innerHTML = "";
 
-            const p = document.createElement("p");
-            p.textContent = app.description || "";
+      for (const row of data.filter(row => row.show && (!row.admin_only || isAdmin))) {
+        const block = document.createElement("div");
+        block.className = "category-block";
 
-            const button = document.createElement("button");
-            button.textContent = added.includes(app.page) ? "解除する" : "追加する";
-            if (added.includes(app.page)) button.classList.add("remove");
-            button.onclick = () => toggleApp(button, app.page);
+        const title = document.createElement("div");
+        title.className = "category-title";
+        title.textContent = row.label;
+        title.onclick = () => {
+          const submenu = block.querySelector(".submenu");
+          submenu.style.display = submenu.style.display === "block" ? "none" : "block";
+        };
 
-            card.appendChild(h3);
-            card.appendChild(p);
-            card.appendChild(button);
-            appGrid.appendChild(card);
+        const submenu = document.createElement("div");
+        submenu.className = "submenu";
+
+        const appListBtn = document.createElement("button");
+        appListBtn.textContent = "📋 アプリ一覧";
+        appListBtn.onclick = () => loadMain(`${row.page}-list`);
+        submenu.appendChild(appListBtn);
+
+        // アプリ取得と表示
+        const storageKey = "carelay" + row.page.charAt(0).toUpperCase() + row.page.slice(1);
+        const addedApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
+        if (addedApps.length > 0) {
+          const { data: apps } = await supabase
+            .from("apps")
+            .select("page, label, icon")
+            .in("page", addedApps);
+
+          apps.forEach(app => {
+            const btn = document.createElement("button");
+            btn.textContent = `${app.icon || ""} ${app.label}`;
+            btn.onclick = () => loadMain(app.page);
+            submenu.appendChild(btn);
+          });
+        }
+
+        block.appendChild(title);
+        block.appendChild(submenu);
+        sidebar.appendChild(block);
+      }
+    }
+
+    function loadMain(pageName) {
+      document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
+      fetch(`${pageName}.html`)
+        .then(res => res.text())
+        .then(html => {
+          const main = document.getElementById("main");
+          main.innerHTML = html;
+          const scripts = main.querySelectorAll("script");
+          scripts.forEach(oldScript => {
+            const newScript = document.createElement("script");
+            if (oldScript.src) {
+              newScript.src = oldScript.src;
+            } else {
+              newScript.textContent = oldScript.textContent;
+            }
+            oldScript.parentNode.replaceChild(newScript, oldScript);
           });
         });
     }
-
-    waitForSessionAndLoadApps();
   </script>
 </body>
 </html>
