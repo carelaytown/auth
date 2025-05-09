@@ -89,7 +89,7 @@
 
     window.waitForSupabaseReady = async function(callback) {
       for (let i = 0; i < 10; i++) {
-        const session = await supabase.auth.getSession();
+        const session = await window.supabaseClient.auth.getSession();
         if (session.data.session) {
           callback(session.data.session);
           return;
@@ -115,7 +115,7 @@
 
     async function fetchUserInfo(email) {
       const query = email.trim().toLowerCase();
-      const { data, error } = await supabase
+      const { data, error } = await window.supabaseClient
         .from("applications")
         .select("org_name, is_admin")
         .eq("email", query);
@@ -136,7 +136,7 @@
 
     async function setupAccordionMenu() {
       const isAdmin = localStorage.getItem("carelayAdmin") === "true";
-      const { data, error } = await supabase
+      const { data, error } = await window.supabaseClient
         .from("menu_config")
         .select("label, page, show, admin_only")
         .order("sort");
