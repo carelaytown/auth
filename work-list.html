@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>ホームセンター | CARELAYタウン</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Noto Sans JP', sans-serif;
+      background-color: #f0f6ff;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .intro {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .intro img {
+      width: 100px;
+      margin-right: 20px;
+      border-radius: 10px;
+    }
+    .intro h2 {
+      font-size: 22px;
+      margin-bottom: 5px;
+    }
+    .intro p {
+      font-size: 14px;
+      color: #333;
+    }
+    hr {
+      margin: 20px 0;
+      border: none;
+      border-top: 1px solid #ccc;
+    }
+    .app-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: flex-start;
+    }
+    .app-card {
+      width: calc(33% - 20px);
+      background-color: #fffdf5;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      padding: 15px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    .app-card h3 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+    .app-card p {
+      font-size: 13px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+    .app-card button {
+      padding: 6px 12px;
+      font-size: 13px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #2a6ebb;
+      color: white;
+    }
+    .app-card button.remove {
+      background-color: #c0392b;
+    }
+    .toast {
+      position: fixed;
+      top: 15px;
+      right: 20px;
+      background: #333;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 6px;
+      display: none;
+      z-index: 10000;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="intro">
+      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png" alt="ホームセンター">
+      <div>
+        <h2>🏪 事務所</h2>
+        <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
+      </div>
+    </div>
+    <hr>
+    <div class="app-grid" id="appGrid"></div>
+  </div>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (() => {
+      const supabase = window.supabaseClient;
+      if (!supabase) {
+        console.error("Supabase client not found.");
+        return;
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.textContent = message;
+        toast.style.display = "block";
+        setTimeout(() => {
+          toast.style.display = "none";
+        }, 2000);
+      }
+
+      function getLocalTools() {
+        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      }
+
+      function updateLocalTools(id, add) {
+        const tools = getLocalTools();
+        if (add) {
+          if (!tools.includes(id)) tools.unshift(id);
+          showToast("追加されました");
+        } else {
+          const idx = tools.indexOf(id);
+          if (idx >= 0) tools.splice(idx, 1);
+          showToast("解除されました");
+        }
+        localStorage.setItem("carelayTools", JSON.stringify(tools));
+        if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
+          window.parent.setupAccordionMenu();
+        }
+      }
+
+      function toggleApp(button, id) {
+        const isAdded = button.classList.contains("remove");
+        if (isAdded) {
+          button.textContent = "追加する";
+          button.classList.remove("remove");
+          updateLocalTools(id, false);
+        } else {
+          button.textContent = "解除する";
+          button.classList.add("remove");
+          updateLocalTools(id, true);
+        }
+      }
+
+      function loadApps() {
+        supabase
+          .from("apps")
+          .select("*")
+          .eq("category", "tools")
+          .eq("is_public", true)
+          .order("sort")
+          .then(({ data, error }) => {
+            if (error) {
+              console.error("アプリ取得エラー:", error);
+              return;
+            }
+            const appGrid = document.getElementById("appGrid");
+            const added = getLocalTools();
+            data.forEach(app => {
+              const card = document.createElement("div");
+              card.className = "app-card";
+              card.setAttribute("data-id", app.page);
+
+              const h3 = document.createElement("h3");
+              h3.innerHTML = `${app.icon || ""} ${app.label}`;
+
+              const p = document.createElement("p");
+              p.textContent = app.description || "";
+
+              const button = document.createElement("button");
+              button.textContent = added.includes(app.page) ? "解除する" : "追加する";
+              if (added.includes(app.page)) button.classList.add("remove");
+              button.onclick = () => toggleApp(button, app.page);
+
+              card.appendChild(h3);
+              card.appendChild(p);
+              card.appendChild(button);
+              appGrid.appendChild(card);
+            });
+          });
+      }
+
+      if (window.waitForSupabaseReady) {
+        window.waitForSupabaseReady(loadApps);
+      } else {
+        window.addEventListener("DOMContentLoaded", loadApps);
+      }
+    })();
+  </script>
+</body>
+</html>
