@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -84,6 +85,19 @@
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    window.supabaseClient = supabase;
+    window.waitForSupabaseReady = function(callback) {
+      if (window.supabaseClient) {
+        callback();
+      } else {
+        const interval = setInterval(() => {
+          if (window.supabaseClient) {
+            clearInterval(interval);
+            callback();
+          }
+        }, 100);
+      }
+    };
     let userOrgName = "";
 
     async function initTopPage() {
@@ -95,6 +109,7 @@
       }
       await fetchUserInfo(email);
       document.getElementById("orgLabel").textContent = userOrgName;
+      localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
       loadMain("map");
     }
@@ -150,7 +165,6 @@
         appListBtn.onclick = () => loadMain(`${row.page}-list`);
         submenu.appendChild(appListBtn);
 
-        // アプリ取得と表示
         const storageKey = "carelay" + row.page.charAt(0).toUpperCase() + row.page.slice(1);
         const addedApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
 
