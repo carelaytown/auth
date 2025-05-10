@@ -95,7 +95,8 @@
 
 <script>
 function initToolcalc() {
-const expressionEl = document.getElementById('expression');
+document.addEventListener('DOMContentLoaded', () => {
+  const expressionEl = document.getElementById('expression');
   const resultEl = document.getElementById('result');
   const historyEl = document.getElementById('history');
   const calcPanel = document.getElementById('calcPanel');
@@ -111,14 +112,7 @@ const expressionEl = document.getElementById('expression');
 
   function addToHistory(expr, res) {
     if (history.length >= 5) history.shift();
-    history.push({ expr, res, memo: ''
-}
-
-if (window.waitForSupabaseReady) {
-  window.waitForSupabaseReady(initToolcalc);
-} else {
-  window.addEventListener("DOMContentLoaded", initToolcalc);
-}
+    history.push({ expr, res, memo: '' });
     localStorage.setItem('calc_history', JSON.stringify(history));
     renderHistory();
   }
@@ -272,6 +266,13 @@ if (window.waitForSupabaseReady) {
   renderHistory();
   updateDisplay();
 });
+}
+
+if (window.waitForSupabaseReady) {
+  window.waitForSupabaseReady(initToolcalc);
+} else {
+  window.addEventListener("DOMContentLoaded", initToolcalc);
+}
 </script>
 </body>
 </html>
