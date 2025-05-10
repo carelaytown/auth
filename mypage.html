@@ -132,12 +132,10 @@
     function fetchCurrentOrg() {
       const email = localStorage.getItem("carelayUser") || "";
       emailOutput.textContent = email || "-";
-
       if (!email) {
         orgOutput.textContent = "(未ログイン)";
         return;
       }
-
       const orgName = localStorage.getItem("carelayOrgName") || "(未取得)";
       orgOutput.textContent = orgName;
     }
@@ -184,20 +182,22 @@
         return;
       }
 
+      const targetEmail = modalTarget.trim().toLowerCase();
+
       if (modalAction === "add") {
         const { data, error } = await supabase
           .from("applications")
           .select("org_name, status")
-          .eq("email", modalTarget);
+          .eq("email", targetEmail);
 
         if (!error && data.length > 0 && data[0].status === "approved") {
-          localStorage.setItem("carelayUser", modalTarget);
+          localStorage.setItem("carelayUser", targetEmail);
           localStorage.setItem("carelayApproved", "ok");
           localStorage.setItem("carelayOrgName", data[0].org_name || "(不明)");
 
           let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-          if (!list.includes(modalTarget)) {
-            list.push(modalTarget);
+          if (!list.includes(targetEmail)) {
+            list.push(targetEmail);
             localStorage.setItem("carelayList", JSON.stringify(list));
           }
           location.reload();
