@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CARELAY電卓</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-white text-gray-800 p-4">
+  <div class="flex flex-col lg:flex-row gap-4">
+    <!-- 電卓本体 -->
+    <div class="w-full lg:w-1/2 bg-white p-4 rounded-xl shadow-md">
+      <div id="display" class="mb-2 p-2 bg-gray-100 rounded text-right">
+        <div id="expression" class="text-sm text-gray-500">式</div>
+        <div id="result" class="text-2xl font-bold">0</div>
+      </div>
+      <div class="grid grid-cols-4 gap-2 mb-2">
+        <button class="btn">7</button><button class="btn">8</button><button class="btn">9</button><button class="btn">÷</button>
+        <button class="btn">4</button><button class="btn">5</button><button class="btn">6</button><button class="btn">×</button>
+        <button class="btn">1</button><button class="btn">2</button><button class="btn">3</button><button class="btn">−</button>
+        <button class="btn">0</button><button class="btn">.</button><button class="btn">=</button><button class="btn">＋</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2 mb-2">
+        <button class="btn">税10%</button>
+        <button class="btn">税8%</button>
+        <button class="btn">非課税</button>
+        <button class="btn">切捨</button>
+        <button class="btn">切上</button>
+        <button class="btn">四捨五入</button>
+      </div>
+      <div class="grid grid-cols-3 gap-2">
+        <button class="btn bg-black text-white">AC</button>
+        <button class="btn bg-blue-600 text-white">保存</button>
+        <button class="btn bg-orange-400 text-white">戻る</button>
+      </div>
+    </div>
+
+    <!-- 右パネル -->
+    <div class="w-full lg:w-1/2 bg-white p-4 rounded-xl shadow-md space-y-4">
+      <!-- 履歴 -->
+      <div>
+        <h2 class="font-bold mb-2">計算履歴（5件まで）</h2>
+        <div id="history" class="space-y-2">
+          <!-- JavaScriptで履歴挿入 -->
+        </div>
+      </div>
+
+      <!-- 色・背景 -->
+      <div>
+        <h2 class="font-bold mb-2">デザイン設定</h2>
+        <div class="flex items-center gap-2 mb-2">
+          <label>電卓色</label>
+          <input type="color" id="colorBtn" />
+          <label>背景色</label>
+          <input type="color" id="bgColor" />
+        </div>
+        <div class="mb-2">
+          <label>背景画像</label>
+          <input type="file" id="bgImage" />
+          <button id="removeBg" class="ml-2 px-2 py-1 bg-gray-200 rounded">背景画像を削除</button>
+        </div>
+      </div>
+
+      <!-- キーボードガイド -->
+      <div>
+        <h2 class="font-bold mb-2">キーボード操作ガイド</h2>
+        <ul class="text-sm text-gray-600">
+          <li>数字キー（0〜9）、+、-、*、/、.、% で計算可能</li>
+          <li>Enter = ／ c: クリア ／ s: 保存 ／ u: 戻る</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 簡易ボタンスクリプト
+    document.querySelectorAll('.btn').forEach(btn => {
+      btn.classList.add('rounded-full', 'bg-gray-300', 'hover:bg-gray-400', 'transition', 'transform', 'active:scale-95', 'py-2', 'text-lg');
+    });
+  </script>
+</body>
+</html>
