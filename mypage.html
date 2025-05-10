@@ -246,15 +246,18 @@
       });
     }
 
+    window.loadMypage = function() {
+      fetchCurrentOrg();
+      renderAccountList();
+    };
+
     if (window.waitForSupabaseReady) {
       window.waitForSupabaseReady(() => {
-        fetchCurrentOrg();
-        renderAccountList();
+        window.loadMypage();
       });
     } else {
       window.addEventListener("DOMContentLoaded", () => {
-        fetchCurrentOrg();
-        renderAccountList();
+        window.loadMypage();
       });
     }
   </script>
