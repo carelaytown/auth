@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -87,10 +88,6 @@
     .modal-box p { margin-bottom: 20px; }
     .modal-box button { margin: 0 10px; }
   </style>
-  <head>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-</head>
-
 </head>
 <body>
   <main>
@@ -132,10 +129,7 @@
     let modalAction = "";
     let modalTarget = "";
 
-    const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-
-    async function fetchCurrentOrg() {
+    function fetchCurrentOrg() {
       const email = localStorage.getItem("carelayUser") || "";
       emailOutput.textContent = email || "-";
 
@@ -144,16 +138,11 @@
         return;
       }
 
-      const url = `${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(email)}`;
-      const res = await fetch(url, {
-        headers: {
-          "apikey": supabaseKey,
-          "Authorization": `Bearer ${supabaseKey}`
-        }
-      });
-      const data = await res.json();
-      orgOutput.textContent = (data[0]?.org_name) || "(未取得)";
+      const orgName = localStorage.getItem("carelayOrgName") || "(未取得)";
+      orgOutput.textContent = orgName;
     }
+
+    // 以下はすべて既存のロジック（略）…
 
     function confirmAdd() {
       const input = document.getElementById("newAccount").value.trim().toLowerCase();
@@ -192,6 +181,9 @@
 
       if (modalAction === "alert") return;
 
+      const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+
       if (modalAction === "add") {
         const url = `${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(modalTarget)}`;
         const res = await fetch(url, {
@@ -205,6 +197,7 @@
         if (data.length > 0 && data[0].status === "approved") {
           localStorage.setItem("carelayUser", modalTarget);
           localStorage.setItem("carelayApproved", "ok");
+          localStorage.setItem("carelayOrgName", data[0].org_name || "(不明)");
 
           let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
           if (!list.includes(modalTarget)) {
