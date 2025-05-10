@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>ホームセンター | CARELAYタウン</title>
+  <title>事務所（事務ツール） | CARELAYタウン</title>
   <style>
     body {
       margin: 0;
@@ -89,10 +89,10 @@
 <body>
   <div class="container">
     <div class="intro">
-      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplehomecenter.png" alt="ホームセンター">
+      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/samplework.png" alt="事務所（事務ツール）">
       <div>
-        <h2>🏪 事務所</h2>
-        <p>このカテゴリでは、<strong>端末にのみデータ保存される</strong>便利ツールが利用できます。<br>他の端末とはデータ共有されません。</p>
+        <h2>🗂️ 事務所（事務ツール）</h2>
+        <p>日々の業務に必要なチェックリストや記録補助など、事務作業をサポートするツールです。</p>
       </div>
     </div>
     <hr>
@@ -117,21 +117,23 @@
         }, 2000);
       }
 
-      function getLocalTools() {
-        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      const category = "work";
+const storageKey = "carelay" + category.charAt(0).toUpperCase() + category.slice(1);
+function getLocalTools() {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
       }
 
       function updateLocalTools(id, add) {
-        const tools = getLocalTools();
+        const work = getLocalTools();
         if (add) {
-          if (!tools.includes(id)) tools.unshift(id);
+          if (!work.includes(id)) work.unshift(id);
           showToast("追加されました");
         } else {
-          const idx = tools.indexOf(id);
-          if (idx >= 0) tools.splice(idx, 1);
+          const idx = work.indexOf(id);
+          if (idx >= 0) work.splice(idx, 1);
           showToast("解除されました");
         }
-        localStorage.setItem("carelayTools", JSON.stringify(tools));
+        localStorage.setItem(storageKey, JSON.stringify(work));
         if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
           window.parent.setupAccordionMenu();
         }
@@ -154,7 +156,7 @@
         supabase
           .from("apps")
           .select("*")
-          .eq("category", "tools")
+          .eq("category", "work")
           .eq("is_public", true)
           .order("sort")
           .then(({ data, error }) => {
