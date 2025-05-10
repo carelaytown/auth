@@ -120,6 +120,7 @@
   </div>
 
   <script>
+  function initMypage() {
     const orgOutput = document.getElementById("orgOutput");
     const emailOutput = document.getElementById("emailOutput");
     const modal = document.getElementById("modal");
@@ -128,6 +129,9 @@
 
     let modalAction = "";
     let modalTarget = "";
+
+    const supabase = window.supabaseClient;
+    if (!supabase) return;
 
     function fetchCurrentOrg() {
       const email = localStorage.getItem("carelayUser") || "";
@@ -175,12 +179,6 @@
     async function modalOk() {
       modal.style.display = "none";
       if (modalAction === "alert") return;
-
-      const supabase = window.supabaseClient;
-      if (!supabase) {
-        alert("Supabase client 未初期化");
-        return;
-      }
 
       const targetEmail = modalTarget.trim().toLowerCase();
 
@@ -246,20 +244,27 @@
       });
     }
 
-    window.loadMypage = function() {
-      fetchCurrentOrg();
-      renderAccountList();
-    };
+    // イベント・初期化呼び出し
+    fetchCurrentOrg();
+    renderAccountList();
 
-    if (window.waitForSupabaseReady) {
-      window.waitForSupabaseReady(() => {
-        window.loadMypage();
-      });
-    } else {
-      window.addEventListener("DOMContentLoaded", () => {
-        window.loadMypage();
-      });
-    }
-  </script>
+    // モーダルイベントをグローバル登録
+    window.confirmAdd = confirmAdd;
+    window.confirmLogout = confirmLogout;
+    window.modalOk = modalOk;
+    window.modalCancel = modalCancel;
+  }
+
+  // グローバルに公開
+  window.initMypage = initMypage;
+
+  // Supabase準備完了後に初回起動（最初の1回目対応）
+  if (window.waitForSupabaseReady) {
+    window.waitForSupabaseReady(initMypage);
+  } else {
+    window.addEventListener("DOMContentLoaded", initMypage);
+  }
+</script>
+
 </body>
 </html>
