@@ -49,13 +49,17 @@ const supabase = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
 );
 
-window.onload = async () => {
-  const session = await supabase.auth.getSession();
-  const approved = localStorage.getItem("carelayApproved");
-  const email = localStorage.getItem("carelayUser");
-  if (session.data.session && approved === "ok" && email) {
-    window.location.href = "top.html";
-  }
+window.onload = () => {
+  supabase.auth.getSession().then(({ data }) => {
+    const session = data.session;
+    const approved = localStorage.getItem("carelayApproved");
+    const email = localStorage.getItem("carelayUser");
+    if (session && approved === "ok" && email) {
+      window.location.href = "top.html";
+    }
+  }).catch(err => {
+    console.error("セッション取得エラー:", err);
+  });
 };
 
 async function submitApplication(e) {
