@@ -142,8 +142,6 @@
       orgOutput.textContent = orgName;
     }
 
-    // 以下はすべて既存のロジック（略）…
-
     function confirmAdd() {
       const input = document.getElementById("newAccount").value.trim().toLowerCase();
       if (!input) {
@@ -178,23 +176,21 @@
 
     async function modalOk() {
       modal.style.display = "none";
-
       if (modalAction === "alert") return;
 
-      const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-      const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+      const supabase = window.supabaseClient;
+      if (!supabase) {
+        alert("Supabase client 未初期化");
+        return;
+      }
 
       if (modalAction === "add") {
-        const url = `${supabaseUrl}/rest/v1/applications?email=eq.${encodeURIComponent(modalTarget)}`;
-        const res = await fetch(url, {
-          headers: {
-            "apikey": supabaseKey,
-            "Authorization": `Bearer ${supabaseKey}`
-          }
-        });
-        const data = await res.json();
+        const { data, error } = await supabase
+          .from("applications")
+          .select("org_name, status")
+          .eq("email", modalTarget);
 
-        if (data.length > 0 && data[0].status === "approved") {
+        if (!error && data.length > 0 && data[0].status === "approved") {
           localStorage.setItem("carelayUser", modalTarget);
           localStorage.setItem("carelayApproved", "ok");
           localStorage.setItem("carelayOrgName", data[0].org_name || "(不明)");
@@ -250,8 +246,17 @@
       });
     }
 
-    fetchCurrentOrg();
-    renderAccountList();
+    if (window.waitForSupabaseReady) {
+      window.waitForSupabaseReady(() => {
+        fetchCurrentOrg();
+        renderAccountList();
+      });
+    } else {
+      window.addEventListener("DOMContentLoaded", () => {
+        fetchCurrentOrg();
+        renderAccountList();
+      });
+    }
   </script>
 </body>
 </html>
