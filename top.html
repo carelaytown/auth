@@ -205,6 +205,11 @@
             }
             oldScript.parentNode.replaceChild(newScript, oldScript);
           });
+    
+          // ✅ ここを追加！
+          if (pageName === "mypage" && window.loadMypage) {
+            window.loadMypage();
+          }
         });
     }
   </script>
