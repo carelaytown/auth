@@ -117,8 +117,10 @@
         }, 2000);
       }
 
-      function getLocalTools() {
-        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      const category = "test";
+const storageKey = "carelay" + category.charAt(0).toUpperCase() + category.slice(1);
+function getLocalTools() {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
       }
 
       function updateLocalTools(id, add) {
@@ -131,7 +133,7 @@
           if (idx >= 0) test.splice(idx, 1);
           showToast("解除されました");
         }
-        localStorage.setItem("carelayTools", JSON.stringify(test));
+        localStorage.setItem(storageKey, JSON.stringify(test));
         if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
           window.parent.setupAccordionMenu();
         }
