@@ -94,9 +94,8 @@
   </div>
 
 <script>
-(function() {
-document.addEventListener('DOMContentLoaded', () => {
-  const expressionEl = document.getElementById('expression');
+(() => {
+const expressionEl = document.getElementById('expression');
   const resultEl = document.getElementById('result');
   const historyEl = document.getElementById('history');
   const calcPanel = document.getElementById('calcPanel');
@@ -265,7 +264,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   renderHistory();
   updateDisplay();
-});
 })();
 </script>
 </body>
