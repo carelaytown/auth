@@ -41,23 +41,23 @@
         <div id="result" class="text-3xl font-bold">0</div>
       </div>
       <div class="grid grid-cols-4 gap-3 mb-4 w-full">
-        <button class="btn digit">7</button><button class="btn digit">8</button><button class="btn digit">9</button><button class="btn op">÷</button>
-        <button class="btn digit">4</button><button class="btn digit">5</button><button class="btn digit">6</button><button class="btn op">×</button>
-        <button class="btn digit">1</button><button class="btn digit">2</button><button class="btn digit">3</button><button class="btn op">−</button>
-        <button class="btn digit">0</button><button class="btn digit">.</button><button class="btn op">=</button><button class="btn op">＋</button>
+        <button type="button" class="btn digit">7</button><button type="button" class="btn digit">8</button><button type="button" class="btn digit">9</button><button type="button" class="btn op">÷</button>
+        <button type="button" class="btn digit">4</button><button type="button" class="btn digit">5</button><button type="button" class="btn digit">6</button><button type="button" class="btn op">×</button>
+        <button type="button" class="btn digit">1</button><button type="button" class="btn digit">2</button><button type="button" class="btn digit">3</button><button type="button" class="btn op">−</button>
+        <button type="button" class="btn digit">0</button><button type="button" class="btn digit">.</button><button type="button" class="btn op">=</button><button type="button" class="btn op">＋</button>
       </div>
       <div class="grid grid-cols-3 gap-3 mb-3 w-full">
-        <button class="btn-action">税10%</button>
-        <button class="btn-action">税8%</button>
-        <button class="btn-action">非課税</button>
-        <button class="btn-action">切捨</button>
-        <button class="btn-action">切上</button>
-        <button class="btn-action">四捨五入</button>
+        <button type="button" class="btn-action">税10%</button>
+        <button type="button" class="btn-action">税8%</button>
+        <button type="button" class="btn-action">非課税</button>
+        <button type="button" class="btn-action">切捨</button>
+        <button type="button" class="btn-action">切上</button>
+        <button type="button" class="btn-action">四捨五入</button>
       </div>
       <div class="grid grid-cols-3 gap-3 w-full">
-        <button class="btn-fixed bg-black text-white">AC</button>
-        <button class="btn-fixed bg-blue-600 text-white">保存</button>
-        <button class="btn-fixed bg-orange-400 text-white">戻る</button>
+        <button type="button" class="btn-fixed bg-black text-white">AC</button>
+        <button type="button" class="btn-fixed bg-blue-600 text-white">保存</button>
+        <button type="button" class="btn-fixed bg-orange-400 text-white">戻る</button>
       </div>
     </div>
 
@@ -79,21 +79,9 @@
         <div class="mt-2">
           <label class="font-bold">背景画像</label>
           <input type="file" id="bgImage" />
-          <button id="removeBg" class="ml-2 px-2 py-1 bg-gray-200 rounded font-bold">背景画像を削除</button>
+          <button type="button" id="removeBg" class="ml-2 px-2 py-1 bg-gray-200 rounded font-bold">背景画像を削除</button>
         </div>
-      </div>
-      <!-- キーボード操作ガイド -->
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="font-bold mb-2">キーボード操作ガイド</h2>
-        <ul class="text-sm text-gray-600">
-          <li class="font-bold">数字キー（0〜9）、+、-、*、/、.、% で計算可能</li>
-          <li class="font-bold">Enter = ／ c: クリア ／ s: 保存 ／ u: 戻る</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-
-<script>
+      </div
 (() => {
 const expressionEl = document.getElementById('expression');
   const resultEl = document.getElementById('result');
@@ -264,6 +252,25 @@ const expressionEl = document.getElementById('expression');
 
   renderHistory();
   updateDisplay();
+})();
+includes(key)) {
+      expression += key;
+    } else if (key === 'Enter') {
+      calculate();
+    } else if (key === 'c') {
+      expression = '';
+      result = 0;
+    } else if (key === 's') {
+      addToHistory(expression, result);
+    } else if (key === 'u') {
+      expression = expression.slice(0, -1);
+    }
+    updateDisplay();
+  });
+
+  renderHistory();
+  updateDisplay();
+});
 })();
 </script>
 </body>
