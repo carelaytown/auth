@@ -94,7 +94,7 @@
   </div>
 
 <script>
-function initToolcalc() {
+(function() {
 document.addEventListener('DOMContentLoaded', () => {
   const expressionEl = document.getElementById('expression');
   const resultEl = document.getElementById('result');
@@ -266,13 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderHistory();
   updateDisplay();
 });
-}
-
-if (window.waitForSupabaseReady) {
-  window.waitForSupabaseReady(initToolcalc);
-} else {
-  window.addEventListener("DOMContentLoaded", initToolcalc);
-}
+})();
 </script>
 </body>
 </html>
