@@ -1,4 +1,6 @@
-<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.tailwindcss.com" onload="initToolcalc()"></script>
+
+<div id="toolcalc-app" class="hidden p-4">
 <div id="toolcalc-app" class="p-4">
 <!DOCTYPE html>
 
@@ -95,7 +97,12 @@
     </div>
   </div>
 </div>
+</div>
+
 <script>
+function initToolcalc() {
+  document.getElementById("toolcalc-app").classList.remove("hidden");
+  (() => {
 (function() {
 document.addEventListener('DOMContentLoaded', () => {
   const expressionEl = document.getElementById('expression');
@@ -269,6 +276,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateDisplay();
 });
 })();
+})();
+}
 </script>
-
-
