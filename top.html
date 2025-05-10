@@ -205,10 +205,10 @@
             }
             oldScript.parentNode.replaceChild(newScript, oldScript);
           });
-    
-          // ✅ ここを追加！
-          if (pageName === "mypage" && window.loadMypage) {
-            window.loadMypage();
+  
+          // ✅ マイページ再表示時に初期化処理を呼ぶ
+          if (pageName === "mypage" && typeof initMypage === "function") {
+            initMypage();
           }
         });
     }
