@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>データ管理 | CARELAYタウン</title>
+  <title>会社（データ管理） | CARELAYタウン</title>
   <style>
     body {
       margin: 0;
@@ -88,9 +89,9 @@
 <body>
   <div class="container">
     <div class="intro">
-      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images//sampleoffice.png" alt="データ管理">
+      <img src="https://viihcgkjzzhkdiwdzdex.supabase.co/storage/v1/object/public/images/sampleoffice.png" alt="会社（データ管理）">
       <div>
-        <h2>📊 データ管理</h2>
+        <h2>📊 会社（データ管理）</h2>
         <p>記録データやシートの整理、CSVやPDF出力など、データ管理に関するツールが利用できます。</p>
       </div>
     </div>
@@ -116,21 +117,23 @@
         }, 2000);
       }
 
-      function getLocalTools() {
-        return JSON.parse(localStorage.getItem("carelayTools") || "[]");
+      const category = "office";
+const storageKey = "carelay" + category.charAt(0).toUpperCase() + category.slice(1);
+function getLocalTools() {
+        return JSON.parse(localStorage.getItem(storageKey) || "[]");
       }
 
       function updateLocalTools(id, add) {
-        const tools = getLocalTools();
+        const office = getLocalTools();
         if (add) {
-          if (!tools.includes(id)) tools.unshift(id);
+          if (!office.includes(id)) office.unshift(id);
           showToast("追加されました");
         } else {
-          const idx = tools.indexOf(id);
-          if (idx >= 0) tools.splice(idx, 1);
+          const idx = office.indexOf(id);
+          if (idx >= 0) office.splice(idx, 1);
           showToast("解除されました");
         }
-        localStorage.setItem("carelayTools", JSON.stringify(tools));
+        localStorage.setItem(storageKey, JSON.stringify(office));
         if (window.parent && typeof window.parent.setupAccordionMenu === "function") {
           window.parent.setupAccordionMenu();
         }
