@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>CARELAYタウン電卓（パネル版）</title>
+  <title>CARELAYタウン電卓（修正版）</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -16,15 +16,23 @@
       font-family: inherit;
       font-size: inherit;
     }
-    textarea {
-      resize: none;
-    }
+    textarea { resize: none; }
     #toolcalc-app {
       display: flex;
-      gap: 20px;
+      gap: 40px;
       justify-content: center;
       align-items: flex-start;
       padding: 20px;
+    }
+    .left-col {
+      flex: 1;
+      min-width: 360px;
+      max-width: 460px;
+    }
+    .right-col {
+      flex: 1;
+      min-width: 400px;
+      max-width: 600px;
     }
     .panel {
       background: #f9f9f9;
@@ -45,14 +53,8 @@
       background: white;
       text-align: right;
     }
-    .display-area .formula {
-      font-size: 18px;
-      color: #555;
-    }
-    .display-area .result {
-      font-size: 24px;
-      font-weight: bold;
-    }
+    .formula { font-size: 18px; color: #555; }
+    .result { font-size: 24px; font-weight: bold; }
     .button-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -66,10 +68,6 @@
       border-radius: 6px;
       background-color: #eeeeee;
       cursor: pointer;
-      transition: transform 0.1s, background 0.1s;
-    }
-    .button-grid button:active {
-      transform: scale(0.95);
     }
     .button-grid button.op { background-color: #d1e7fd; }
     .button-grid button.eq { background-color: #fcd34d; }
@@ -79,12 +77,16 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 0;
+      padding: 6px 0;
       border-bottom: 1px solid #ddd;
     }
-    .history-item .exp { flex: 1; white-space: nowrap; }
+    .history-item .exp {
+      flex: 1;
+      white-space: nowrap;
+    }
     .history-item textarea {
-      width: 100px;
+      flex-shrink: 0;
+      width: 160px;
       height: 24px;
     }
     .history-item button {
@@ -95,43 +97,39 @@
 </head>
 <body>
 <div id="toolcalc-app">
-  <!-- 左：電卓パネル -->
-  <div style="flex-shrink:0; width:260px;">
-    <div class="panel">
-      <div class="display-area">
-        <div class="formula" id="formula">式</div>
-        <div class="result" id="result">0</div>
-      </div>
-      <div class="button-grid">
-        <button class="ac" onclick="clearCalc()">AC</button>
-        <button onclick="appendCalc('(')">(</button>
-        <button onclick="appendCalc(')')">)</button>
-        <button class="op" onclick="appendCalc('/')">÷</button>
-        <button onclick="appendCalc('7')">7</button>
-        <button onclick="appendCalc('8')">8</button>
-        <button onclick="appendCalc('9')">9</button>
-        <button class="op" onclick="appendCalc('*')">×</button>
-        <button onclick="appendCalc('4')">4</button>
-        <button onclick="appendCalc('5')">5</button>
-        <button onclick="appendCalc('6')">6</button>
-        <button class="op" onclick="appendCalc('-')">−</button>
-        <button onclick="appendCalc('1')">1</button>
-        <button onclick="appendCalc('2')">2</button>
-        <button onclick="appendCalc('3')">3</button>
-        <button class="op" onclick="appendCalc('+')">＋</button>
-        <button onclick="appendCalc('0')">0</button>
-        <button onclick="appendCalc('.')">.</button>
-        <button class="eq" onclick="computeCalc()">=</button>
-        <button class="eq" onclick="saveHistory()">保存</button>
-        <button class="tax" onclick="applyTax(1.10)">税10%</button>
-        <button class="tax" onclick="applyTax(1.08)">税8%</button>
-        <button class="tax" onclick="removeTax()">非課税</button>
-      </div>
+  <div class="left-col">
+    <div class="display-area">
+      <div class="formula" id="formula">式</div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="button-grid">
+      <button class="ac" onclick="clearCalc()">AC</button>
+      <button onclick="appendCalc('(')">(</button>
+      <button onclick="appendCalc(')')">)</button>
+      <button class="op" onclick="appendCalc('/')">÷</button>
+      <button onclick="appendCalc('7')">7</button>
+      <button onclick="appendCalc('8')">8</button>
+      <button onclick="appendCalc('9')">9</button>
+      <button class="op" onclick="appendCalc('*')">×</button>
+      <button onclick="appendCalc('4')">4</button>
+      <button onclick="appendCalc('5')">5</button>
+      <button onclick="appendCalc('6')">6</button>
+      <button class="op" onclick="appendCalc('-')">−</button>
+      <button onclick="appendCalc('1')">1</button>
+      <button onclick="appendCalc('2')">2</button>
+      <button onclick="appendCalc('3')">3</button>
+      <button class="op" onclick="appendCalc('+')">＋</button>
+      <button onclick="appendCalc('0')">0</button>
+      <button onclick="appendCalc('.')">.</button>
+      <button class="eq" onclick="computeCalc()">=</button>
+      <button class="eq" onclick="saveHistory()">保存</button>
+      <button class="tax" onclick="applyTax(1.10)">税10%</button>
+      <button class="tax" onclick="applyTax(1.08)">税8%</button>
+      <button class="tax" onclick="removeTax()">非課税</button>
+      <button onclick="restorePrevious()">戻る</button>
     </div>
   </div>
-
-  <!-- 右：履歴・設定・ガイド -->
-  <div style="flex-grow:1;">
+  <div class="right-col">
     <div class="panel">
       <h3>計算履歴 (5件まで)</h3>
       <div id="history-list"></div>
@@ -150,15 +148,17 @@
       <ul>
         <li>数字、+ - * / . () で入力</li>
         <li>Enterで計算、Backspaceで削除</li>
+        <li>c: クリア、s: 保存</li>
       </ul>
     </div>
   </div>
 </div>
-
 <script>
 (() => {
   let calcFormula = "";
   let calcResult = "";
+  let prevFormula = "";
+  let prevResult = "";
   const formulaEl = document.getElementById("formula");
   const resultEl = document.getElementById("result");
   const historyListEl = document.getElementById("history-list");
@@ -171,8 +171,18 @@
 
   window.appendCalc = val => { calcFormula += val; updateDisplay(); };
   window.clearCalc = () => { calcFormula = ""; calcResult = ""; updateDisplay(); };
+  window.restorePrevious = () => {
+    calcFormula = prevFormula; calcResult = prevResult;
+    updateDisplay();
+  };
   window.computeCalc = () => {
-    try { calcResult = eval(calcFormula); } catch { calcResult = "Error"; }
+    try {
+      prevFormula = calcFormula;
+      prevResult = calcResult;
+      calcResult = eval(calcFormula);
+    } catch {
+      calcResult = "Error";
+    }
     updateDisplay();
   };
   window.applyTax = rate => {
@@ -205,7 +215,7 @@
         div.innerHTML = `
           <div class="exp"><strong>${item.formula} = ${item.result}</strong></div>
           <textarea>${item.memo || ""}</textarea>
-          <button onclick="useResult(${i})">読込</button>
+          <button onclick="appendFromHistory(${i})">読込</button>
           <button onclick="deleteHistory(${i})">削除</button>
         `;
         div.querySelector("textarea").addEventListener("change", function() {
@@ -219,10 +229,9 @@
     }
   }
 
-  window.useResult = i => {
+  window.appendFromHistory = i => {
     if (historyData[i]) {
-      calcFormula = historyData[i].result.toString();
-      calcResult = "";
+      calcFormula += historyData[i].result.toString();
       updateDisplay();
     }
   };
@@ -231,14 +240,13 @@
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
   };
-
   document.getElementById("btnColor").addEventListener("change", function() {
     document.querySelectorAll(".button-grid button").forEach(btn => {
       btn.style.backgroundColor = this.value;
     });
   });
   document.getElementById("calcBgColor").addEventListener("change", function() {
-    document.getElementById("toolcalc-app").style.backgroundColor = this.value;
+    document.querySelector(".left-col").style.backgroundColor = this.value;
   });
   document.getElementById("screenBgColor").addEventListener("change", function() {
     const main = document.getElementById("main");
@@ -276,7 +284,8 @@
     else if (key === "Enter") computeCalc();
     else if (key === "Backspace") {
       calcFormula = calcFormula.slice(0, -1); updateDisplay();
-    }
+    } else if (key === "c") clearCalc();
+    else if (key === "s") saveHistory();
   });
 
   updateDisplay();
