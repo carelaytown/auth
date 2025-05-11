@@ -1,159 +1,174 @@
+<!DOCTYPE html><html><head><meta charset='UTF-8'><title>電卓アプリ</title></head><body>
 
+<!-- toolcalc-app 全体（左パネル＋右パネル＋スクリプト） -->
 <div id="toolcalc-app" style="display:flex; gap:20px; justify-content:center; align-items:flex-start;">
-  <style>
-    #toolcalc-app {
-      font-family: Arial, sans-serif;
-      max-width: 400px;
-      margin: 20px auto;
-      padding: 16px;
-      background: #f5f5f5;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-    }
-    .display-area {
-      margin-bottom: 12px;
-    }
-    .display-area .formula,
-    .display-area .result {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 4px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      background: white;
-      text-align: right;
-    }
-    .display-area .formula { font-size: 18px; color: #555; }
-    .display-area .result { font-size: 24px; font-weight: bold; }
-    .button-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    .button-grid button {
-      padding: 16px;
-      font-size: 18px;
-      border: none;
-      border-radius: 6px;
-      background-color: #eee;
-      cursor: pointer;
-      transition: transform 0.1s, background 0.1s;
-    }
-    .button-grid button:active { transform: scale(0.95); }
-    .button-grid button.op { background-color: #d1e7fd; }
-    .button-grid button.op:active { background-color: #aad4fa; }
-    .button-grid button.eq { background-color: #fcd34d; }
-    .button-grid button.eq:active { background-color: #fbbf24; }
-    .button-grid button.ac { background-color: #fca5a5; }
-    .button-grid button.ac:active { background-color: #f87171; }
-    .button-grid button.tax { background-color: #c7d2fe; }
-    .button-grid button.tax:active { background-color: #a5b4fc; }
-  </style>
+  <!-- 左パネル（省略） -->
 
-  <div id="left-panel" style="flex-shrink:0; width:220px;">
-<div class="display-area">
-    <div class="formula" id="formula">式</div>
-    <div class="result" id="result">0</div>
+  <!-- 右パネル：履歴・設定・操作ガイド -->
+  <div id="right-panel" style="flex-grow:1;">
+    <div class="history">
+      <h3>計算履歴 (5件まで)</h3>
+      <div id="history-list"></div>
+    </div>
+
+    <div class="settings">
+      <h3>デザイン設定</h3>
+      <label>ボタン色: <input type="color" id="btnColor" value="#eee"></label>
+      <label>電卓背景色: <input type="color" id="calcBgColor" value="#f5f5f5"></label>
+      <label>画面背景色: <input type="color" id="screenBgColor" value="#ffffff"></label>
+      <label>背景画像: <input type="file" id="bgFile"></label>
+      <button type="button" onclick="removeBgImage()">背景画像を削除</button>
+    </div>
+
+    <div class="guide">
+      <h3>キーボード操作ガイド</h3>
+      <ul>
+        <li>数字キー、'+', '-', '*', '/', '.', '(', ')' で入力</li>
+        <li>Enterキーで計算、Backspaceキーで削除</li>
+      </ul>
+    </div>
   </div>
-
-  <div class="button-grid">
-    <button class="ac" type="button" onclick="clearCalc()">AC</button>
-    <button type="button" onclick="appendCalc('(')">(</button>
-    <button type="button" onclick="appendCalc(')')">)</button>
-    <button class="op" type="button" onclick="appendCalc('/')">÷</button>
-
-    <button type="button" onclick="appendCalc('7')">7</button>
-    <button type="button" onclick="appendCalc('8')">8</button>
-    <button type="button" onclick="appendCalc('9')">9</button>
-    <button class="op" type="button" onclick="appendCalc('*')">×</button>
-
-    <button type="button" onclick="appendCalc('4')">4</button>
-    <button type="button" onclick="appendCalc('5')">5</button>
-    <button type="button" onclick="appendCalc('6')">6</button>
-    <button class="op" type="button" onclick="appendCalc('-')">−</button>
-
-    <button type="button" onclick="appendCalc('1')">1</button>
-    <button type="button" onclick="appendCalc('2')">2</button>
-    <button type="button" onclick="appendCalc('3')">3</button>
-    <button class="op" type="button" onclick="appendCalc('+')">＋</button>
-
-    <button type="button" onclick="appendCalc('0')">0</button>
-    <button type="button" onclick="appendCalc('.')">.</button>
-    <button class="eq" type="button" onclick="computeCalc()">=</button>
-    <button class="eq" type="button" onclick="saveHistory()">保存</button>
-
-    <button class="tax" type="button" onclick="applyTax(1.10)">税10%</button>
-    <button class="tax" type="button" onclick="applyTax(1.08)">税8%</button>
-    <button class="tax" type="button" onclick="removeTax()">非課税</button>
-  </div>
-
-  </div>
-<div id="right-panel" style="flex-grow:1;">
-<script>
-    (() => {
-      let calcFormula = "";
-      let calcResult = "";
-      const formulaEl = document.getElementById("formula");
-      const resultEl = document.getElementById("result");
-
-      function updateDisplay() {
-        formulaEl.textContent = calcFormula || "式";
-        resultEl.textContent = calcResult || "0";
-      }
-
-      window.appendCalc = function(val) {
-        calcFormula += val;
-        updateDisplay();
-      };
-
-      window.clearCalc = function() {
-        calcFormula = "";
-        calcResult = "";
-        updateDisplay();
-      };
-
-      window.computeCalc = function() {
-        try {
-          calcResult = eval(calcFormula);
-        } catch (e) {
-          calcResult = "Error";
-        }
-        updateDisplay();
-      };
-
-      window.applyTax = function(rate) {
-        if (calcResult !== "" && !isNaN(calcResult)) {
-          calcResult = Math.round(calcResult * rate * 100) / 100;
-          updateDisplay();
-        } else {
-          calcFormula += "*" + rate;
-          updateDisplay();
-        }
-      };
-
-      window.removeTax = function() {
-        calcFormula = calcFormula.replace(/\*1\.(10|08)/, "");
-        computeCalc();
-      };
-
-      window.saveHistory = function() {
-        alert("保存しました（仮動作）");
-      };
-
-      document.addEventListener("keydown", function(e) {
-        const key = e.key;
-        if ("0123456789.+-*/()".includes(key)) {
-          appendCalc(key);
-        } else if (key === "Enter") {
-          computeCalc();
-        } else if (key === "Backspace") {
-          calcFormula = calcFormula.slice(0, -1);
-          updateDisplay();
-        }
-      });
-
-      updateDisplay();
-    })();
-  </script>
 </div>
+
+<script>
+(() => {
+  let calcFormula = "";
+  let calcResult = "";
+  const formulaEl = document.getElementById("formula");
+  const resultEl = document.getElementById("result");
+  const historyListEl = document.getElementById("history-list");
+  let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
+
+  function updateDisplay() {
+    formulaEl.textContent = calcFormula || "式";
+    resultEl.textContent = calcResult || "0";
+  }
+
+  window.appendCalc = function(val) {
+    calcFormula += val;
+    updateDisplay();
+  };
+
+  window.clearCalc = function() {
+    calcFormula = "";
+    calcResult = "";
+    updateDisplay();
+  };
+
+  window.computeCalc = function() {
+    try {
+      calcResult = eval(calcFormula);
+    } catch (e) {
+      calcResult = "Error";
+    }
+    updateDisplay();
+  };
+
+  window.applyTax = function(rate) {
+    if (calcResult !== "" && !isNaN(calcResult)) {
+      calcResult = Math.round(calcResult * rate * 100) / 100;
+      updateDisplay();
+    } else {
+      calcFormula += "*" + rate;
+      updateDisplay();
+    }
+  };
+
+  window.removeTax = function() {
+    calcFormula = calcFormula.replace(/\*1\.(10|08)/, "");
+    computeCalc();
+  };
+
+  window.saveHistory = function() {
+    if (!calcFormula) return;
+    const entry = { formula: calcFormula, result: calcResult, memo: "" };
+    historyData.unshift(entry);
+    if (historyData.length > 5) {
+      historyData = historyData.slice(0, 5);
+    }
+    localStorage.setItem("calc_history", JSON.stringify(historyData));
+    renderHistory();
+  };
+
+  function renderHistory() {
+    historyListEl.innerHTML = "";
+    for (let i = 0; i < 5; i++) {
+      const item = historyData[i];
+      const div = document.createElement("div");
+      div.className = "history-item";
+      if (item) {
+        div.innerHTML = "<strong>" + item.formula + " = " + item.result + "</strong><br>" +
+          "<textarea placeholder='メモ'>" + (item.memo || "") + "</textarea>";
+        div.querySelector("textarea").addEventListener("change", function() {
+          item.memo = this.value;
+          localStorage.setItem("calc_history", JSON.stringify(historyData));
+        });
+      } else {
+        div.innerHTML = "<em>空欄</em><br><textarea placeholder='メモ'></textarea>";
+      }
+      historyListEl.appendChild(div);
+    }
+  }
+
+  const btnColorInput = document.getElementById("btnColor");
+  const calcBgColorInput = document.getElementById("calcBgColor");
+  const screenBgColorInput = document.getElementById("screenBgColor");
+  const bgFileInput = document.getElementById("bgFile");
+
+  btnColorInput.addEventListener("change", function() {
+    document.querySelectorAll(".button-grid button").forEach(btn => {
+      btn.style.backgroundColor = this.value;
+    });
+  });
+
+  calcBgColorInput.addEventListener("change", function() {
+    document.getElementById("toolcalc-app").style.backgroundColor = this.value;
+  });
+
+  screenBgColorInput.addEventListener("change", function() {
+    const mainEl = document.getElementById("main");
+    if (mainEl) {
+      mainEl.style.backgroundColor = this.value;
+    }
+  });
+
+  bgFileInput.addEventListener("change", function() {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const mainEl = document.getElementById("main");
+        if (mainEl) {
+          mainEl.style.backgroundImage = "url('" + e.target.result + "')";
+          mainEl.style.backgroundSize = "cover";
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  window.removeBgImage = function() {
+    const mainEl = document.getElementById("main");
+    if (mainEl) {
+      mainEl.style.backgroundImage = "";
+    }
+  };
+
+  document.addEventListener("keydown", function(e) {
+    const key = e.key;
+    if ("0123456789.+-*/()".includes(key)) {
+      appendCalc(key);
+    } else if (key === "Enter") {
+      computeCalc();
+    } else if (key === "Backspace") {
+      calcFormula = calcFormula.slice(0, -1);
+      updateDisplay();
+    }
+  });
+
+  updateDisplay();
+  renderHistory();
+})();
+</script>
+
+</body></html>
