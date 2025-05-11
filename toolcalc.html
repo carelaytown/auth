@@ -1,281 +1,109 @@
-<script src="https://cdn.tailwindcss.com" onload="initToolcalc()"></script>
 
-<div id="toolcalc-app" class="hidden p-4">
-<div id="toolcalc-app" class="p-4">
-<!DOCTYPE html>
-
-
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>CARELAY電卓 完全版</title>
-  
+<div id="toolcalc-app">
   <style>
-    .btn {
-      height: 4rem;
-      background-color: #e5e7eb;
-      font-weight: bold;
-      font-size: 1.125rem;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-      transition: all 0.1s;
+    #toolcalc-app {
+      font-family: sans-serif;
+      max-width: 400px;
+      margin: 20px auto;
+      padding: 16px;
+      background: #f5f5f5;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
     }
-    .digit {
-      border-radius: 9999px;
+    .display {
+      width: 100%;
+      font-size: 24px;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: white;
+      text-align: right;
     }
-    .op {
-      border-radius: 0.5rem;
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
     }
-    .btn:active {
-      transform: scale(0.95) translateY(2px);
-      box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+    .buttons button {
+      padding: 16px;
+      font-size: 18px;
+      border: none;
+      border-radius: 6px;
+      background-color: #eee;
+      cursor: pointer;
+      transition: background 0.2s;
     }
-    .btn-action, .btn-fixed {
-      height: 3rem;
-      font-weight: bold;
-      border-radius: 0.5rem;
-      background-color: #e5e7eb;
+    .buttons button:hover {
+      background-color: #ddd;
+    }
+    .buttons .op {
+      background-color: #d1e7fd;
+    }
+    .buttons .op:hover {
+      background-color: #aad4fa;
+    }
+    .buttons .eq {
+      background-color: #fcd34d;
+    }
+    .buttons .eq:hover {
+      background-color: #fbbf24;
+    }
+    .buttons .ac {
+      background-color: #fca5a5;
+    }
+    .buttons .ac:hover {
+      background-color: #f87171;
     }
   </style>
 
-<body id="body" class="bg-white text-gray-800 p-4 flex justify-center">
-  <div class="flex flex-col lg:flex-row gap-6 w-full max-w-7xl items-start">
-    <!-- 電卓 -->
-    <div class="w-full max-w-lg bg-white p-4 rounded-2xl shadow-2xl flex flex-col items-center" id="calcPanel">
-      <div id="display" class="mb-4 p-4 h-24 w-full bg-gray-100 rounded text-right shadow-inner">
-        <div id="expression" class="text-lg text-gray-500 font-bold">式</div>
-        <div id="result" class="text-3xl font-bold">0</div>
-      </div>
-      <div class="grid grid-cols-4 gap-3 mb-4 w-full">
-        <button class="btn digit">7</button><button class="btn digit">8</button><button class="btn digit">9</button><button class="btn op">÷</button>
-        <button class="btn digit">4</button><button class="btn digit">5</button><button class="btn digit">6</button><button class="btn op">×</button>
-        <button class="btn digit">1</button><button class="btn digit">2</button><button class="btn digit">3</button><button class="btn op">−</button>
-        <button class="btn digit">0</button><button class="btn digit">.</button><button class="btn op">=</button><button class="btn op">＋</button>
-      </div>
-      <div class="grid grid-cols-3 gap-3 mb-3 w-full">
-        <button class="btn-action">税10%</button>
-        <button class="btn-action">税8%</button>
-        <button class="btn-action">非課税</button>
-        <button class="btn-action">切捨</button>
-        <button class="btn-action">切上</button>
-        <button class="btn-action">四捨五入</button>
-      </div>
-      <div class="grid grid-cols-3 gap-3 w-full">
-        <button class="btn-fixed bg-black text-white">AC</button>
-        <button class="btn-fixed bg-blue-600 text-white">保存</button>
-        <button class="btn-fixed bg-orange-400 text-white">戻る</button>
-      </div>
-    </div>
+  <input type="text" id="display" class="display" disabled>
 
-    <!-- パネル -->
-    <div class="flex flex-col w-full space-y-4">
-      <!-- 履歴 -->
-      <div class="bg-white p-4 rounded-xl shadow space-y-2 flex-grow">
-        <h2 class="font-bold mb-2">計算履歴（5件まで）</h2>
-        <div id="history" class="space-y-2"></div>
-      </div>
-      <!-- デザイン設定 -->
-      <div class="bg-white p-4 rounded-xl shadow space-y-2">
-        <h2 class="font-bold mb-2">デザイン設定</h2>
-        <div class="flex gap-4 flex-wrap items-center">
-          <label class="font-bold">電卓ボタン色 <input type="color" id="colorBtn" /></label>
-          <label class="font-bold">電卓背景色 <input type="color" id="panelColor" /></label>
-          <label class="font-bold">画面背景色 <input type="color" id="bgColor" /></label>
-        </div>
-        <div class="mt-2">
-          <label class="font-bold">背景画像</label>
-          <input type="file" id="bgImage" />
-          <button id="removeBg" class="ml-2 px-2 py-1 bg-gray-200 rounded font-bold">背景画像を削除</button>
-        </div>
-      </div>
-      <!-- キーボード操作ガイド -->
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="font-bold mb-2">キーボード操作ガイド</h2>
-        <ul class="text-sm text-gray-600">
-          <li class="font-bold">数字キー（0〜9）、+、-、*、/、.、% で計算可能</li>
-          <li class="font-bold">Enter = ／ c: クリア ／ s: 保存 ／ u: 戻る</li>
-        </ul>
-      </div>
-    </div>
+  <div class="buttons">
+    <button class="ac" onclick="clearDisplay()">AC</button>
+    <button onclick="appendValue('(')">(</button>
+    <button onclick="appendValue(')')">)</button>
+    <button class="op" onclick="appendValue('/')">÷</button>
+
+    <button onclick="appendValue('7')">7</button>
+    <button onclick="appendValue('8')">8</button>
+    <button onclick="appendValue('9')">9</button>
+    <button class="op" onclick="appendValue('*')">×</button>
+
+    <button onclick="appendValue('4')">4</button>
+    <button onclick="appendValue('5')">5</button>
+    <button onclick="appendValue('6')">6</button>
+    <button class="op" onclick="appendValue('-')">−</button>
+
+    <button onclick="appendValue('1')">1</button>
+    <button onclick="appendValue('2')">2</button>
+    <button onclick="appendValue('3')">3</button>
+    <button class="op" onclick="appendValue('+')">＋</button>
+
+    <button onclick="appendValue('0')">0</button>
+    <button onclick="appendValue('.')">.</button>
+    <button class="eq" onclick="calculate()">=</button>
   </div>
-</div>
-</div>
 
-<script>
-function initToolcalc() {
-  document.getElementById("toolcalc-app").classList.remove("hidden");
-  (() => {
-(function() {
-document.addEventListener('DOMContentLoaded', () => {
-  const expressionEl = document.getElementById('expression');
-  const resultEl = document.getElementById('result');
-  const historyEl = document.getElementById('history');
-  const calcPanel = document.getElementById('calcPanel');
-  const body = document.getElementById('body');
-  let expression = '';
-  let result = 0;
-  let history = JSON.parse(localStorage.getItem('calc_history') || '[]');
+  <script>
+    (() => {
+      const display = document.getElementById("display");
 
-  function updateDisplay() {
-    expressionEl.textContent = expression || '式';
-    resultEl.textContent = result || '0';
-  }
+      window.appendValue = function(val) {
+        display.value += val;
+      };
 
-  function addToHistory(expr, res) {
-    if (history.length >= 5) history.shift();
-    history.push({ expr, res, memo: '' });
-    localStorage.setItem('calc_history', JSON.stringify(history));
-    renderHistory();
-  }
+      window.clearDisplay = function() {
+        display.value = "";
+      };
 
-  function renderHistory() {
-    historyEl.innerHTML = '';
-    for (let i = 0; i < 5; i++) {
-      const item = history[i] || { expr: '--', res: '', memo: '' };
-      const wrapper = document.createElement('div');
-      wrapper.className = 'p-2 bg-gray-100 rounded space-y-1';
-      const topRow = document.createElement('div');
-      topRow.className = 'flex justify-between text-sm';
-      topRow.innerHTML = `<div><b>${item.expr}</b> ${item.res ? '= ' + item.res : ''}</div>
-        <div>
-          <button onclick="loadHistory(${i})" class="text-blue-600">読込</button>
-          <button onclick="deleteHistory(${i})" class="text-red-600 ml-2">削除</button>
-        </div>`;
-      wrapper.appendChild(topRow);
-      const memo = document.createElement('textarea');
-      memo.rows = 1;
-      memo.placeholder = 'メモ';
-      memo.className = 'w-full text-xs p-1 rounded';
-      memo.value = item.memo || '';
-      memo.onchange = () => {
-        if (history[i]) {
-          history[i].memo = memo.value;
-          localStorage.setItem('calc_history', JSON.stringify(history));
+      window.calculate = function() {
+        try {
+          display.value = eval(display.value);
+        } catch {
+          display.value = "Error";
         }
       };
-      wrapper.appendChild(memo);
-      historyEl.appendChild(wrapper);
-    }
-  }
-
-  window.loadHistory = (i) => {
-    const item = history[i];
-    if (item) {
-      if (expression && /[0-9)]$/.test(expression)) {
-        expression += '+' + item.res;
-      } else {
-        expression += item.res;
-      }
-      updateDisplay();
-    }
-  };
-
-  window.deleteHistory = (i) => {
-    if (history[i]) {
-      history.splice(i, 1);
-      localStorage.setItem('calc_history', JSON.stringify(history));
-      renderHistory();
-    }
-  };
-
-  function calculate() {
-    try {
-      const evalExpr = expression.replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-').replace(/＋/g, '+');
-      result = Function('"use strict"; return (' + evalExpr + ')')();
-      result = Math.round((result + Number.EPSILON) * 100) / 100;
-    } catch {
-      result = 'Error';
-    }
-    updateDisplay();
-  }
-
-  document.querySelectorAll('button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const val = btn.textContent.trim();
-      if (val === '=') {
-        calculate();
-      } else if (val === 'AC') {
-        expression = '';
-        result = 0;
-        updateDisplay();
-      } else if (val === '保存') {
-        addToHistory(expression, result);
-      } else if (val === '戻る') {
-        expression = expression.slice(0, -1);
-        updateDisplay();
-      } else if (val.startsWith('税')) {
-        if (val === '非課税') {
-          expression = expression.replace(/\*1\.1$|\*1\.08$/, '');
-        } else if (val === '税10%') {
-          expression += '*1.1';
-        } else if (val === '税8%') {
-          expression += '*1.08';
-        }
-        calculate();
-      } else if (val === '切捨') {
-        result = Math.floor(result);
-        updateDisplay();
-      } else if (val === '切上') {
-        result = Math.ceil(result);
-        updateDisplay();
-      } else if (val === '四捨五入') {
-        result = Math.round(result);
-        updateDisplay();
-      } else {
-        expression += val;
-        updateDisplay();
-      }
-    });
-  });
-
-  document.getElementById('colorBtn').addEventListener('change', e => {
-    document.querySelectorAll('.digit, .op').forEach(b => {
-      b.style.backgroundColor = e.target.value;
-    });
-  });
-
-  document.getElementById('panelColor').addEventListener('change', e => {
-    calcPanel.style.backgroundColor = e.target.value;
-  });
-
-  document.getElementById('bgColor').addEventListener('change', e => {
-    body.style.backgroundColor = e.target.value;
-  });
-
-  document.getElementById('bgImage').addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      body.style.backgroundImage = `url('${e.target.result}')`;
-      body.style.backgroundSize = 'cover';
-    };
-    reader.readAsDataURL(file);
-  });
-
-  document.getElementById('removeBg').addEventListener('click', () => {
-    body.style.backgroundImage = '';
-  });
-
-  document.addEventListener('keydown', e => {
-    const key = e.key;
-    if ('0123456789.+-*/%'.includes(key)) {
-      expression += key;
-    } else if (key === 'Enter') {
-      calculate();
-    } else if (key === 'c') {
-      expression = '';
-      result = 0;
-    } else if (key === 's') {
-      addToHistory(expression, result);
-    } else if (key === 'u') {
-      expression = expression.slice(0, -1);
-    }
-    updateDisplay();
-  });
-
-  renderHistory();
-  updateDisplay();
-});
-})();
-})();
-}
-</script>
+    })();
+  </script>
+</div>
