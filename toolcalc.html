@@ -1,10 +1,33 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>CARELAYタウン電卓</title>
   <style>
-    #toolcalc-app { font-family: Arial, sans-serif; display: flex; gap: 20px; justify-content: center; align-items: flex-start; }
+    body {
+      font-family: Arial, sans-serif;
+      font-size: 16px;
+      color: #333;
+      line-height: 1.4;
+      margin: 0;
+      padding: 0;
+    }
+    label, input, textarea, button {
+      font-family: inherit;
+      font-size: inherit;
+    }
+    textarea {
+      width: 100%;
+      margin: 4px 0;
+    }
+    #toolcalc-app {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 20px;
+    }
     .display-area { margin-bottom: 12px; }
     .display-area .formula, .display-area .result {
       width: 100%; padding: 10px; margin-bottom: 4px;
@@ -35,6 +58,8 @@
   </style>
 </head>
 <body>
+<!-- 電卓アプリ本体：左＋右パネル、JS含む -->
+
 <div id="toolcalc-app">
   <div id="left-panel" style="flex-shrink:0; width:240px;">
     <div class="display-area">
