@@ -1,7 +1,6 @@
-<!-- toolcalc_final_full.html -->
-<div id="toolcalc-app">
+
+<div id="toolcalc-app" style="display:flex; gap:20px; justify-content:center; align-items:flex-start;">
   <style>
-    /* コンテナ */
     #toolcalc-app {
       font-family: Arial, sans-serif;
       max-width: 400px;
@@ -11,7 +10,6 @@
       border-radius: 10px;
       box-shadow: 0 0 8px rgba(0,0,0,0.2);
     }
-    /* 表示エリア */
     .display-area {
       margin-bottom: 12px;
     }
@@ -27,7 +25,6 @@
     }
     .display-area .formula { font-size: 18px; color: #555; }
     .display-area .result { font-size: 24px; font-weight: bold; }
-    /* ボタングリッド */
     .button-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -43,107 +40,27 @@
       cursor: pointer;
       transition: transform 0.1s, background 0.1s;
     }
-    .button-grid button:active {
-      transform: scale(0.95);
-    }
-    /* オペレーター */
-    .button-grid button.op {
-      background-color: #d1e7fd;
-    }
-    .button-grid button.op:active {
-      background-color: #aad4fa;
-    }
-    /* 等号 */
-    .button-grid button.eq {
-      background-color: #fcd34d;
-    }
-    .button-grid button.eq:active {
-      background-color: #fbbf24;
-    }
-    /* ACボタン */
-    .button-grid button.ac {
-      background-color: #fca5a5;
-    }
-    .button-grid button.ac:active {
-      background-color: #f87171;
-    }
-    /* 税率ボタン */
-    .button-grid button.tax {
-      background-color: #c7d2fe;
-    }
-    .button-grid button.tax:active {
-      background-color: #a5b4fc;
-    }
-    /* 計算履歴 */
-    .history {
-      margin-bottom: 16px;
-      background: #fff;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .history h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-    }
-    .history .history-item {
-      margin-bottom: 8px;
-      padding: 8px;
-      background: #f9f9f9;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-    }
-    .history .history-item textarea {
-      width: 100%;
-      font-size: 14px;
-      margin-top: 4px;
-      padding: 4px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      resize: none;
-    }
-    /* デザイン設定 */
-    .settings {
-      margin-bottom: 16px;
-      background: #fff;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-    .settings h3 {
-      margin: 0 0 8px 0;
-      font-size: 16px;
-    }
-    .settings label {
-      display: block;
-      margin-bottom: 4px;
-      font-size: 14px;
-    }
-    /* 操作ガイド */
-    .guide {
-      font-size: 14px;
-      color: #555;
-    }
-    .guide ul {
-      list-style: none;
-      padding-left: 0;
-    }
-    .guide li:before {
-      content: "• ";
-    }
+    .button-grid button:active { transform: scale(0.95); }
+    .button-grid button.op { background-color: #d1e7fd; }
+    .button-grid button.op:active { background-color: #aad4fa; }
+    .button-grid button.eq { background-color: #fcd34d; }
+    .button-grid button.eq:active { background-color: #fbbf24; }
+    .button-grid button.ac { background-color: #fca5a5; }
+    .button-grid button.ac:active { background-color: #f87171; }
+    .button-grid button.tax { background-color: #c7d2fe; }
+    .button-grid button.tax:active { background-color: #a5b4fc; }
   </style>
 
-  <!-- 表示エリア -->
-  <div class="display-area">
+  <div id="left-panel" style="flex-shrink:0; width:220px;">
+<div class="display-area">
     <div class="formula" id="formula">式</div>
     <div class="result" id="result">0</div>
   </div>
 
-  <!-- ボタングリッド -->
   <div class="button-grid">
     <button class="ac" type="button" onclick="clearCalc()">AC</button>
-    <button type="button" onclick="appendCalc('(')"> ( </button>
-    <button type="button" onclick="appendCalc(')')"> ) </button>
+    <button type="button" onclick="appendCalc('(')">(</button>
+    <button type="button" onclick="appendCalc(')')">)</button>
     <button class="op" type="button" onclick="appendCalc('/')">÷</button>
 
     <button type="button" onclick="appendCalc('7')">7</button>
@@ -164,69 +81,38 @@
     <button type="button" onclick="appendCalc('0')">0</button>
     <button type="button" onclick="appendCalc('.')">.</button>
     <button class="eq" type="button" onclick="computeCalc()">=</button>
+    <button class="eq" type="button" onclick="saveHistory()">保存</button>
 
-    <!-- 税率ボタン -->
     <button class="tax" type="button" onclick="applyTax(1.10)">税10%</button>
     <button class="tax" type="button" onclick="applyTax(1.08)">税8%</button>
     <button class="tax" type="button" onclick="removeTax()">非課税</button>
   </div>
 
-  <!-- 計算履歴 -->
-  <div class="history">
-    <h3>計算履歴 (5件まで)</h3>
-    <div id="history-list"></div>
-    <button class="eq" type="button" onclick="saveHistory()">保存</button>
   </div>
-
-  <!-- デザイン設定 -->
-  <div class="settings">
-    <h3>デザイン設定</h3>
-    <label>ボタン色: <input type="color" id="btnColor" value="#eee"></label>
-    <label>電卓背景色: <input type="color" id="calcBgColor" value="#f5f5f5"></label>
-    <label>画面背景色: <input type="color" id="screenBgColor" value="#ffffff"></label>
-    <label>背景画像: <input type="file" id="bgFile"></label>
-    <button type="button" onclick="removeBgImage()">背景画像を削除</button>
-  </div>
-
-  <!-- キーボード操作ガイド -->
-  <div class="guide">
-    <h3>キーボード操作ガイド</h3>
-    <ul>
-      <li>数字キー、'+', '-', '*', '/', '.', '(', ')' で入力</li>
-      <li>Enterキーで計算、Backspaceキーで削除</li>
-    </ul>
-  </div>
-
-  <script>
+<div id="right-panel" style="flex-grow:1;">
+<script>
     (() => {
-      // 変数定義
       let calcFormula = "";
       let calcResult = "";
       const formulaEl = document.getElementById("formula");
       const resultEl = document.getElementById("result");
-      const historyListEl = document.getElementById("history-list");
-      let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
 
-      // 表示更新
       function updateDisplay() {
         formulaEl.textContent = calcFormula || "式";
         resultEl.textContent = calcResult || "0";
       }
 
-      // 数値・記号の追加
       window.appendCalc = function(val) {
         calcFormula += val;
         updateDisplay();
       };
 
-      // クリア
       window.clearCalc = function() {
         calcFormula = "";
         calcResult = "";
         updateDisplay();
       };
 
-      // 計算実行
       window.computeCalc = function() {
         try {
           calcResult = eval(calcFormula);
@@ -236,7 +122,6 @@
         updateDisplay();
       };
 
-      // 税率計算（結果が数値の場合のみ適用、または式に乗数を追加）
       window.applyTax = function(rate) {
         if (calcResult !== "" && !isNaN(calcResult)) {
           calcResult = Math.round(calcResult * rate * 100) / 100;
@@ -247,91 +132,15 @@
         }
       };
 
-      // 非課税（乗数部分を除去して再計算）
       window.removeTax = function() {
         calcFormula = calcFormula.replace(/\*1\.(10|08)/, "");
         computeCalc();
       };
 
-      // 計算履歴保存（最大5件）
       window.saveHistory = function() {
-        if (!calcFormula) return;
-        const entry = { formula: calcFormula, result: calcResult, memo: "" };
-        historyData.unshift(entry);
-        if (historyData.length > 5) {
-          historyData = historyData.slice(0, 5);
-        }
-        localStorage.setItem("calc_history", JSON.stringify(historyData));
-        renderHistory();
+        alert("保存しました（仮動作）");
       };
 
-      // 履歴表示
-      function renderHistory() {
-        historyListEl.innerHTML = "";
-        for (let i = 0; i < 5; i++) {
-          const item = historyData[i];
-          const div = document.createElement("div");
-          div.className = "history-item";
-          if (item) {
-            div.innerHTML = "<strong>" + item.formula + " = " + item.result + "</strong><br>" +
-              "<textarea placeholder='メモ'>" + (item.memo || "") + "</textarea>";
-            div.querySelector("textarea").addEventListener("change", function() {
-              item.memo = this.value;
-              localStorage.setItem("calc_history", JSON.stringify(historyData));
-            });
-          } else {
-            div.innerHTML = "<em>空欄</em><br><textarea placeholder='メモ'></textarea>";
-          }
-          historyListEl.appendChild(div);
-        }
-      }
-
-      // カラーピッカー設定
-      const btnColorInput = document.getElementById("btnColor");
-      const calcBgColorInput = document.getElementById("calcBgColor");
-      const screenBgColorInput = document.getElementById("screenBgColor");
-      const bgFileInput = document.getElementById("bgFile");
-
-      btnColorInput.addEventListener("change", function() {
-        document.querySelectorAll(".button-grid button").forEach(btn => {
-          btn.style.backgroundColor = this.value;
-        });
-      });
-
-      calcBgColorInput.addEventListener("change", function() {
-        document.getElementById("toolcalc-app").style.backgroundColor = this.value;
-      });
-
-      screenBgColorInput.addEventListener("change", function() {
-        const mainEl = document.getElementById("main");
-        if (mainEl) {
-          mainEl.style.backgroundColor = this.value;
-        }
-      });
-
-      bgFileInput.addEventListener("change", function() {
-        const file = this.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = function(e) {
-            const mainEl = document.getElementById("main");
-            if (mainEl) {
-              mainEl.style.backgroundImage = "url('" + e.target.result + "')";
-              mainEl.style.backgroundSize = "cover";
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      window.removeBgImage = function() {
-        const mainEl = document.getElementById("main");
-        if (mainEl) {
-          mainEl.style.backgroundImage = "";
-        }
-      };
-
-      // キーボード操作サポート
       document.addEventListener("keydown", function(e) {
         const key = e.key;
         if ("0123456789.+-*/()".includes(key)) {
@@ -345,7 +154,6 @@
       });
 
       updateDisplay();
-      renderHistory();
     })();
   </script>
 </div>
