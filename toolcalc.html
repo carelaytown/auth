@@ -51,11 +51,9 @@
       text-align: right;
     }
     .formula {
-      height: 36px;
-      font-size: 24px;
-      font-weight: bold;
-      overflow: hidden;
+      font-size: 18px;
       color: #555;
+      min-height: 28px;
     }
     .result {
       font-size: 24px;
@@ -268,7 +266,6 @@
     renderHistory();
   };
 
-  
   function restoreDesign() {
     const calcBg = localStorage.getItem("calcBgColor");
     const screenBg = localStorage.getItem("screenBgColor");
@@ -282,7 +279,10 @@
       document.body.style.backgroundColor = screenBg;
       document.getElementById("screenBgColor").value = screenBg;
     }
-  }
+    if (bgImg) {
+      document.body.style.backgroundImage = `url('${bgImg}')`;
+      document.body.style.backgroundSize = "cover";
+    }
   }
 
   document.getElementById("calcBgColor").addEventListener("change", function () {
@@ -337,9 +337,7 @@
 
   updateDisplay();
   renderHistory();
-  document.addEventListener("DOMContentLoaded", restoreDesign);
-
-  
+  restoreDesign();
 })();
 </script>
 </body>
