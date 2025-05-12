@@ -293,11 +293,6 @@
       img.src = bgImg;
     }
   }
-
-    if (screenBg) {
-      document.body.style.backgroundColor = screenBg;
-      document.getElementById("screenBgColor").value = screenBg;
-    }
     if (bgImg) {
       document.body.style.backgroundImage = `url('${bgImg}')`;
       document.body.style.backgroundSize = "cover";
@@ -356,8 +351,25 @@
 
   updateDisplay();
   renderHistory();
+  document.addEventListener("DOMContentLoaded", restoreDesign);
 document.addEventListener("DOMContentLoaded", () => {
-  restoreDesign();
+  
+  const calcBg = localStorage.getItem("calcBgColor");
+  const screenBg = localStorage.getItem("screenBgColor");
+  const bgImg = localStorage.getItem("bgImageData");
+
+  if (calcBg) {
+    calcPanel.style.setProperty("background-color", calcBg, "important");
+    document.getElementById("calcBgColor").value = calcBg;
+  }
+  if (screenBg) {
+    document.body.style.setProperty("background-color", screenBg, "important");
+    document.getElementById("screenBgColor").value = screenBg;
+  }
+  if (bgImg) {
+    document.body.style.backgroundImage = `url('${bgImg}')`;
+    document.body.style.backgroundSize = "cover";
+  }
 });
 
   
