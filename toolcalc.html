@@ -51,6 +51,8 @@
       text-align: right;
     }
     .formula {
+      height: 28px;
+      overflow: hidden;
       font-size: 18px;
       color: #555;
       min-height: 28px;
@@ -193,7 +195,7 @@
   }
 
   window.appendCalc = val => { calcFormula += val; updateDisplay(); };
-  window.clearCalc = () => { calcFormula = ""; calcResult = ""; updateDisplay(); };
+  window.clearCalc = () => { calcFormula = ""; calcResult = ""; updateDisplay(); document.activeElement.blur(); };
   window.restorePrevious = () => {
     calcFormula = prevFormula; calcResult = prevResult;
     updateDisplay();
@@ -338,6 +340,21 @@
   updateDisplay();
   renderHistory();
   restoreDesign();
+  function applyDesign() {
+    const calcBg = localStorage.getItem("calcBgColor");
+    const screenBg = localStorage.getItem("screenBgColor");
+    const bgImg = localStorage.getItem("bgImageData");
+
+    if (calcBg) calcPanel.style.backgroundColor = calcBg;
+    if (screenBg) document.body.style.backgroundColor = screenBg;
+    if (bgImg) {
+      document.body.style.backgroundImage = `url('${bgImg}')`;
+      document.body.style.backgroundSize = "cover";
+    } else {
+      document.body.style.backgroundImage = "";
+    }
+  }
+  applyDesign();
 })();
 </script>
 </body>
