@@ -59,7 +59,8 @@
       border-radius: 6px;
       background: white;
       text-align: right;
-      height: 48px; /* 固定の高さ */
+      height: 48px;
+      /* 固定の高さ */
     }
 
     .formula {
@@ -72,7 +73,8 @@
     .result {
       font-size: 24px;
       font-weight: bold;
-      min-height: 48px; /* 念のため指定 */
+      min-height: 48px;
+      /* 念のため指定 */
     }
 
     .button-grid {
@@ -157,6 +159,7 @@
         <div class="button-grid">
           <button class="ac" onclick="clearCalc()">AC</button>
           <button onclick="appendCalc('(')">(</button>
+
           <button onclick="appendCalc(')')">)</button>
           <button class="op" onclick="appendCalc('/')">÷</button>
           <button onclick="appendCalc('7')">7</button>
@@ -166,6 +169,7 @@
           <button onclick="appendCalc('4')">4</button>
           <button onclick="appendCalc('5')">5</button>
           <button onclick="appendCalc('6')">6</button>
+
           <button class="op" onclick="appendCalc('-')">−</button>
           <button onclick="appendCalc('1')">1</button>
           <button onclick="appendCalc('2')">2</button>
@@ -176,6 +180,7 @@
           <button onclick="appendCalc('.')">.</button>
           <button class="eq" onclick="computeCalc()">=</button>
           <button class="eq" onclick="saveHistory()">保存</button>
+
           <button class="tax" onclick="applyTax(1.10)">税10%</button>
           <button class="tax" onclick="applyTax(1.08)">税8%</button>
           <button class="tax" onclick="removeTax()">非課税</button>
@@ -221,6 +226,7 @@
       let calcResult = "";
       let prevFormula = "";
       let prevResult = "";
+
       const formulaEl = document.getElementById("formula");
       const resultEl = document.getElementById("result");
       const historyListEl = document.getElementById("history-list");
@@ -333,14 +339,14 @@
           document.getElementById("calcBgColor").value = calcBg;
         }
         if (screenBg) {
-          document.body.style.backgroundColor = screenBg;
+          document.getElementById("toolcalc-app").style.backgroundColor = screenBg; // 修正箇所
           document.getElementById("screenBgColor").value = screenBg;
         }
         if (bgImg) {
           const img = new Image();
           img.onload = () => {
-            document.body.style.backgroundImage = `url('${bgImg}')`;
-            document.body.style.backgroundSize = "cover";
+            document.getElementById("toolcalc-app").style.backgroundImage = `url('${bgImg}')`; // 修正箇所
+            document.getElementById("toolcalc-app").style.backgroundSize = "cover"; // 修正箇所
           };
           img.src = bgImg;
         }
@@ -352,7 +358,7 @@
         localStorage.setItem("calcBgColor", this.value);
       });
       document.getElementById("screenBgColor").addEventListener("change", function () {
-        document.body.style.backgroundColor = this.value;
+        document.getElementById("toolcalc-app").style.backgroundColor = this.value; // 修正箇所
         localStorage.setItem("screenBgColor", this.value);
       });
       document.getElementById("bgFile").addEventListener("change", function () {
@@ -360,15 +366,15 @@
         if (file) {
           const reader = new FileReader();
           reader.onload = e => {
-            document.body.style.backgroundImage = "url('" + e.target.result + "')";
-            document.body.style.backgroundSize = "cover";
+            document.getElementById("toolcalc-app").style.backgroundImage = "url('" + e.target.result + "')"; // 修正箇所
+            document.getElementById("toolcalc-app").style.backgroundSize = "cover"; // 修正箇所
             localStorage.setItem("bgImageData", e.target.result);
           };
           reader.readAsDataURL(file);
         }
       });
       window.removeBgImage = () => {
-        document.body.style.backgroundImage = "";
+        document.getElementById("toolcalc-app").style.backgroundImage = ""; // 修正箇所
         localStorage.removeItem("bgImageData");
       };
       window.resetDesign = () => {
@@ -379,7 +385,7 @@
         document.getElementById("screenBgColor").value = "#ffffff";
         removeBgImage();
         calcPanel.style.backgroundColor = "#f5f5f5";
-        document.body.style.backgroundColor = "#ffffff";
+        document.getElementById("toolcalc-app").style.backgroundColor = "#ffffff"; // 修正箇所
       };
 
       document.addEventListener("keydown", e => {
