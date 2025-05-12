@@ -245,10 +245,15 @@
           "0";
       }
 
-      window.appendCalc = val => {
-        calcFormula += val;
-        updateDisplay();
-      };
+      
+window.appendCalc = val => {
+  if (calcResult !== "" && calcFormula === calcResult) {
+    calcFormula = "";  // 直前が答えだったら式をクリア
+  }
+  calcFormula += val;
+  updateDisplay();
+};
+
       window.clearCalc = () => {
         calcFormula = "";
         calcResult = "";
