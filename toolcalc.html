@@ -2,22 +2,17 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>CARELAYタウン電卓（修正版）</title>
+  <title>CARELAYタウン電卓（完全修正版）</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       font-size: 16px;
-      color: #333;
-      line-height: 1.4;
       margin: 0;
       padding: 0;
+      color: #333;
     }
-    label, input, textarea, button {
-      font-family: inherit;
-      font-size: inherit;
-    }
-    textarea { resize: none; }
     #toolcalc-app {
+  font-size: 16px;
       display: flex;
       gap: 40px;
       justify-content: center;
@@ -41,10 +36,13 @@
       margin-bottom: 16px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
+    .calc-panel {
+      background-color: var(--calc-bg, #f5f5f5);
+    }
     .display-area {
       margin-bottom: 12px;
     }
-    .display-area .formula, .display-area .result {
+    .formula, .result {
       width: 100%;
       padding: 10px;
       margin-bottom: 4px;
@@ -53,17 +51,31 @@
       background: white;
       text-align: right;
     }
-    .formula { font-size: 18px; color: #555; }
-    .result { font-size: 24px; font-weight: bold; }
+    .formula {
+      height: 36px;
+      font-size: 24px;
+      font-weight: bold;
+      overflow: hidden;
+      color: #555;
+    }
+    .result {
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 36px;
+    }
     .button-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
       margin-bottom: 16px;
+      padding: 10px;
     }
     .button-grid button {
+  font-size: 18px;
+      height: 60px;
       padding: 16px;
       font-size: 18px;
+      font-weight: bold;
       border: none;
       border-radius: 6px;
       background-color: #eeeeee;
@@ -93,42 +105,52 @@
       font-size: 12px;
       padding: 4px 6px;
     }
+    .right-col ul {
+      padding-left: 1.5em;
+    }
+    .design-row label {
+      display: inline-block;
+      margin-right: 20px;
+    }
   </style>
 </head>
 <body>
 <div id="toolcalc-app">
   <div class="left-col">
-    <div class="display-area">
-      <div class="formula" id="formula">式</div>
-      <div class="result" id="result">0</div>
-    </div>
-    <div class="button-grid">
-      <button class="ac" onclick="clearCalc()">AC</button>
-      <button onclick="appendCalc('(')">(</button>
-      <button onclick="appendCalc(')')">)</button>
-      <button class="op" onclick="appendCalc('/')">÷</button>
-      <button onclick="appendCalc('7')">7</button>
-      <button onclick="appendCalc('8')">8</button>
-      <button onclick="appendCalc('9')">9</button>
-      <button class="op" onclick="appendCalc('*')">×</button>
-      <button onclick="appendCalc('4')">4</button>
-      <button onclick="appendCalc('5')">5</button>
-      <button onclick="appendCalc('6')">6</button>
-      <button class="op" onclick="appendCalc('-')">−</button>
-      <button onclick="appendCalc('1')">1</button>
-      <button onclick="appendCalc('2')">2</button>
-      <button onclick="appendCalc('3')">3</button>
-      <button class="op" onclick="appendCalc('+')">＋</button>
-      <button onclick="appendCalc('0')">0</button>
-      <button onclick="appendCalc('.')">.</button>
-      <button class="eq" onclick="computeCalc()">=</button>
-      <button class="eq" onclick="saveHistory()">保存</button>
-      <button class="tax" onclick="applyTax(1.10)">税10%</button>
-      <button class="tax" onclick="applyTax(1.08)">税8%</button>
-      <button class="tax" onclick="removeTax()">非課税</button>
-      <button onclick="restorePrevious()">戻る</button>
+    <div class="panel calc-panel" id="calcPanel">
+      <div class="display-area">
+        <div class="formula" id="formula">式</div>
+        <div class="result" id="result">0</div>
+      </div>
+      <div class="button-grid">
+        <button class="ac" onclick="clearCalc()">AC</button>
+        <button onclick="appendCalc('(')">(</button>
+        <button onclick="appendCalc(')')">)</button>
+        <button class="op" onclick="appendCalc('/')">÷</button>
+        <button onclick="appendCalc('7')">7</button>
+        <button onclick="appendCalc('8')">8</button>
+        <button onclick="appendCalc('9')">9</button>
+        <button class="op" onclick="appendCalc('*')">×</button>
+        <button onclick="appendCalc('4')">4</button>
+        <button onclick="appendCalc('5')">5</button>
+        <button onclick="appendCalc('6')">6</button>
+        <button class="op" onclick="appendCalc('-')">−</button>
+        <button onclick="appendCalc('1')">1</button>
+        <button onclick="appendCalc('2')">2</button>
+        <button onclick="appendCalc('3')">3</button>
+        <button class="op" onclick="appendCalc('+')">＋</button>
+        <button onclick="appendCalc('0')">0</button>
+        <button onclick="appendCalc('.')">.</button>
+        <button class="eq" onclick="computeCalc()">=</button>
+        <button class="eq" onclick="saveHistory()">保存</button>
+        <button class="tax" onclick="applyTax(1.10)">税10%</button>
+        <button class="tax" onclick="applyTax(1.08)">税8%</button>
+        <button class="tax" onclick="removeTax()">非課税</button>
+        <button onclick="restorePrevious()">戻る</button>
+      </div>
     </div>
   </div>
+
   <div class="right-col">
     <div class="panel">
       <h3>計算履歴 (5件まで)</h3>
@@ -136,12 +158,15 @@
     </div>
     <div class="panel">
       <h3>デザイン設定</h3>
-      <label>ボタン色: <input type="color" id="btnColor" value="#eeeeee"></label>
-      <label>電卓背景色: <input type="color" id="calcBgColor" value="#f5f5f5"></label>
-      <label>画面背景色: <input type="color" id="screenBgColor" value="#ffffff"></label>
-      <label>背景画像: <input type="file" id="bgFile"></label>
-      <button onclick="removeBgImage()">背景画像を削除</button>
-      <button onclick="resetDesign()">デザインリセット</button>
+      <div class="design-row">
+        <label>電卓色: <input type="color" id="calcBgColor" /></label>
+        <label>背景色: <input type="color" id="screenBgColor" /></label>
+      </div>
+      <div>
+        <label>背景画像: <input type="file" id="bgFile" /></label>
+        <button onclick="removeBgImage()">背景画像を削除</button><br>
+        <button onclick="resetDesign()">デザインリセット</button>
+      </div>
     </div>
     <div class="panel">
       <h3>キーボード操作ガイド</h3>
@@ -153,6 +178,7 @@
     </div>
   </div>
 </div>
+
 <script>
 (() => {
   let calcFormula = "";
@@ -162,6 +188,8 @@
   const formulaEl = document.getElementById("formula");
   const resultEl = document.getElementById("result");
   const historyListEl = document.getElementById("history-list");
+  const calcPanel = document.getElementById("calcPanel");
+
   let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
 
   function updateDisplay() {
@@ -204,7 +232,8 @@
     historyData.unshift(entry); historyData = historyData.slice(0, 5);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
-  };
+  document.addEventListener("DOMContentLoaded", restoreDesign);};
+
   function renderHistory() {
     historyListEl.innerHTML = "";
     for (let i = 0; i < 5; i++) {
@@ -235,62 +264,94 @@
       updateDisplay();
     }
   };
+
   window.deleteHistory = i => {
     historyData.splice(i, 1);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
-  };
-  document.getElementById("btnColor").addEventListener("change", function() {
-    document.querySelectorAll(".button-grid button").forEach(btn => {
-      btn.style.backgroundColor = this.value;
-    });
+  document.addEventListener("DOMContentLoaded", restoreDesign);};
+
+  
+  
+  
+  function restoreDesign() {
+    const calcBg = localStorage.getItem("calcBgColor");
+    const screenBg = localStorage.getItem("screenBgColor");
+    const bgImg = localStorage.getItem("bgImageData");
+
+    if (calcBg) {
+      calcPanel.style.backgroundColor = calcBg;
+      document.getElementById("calcBgColor").value = calcBg;
+    }
+    if (screenBg) {
+      document.body.style.backgroundColor = screenBg;
+      document.getElementById("screenBgColor").value = screenBg;
+    }
+    if (bgImg) {
+      const img = new Image();
+      img.onload = () => {
+        document.body.style.backgroundImage = `url('${bgImg}')`;
+        document.body.style.backgroundSize = "cover";
+      };
+      img.src = bgImg;
+    }
+  }
+
+}
+
+  document.getElementById("calcBgColor").addEventListener("change", function () {
+    calcPanel.style.backgroundColor = this.value;
+    localStorage.setItem("calcBgColor", this.value);
   });
-  document.getElementById("calcBgColor").addEventListener("change", function() {
-    document.querySelector(".left-col").style.backgroundColor = this.value;
+
+  document.getElementById("screenBgColor").addEventListener("change", function () {
+    document.body.style.backgroundColor = this.value;
+    localStorage.setItem("screenBgColor", this.value);
   });
-  document.getElementById("screenBgColor").addEventListener("change", function() {
-    const main = document.getElementById("main");
-    if (main) main.style.backgroundColor = this.value;
-  });
-  document.getElementById("bgFile").addEventListener("change", function() {
+
+  document.getElementById("bgFile").addEventListener("change", function () {
     const file = this.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
-        const main = document.getElementById("main");
-        if (main) {
-          main.style.backgroundImage = "url('" + e.target.result + "')";
-          main.style.backgroundSize = "cover";
-        }
+        document.body.style.backgroundImage = "url('" + e.target.result + "')";
+        document.body.style.backgroundSize = "cover";
+        localStorage.setItem("bgImageData", e.target.result);
       };
       reader.readAsDataURL(file);
     }
   });
+
   window.removeBgImage = () => {
-    const main = document.getElementById("main");
-    if (main) main.style.backgroundImage = "";
+    document.body.style.backgroundImage = "";
+    localStorage.removeItem("bgImageData");
   };
+
   window.resetDesign = () => {
-    document.getElementById("btnColor").value = "#eeeeee";
+    localStorage.removeItem("calcBgColor");
+    localStorage.removeItem("screenBgColor");
+    localStorage.removeItem("bgImageData");
     document.getElementById("calcBgColor").value = "#f5f5f5";
     document.getElementById("screenBgColor").value = "#ffffff";
     removeBgImage();
-    document.getElementById("calcBgColor").dispatchEvent(new Event("change"));
-    document.getElementById("btnColor").dispatchEvent(new Event("change"));
+    calcPanel.style.backgroundColor = "#f5f5f5";
+    document.body.style.backgroundColor = "#ffffff";
   };
+
   document.addEventListener("keydown", e => {
     const key = e.key;
     if ("0123456789.+-*/()".includes(key)) appendCalc(key);
     else if (key === "Enter") computeCalc();
     else if (key === "Backspace") {
-      calcFormula = calcFormula.slice(0, -1); updateDisplay();
+      calcFormula = calcFormula.slice(0, -1);
+      updateDisplay();
     } else if (key === "c") clearCalc();
-    else if (key === "s") saveHistory();
+    else if (key === "s") { e.preventDefault(); saveHistory(); }
   });
 
   updateDisplay();
   renderHistory();
-})();
+  document.addEventListener("DOMContentLoaded", restoreDesign);})();
 </script>
 </body>
 </html>
