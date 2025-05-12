@@ -79,6 +79,7 @@
       font-size: 24px;
       font-weight: bold;
       min-height: 48px;
+      /* 念のため指定 */
     }
 
     .button-grid {
@@ -90,6 +91,7 @@
     }
 
     .button-grid button {
+      transition: transform 0.1s ease;
       font-size: 18px;
       height: 60px;
       padding: 16px;
@@ -99,7 +101,6 @@
       border-radius: 6px;
       background-color: #eeeeee;
       cursor: pointer;
-      transition: background-color 0.3s ease;
     }
 
     .button-grid button.op {
@@ -116,26 +117,6 @@
 
     .button-grid button.tax {
       background-color: #c7d2fe;
-    }
-
-    .button-grid button:hover {
-      background-color: #dddddd;
-    }
-
-    .button-grid button.op:hover {
-      background-color: #b9d6f2;
-    }
-
-    .button-grid button.eq:hover {
-      background-color: #f4c11f;
-    }
-
-    .button-grid button.ac:hover {
-      background-color: #f88686;
-    }
-
-    .button-grid button.tax:hover {
-      background-color: #a9bdf0;
     }
 
     .history-item {
@@ -263,6 +244,10 @@
       }
 
       window.appendCalc = val => {
+        if (calcResult !== "") {
+          calcFormula = calcResult; // 計算結果を初期値に
+          calcResult = "";
+        }
         calcFormula += val;
         updateDisplay();
       };
@@ -281,10 +266,12 @@
           prevFormula = calcFormula;
           prevResult = calcResult;
           calcResult = eval(calcFormula);
+          calcFormula = calcResult.toString(); // 数値 -> 文字列
+          updateDisplay();
         } catch {
           calcResult = "Error";
+          updateDisplay();
         }
-        updateDisplay();
       };
       window.applyTax = rate => {
         if (calcResult !== "" && !isNaN(calcResult)) {
@@ -320,10 +307,10 @@
           div.className = "history-item";
           if (item) {
             div.innerHTML = `
-          <div class="exp"><strong>${item.formula} = <span class="math-inline">\{item\.result\}</strong\></div\>
-<textarea\></span>{item.memo || ""}</textarea>
-          <button onclick="appendFromHistory(<span class="math-inline">\{i\}\)"\>読込</button\>
-<button onclick\="deleteHistory\(</span>{i})">削除</button>
+          <div class="exp"><strong>${item.formula} = ${item.result}</strong></div>
+          <textarea>${item.memo || ""}</textarea>
+          <button onclick="appendFromHistory(${i})">読込</button>
+          <button onclick="deleteHistory(${i})">削除</button>
         `;
             div.querySelector("textarea").addEventListener("change", function() {
               item.memo = this.value;
@@ -415,33 +402,61 @@
       }
 
       document.addEventListener("keydown", e => {
-        const now = Date.now();
-        if (now - lastKeyTime < 100) { // 連打防止: 100ms以内は無視
-          e.preventDefault();
-          return;
-        }
-        lastKeyTime = now;
+        animateKeyButton(e.key);
 
         const key = e.key;
-        if ("0123456789.+-*/()".includes(key)) {
-          appendCalc(key);
-          animateKeyButton(key);
-        } else if (key === "Enter") {
-          computeCalc();
-          animateKeyButton("=");
-        } else if (key === "Backspace") {
+        if ("0123456789.+-*/()".includes(key)) appendCalc(key);
+        else if (key === "Enter") computeCalc();
+        else if (key === "Backspace") {
           calcFormula = calcFormula.slice(0, -1);
           updateDisplay();
-          animateKeyButton("Backspace");
-        } else if (key === "c") {
-          clearCalc();
-          animateKeyButton("AC");
-        } else if (key === "s") {
+        } else if (key === "c") clearCalc();
+        else if (key === "s") {
           e.preventDefault();
           saveHistory();
-          animateKeyButton("保存");
         }
       });
+      updateDisplay();
+      renderHistory();
+      restoreDesign();
 
-      function animateKeyButton(key) {
-        const buttonText = translateKey(key);
+      // マウスクリック時のボタン押下アニメーション
+      document.querySelectorAll(".button-grid button").forEach(button => {
+        button.addEventListener("mousedown", () => {
+          button.classList.add("pressed");
+        });
+        button.addEventListener("mouseup", () => {
+          button.classList.remove("pressed");
+        });
+        button.addEventListener("mouseleave", () => {
+          button.classList.remove("pressed");
+        });
+      });
+    })();
+  </script>
+</body>
+
+</html>
+<style>
+  /* ボタンホバーアニメーションをキーボード操作時にも適用 */
+  @keyframes button-press {
+    0% {
+      transform: scale(1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    50% {
+      transform: scale(0.95);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    100% {
+      transform: scale(1);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+  }
+
+  .pressed {
+    animation: button-press 0.2s ease-out;
+  }
+</style>
