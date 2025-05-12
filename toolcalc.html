@@ -413,9 +413,7 @@
                key === "-" ? "−" : key;
       }
 
-      document.removeEventListener("keydown", keydownHandler);
-document.addEventListener("keydown", keydownHandler);
-function keydownHandler(e) {
+      document.addEventListener("keydown", e => {
         animateKeyButton(e.key);
 
         const key = e.key;
@@ -430,8 +428,7 @@ function keydownHandler(e) {
           saveHistory();
         }
       });
-      updateDisplay();}
-
+      updateDisplay();
       renderHistory();
       restoreDesign();
 // マウスクリック時のボタン押下アニメーション
