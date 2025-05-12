@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>CARELAYタウン電卓（完全統合版）</title>
+  <title>CARELAYタウン電卓（完全修正版）</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -35,6 +35,9 @@
       margin-bottom: 16px;
       box-shadow: 0 0 5px rgba(0,0,0,0.1);
     }
+    .calc-panel {
+      background-color: var(--calc-bg, #f5f5f5);
+    }
     .display-area {
       margin-bottom: 12px;
     }
@@ -47,8 +50,16 @@
       background: white;
       text-align: right;
     }
-    .formula { font-size: 18px; color: #555; }
-    .result { font-size: 24px; font-weight: bold; }
+    .formula {
+      font-size: 18px;
+      color: #555;
+      min-height: 28px;
+    }
+    .result {
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 36px;
+    }
     .button-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
@@ -92,12 +103,16 @@
     .right-col ul {
       padding-left: 1.5em;
     }
+    .design-row label {
+      display: inline-block;
+      margin-right: 20px;
+    }
   </style>
 </head>
 <body>
 <div id="toolcalc-app">
   <div class="left-col">
-    <div class="panel">
+    <div class="panel calc-panel" id="calcPanel">
       <div class="display-area">
         <div class="formula" id="formula">式</div>
         <div class="result" id="result">0</div>
@@ -138,11 +153,15 @@
     </div>
     <div class="panel">
       <h3>デザイン設定</h3>
-      <label>電卓色: <input type="color" id="calcBgColor" /></label><br>
-      <label>背景色: <input type="color" id="screenBgColor" /></label><br>
-      <label>背景画像: <input type="file" id="bgFile" /></label>
-      <button onclick="removeBgImage()">背景画像を削除</button><br>
-      <button onclick="resetDesign()">デザインリセット</button>
+      <div class="design-row">
+        <label>電卓色: <input type="color" id="calcBgColor" /></label>
+        <label>背景色: <input type="color" id="screenBgColor" /></label>
+      </div>
+      <div>
+        <label>背景画像: <input type="file" id="bgFile" /></label>
+        <button onclick="removeBgImage()">背景画像を削除</button><br>
+        <button onclick="resetDesign()">デザインリセット</button>
+      </div>
     </div>
     <div class="panel">
       <h3>キーボード操作ガイド</h3>
@@ -164,6 +183,7 @@
   const formulaEl = document.getElementById("formula");
   const resultEl = document.getElementById("result");
   const historyListEl = document.getElementById("history-list");
+  const calcPanel = document.getElementById("calcPanel");
 
   let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
 
@@ -252,27 +272,26 @@
     const bgImg = localStorage.getItem("bgImageData");
 
     if (calcBg) {
-      document.querySelector(".left-col").style.backgroundColor = calcBg;
+      calcPanel.style.backgroundColor = calcBg;
       document.getElementById("calcBgColor").value = calcBg;
     }
     if (screenBg) {
-      document.getElementById("main")?.style.setProperty("background-color", screenBg);
+      document.body.style.backgroundColor = screenBg;
       document.getElementById("screenBgColor").value = screenBg;
     }
     if (bgImg) {
-      document.getElementById("main")?.style.setProperty("background-image", `url('${bgImg}')`);
-      document.getElementById("main")?.style.setProperty("background-size", "cover");
+      document.body.style.backgroundImage = `url('${bgImg}')`;
+      document.body.style.backgroundSize = "cover";
     }
   }
 
   document.getElementById("calcBgColor").addEventListener("change", function () {
-    document.querySelector(".left-col").style.backgroundColor = this.value;
+    calcPanel.style.backgroundColor = this.value;
     localStorage.setItem("calcBgColor", this.value);
   });
 
   document.getElementById("screenBgColor").addEventListener("change", function () {
-    const main = document.getElementById("main");
-    if (main) main.style.backgroundColor = this.value;
+    document.body.style.backgroundColor = this.value;
     localStorage.setItem("screenBgColor", this.value);
   });
 
@@ -281,20 +300,16 @@
     if (file) {
       const reader = new FileReader();
       reader.onload = e => {
-        const main = document.getElementById("main");
-        if (main) {
-          main.style.backgroundImage = "url('" + e.target.result + "')";
-          main.style.backgroundSize = "cover";
-          localStorage.setItem("bgImageData", e.target.result);
-        }
+        document.body.style.backgroundImage = "url('" + e.target.result + "')";
+        document.body.style.backgroundSize = "cover";
+        localStorage.setItem("bgImageData", e.target.result);
       };
       reader.readAsDataURL(file);
     }
   });
 
   window.removeBgImage = () => {
-    const main = document.getElementById("main");
-    if (main) main.style.backgroundImage = "";
+    document.body.style.backgroundImage = "";
     localStorage.removeItem("bgImageData");
   };
 
@@ -305,8 +320,8 @@
     document.getElementById("calcBgColor").value = "#f5f5f5";
     document.getElementById("screenBgColor").value = "#ffffff";
     removeBgImage();
-    document.querySelector(".left-col").style.backgroundColor = "#f5f5f5";
-    document.getElementById("main")?.style.setProperty("background-color", "#ffffff");
+    calcPanel.style.backgroundColor = "#f5f5f5";
+    document.body.style.backgroundColor = "#ffffff";
   };
 
   document.addEventListener("keydown", e => {
