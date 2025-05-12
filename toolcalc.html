@@ -10,7 +10,8 @@
       margin: 0;
       padding: 0;
       color: #333;
-    }
+    
+  background-color: var(--bg-color, #ffffff);}
     #toolcalc-app {
       display: flex;
       gap: 40px;
@@ -51,16 +52,18 @@
       text-align: right;
     }
     .formula {
-      height: 36px;
-      font-size: 24px;
-      font-weight: bold;
-      overflow: hidden;
+      font-size: 18px;
       color: #555;
+      height: 28px;
+overflow: auto;
+white-space: nowrap;
     }
     .result {
       font-size: 24px;
       font-weight: bold;
-      min-height: 36px;
+      height: 36px;
+overflow: auto;
+white-space: nowrap;
     }
     .button-grid {
       display: grid;
@@ -70,7 +73,6 @@
       padding: 10px;
     }
     .button-grid button {
-      height: 60px;
       padding: 16px;
       font-size: 18px;
       font-weight: bold;
@@ -178,8 +180,8 @@
 </div>
 
 <script>
-(() => {
-  let calcFormula = "";
+window.onload = () => {
+let calcFormula = "";
   let calcResult = "";
   let prevFormula = "";
   let prevResult = "";
@@ -230,7 +232,7 @@
     historyData.unshift(entry); historyData = historyData.slice(0, 5);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
-  document.addEventListener("DOMContentLoaded", restoreDesign);};
+  };
 
   function renderHistory() {
     historyListEl.innerHTML = "";
@@ -267,10 +269,8 @@
     historyData.splice(i, 1);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
-  document.addEventListener("DOMContentLoaded", restoreDesign);};
+  };
 
-  
-  
   function restoreDesign() {
     const calcBg = localStorage.getItem("calcBgColor");
     const screenBg = localStorage.getItem("screenBgColor");
@@ -280,8 +280,15 @@
       calcPanel.style.backgroundColor = calcBg;
       document.getElementById("calcBgColor").value = calcBg;
     }
-}
-}
+    if (screenBg) {
+      document.body.style.backgroundColor = screenBg;
+      document.getElementById("screenBgColor").value = screenBg;
+    }
+    if (bgImg) {
+      document.body.style.backgroundImage = `url('${bgImg}')`;
+      document.body.style.backgroundSize = "cover";
+    }
+  }
 
   document.getElementById("calcBgColor").addEventListener("change", function () {
     calcPanel.style.backgroundColor = this.value;
@@ -309,7 +316,8 @@
   window.removeBgImage = () => {
     document.body.style.backgroundImage = "";
     localStorage.removeItem("bgImageData");
-  };
+  
+  document.body.style.backgroundSize = ""; };
 
   window.resetDesign = () => {
     localStorage.removeItem("calcBgColor");
@@ -330,12 +338,13 @@
       calcFormula = calcFormula.slice(0, -1);
       updateDisplay();
     } else if (key === "c") clearCalc();
-    else if (key === "s") { e.preventDefault(); saveHistory(); }
+    else if (key === "s") saveHistory();
   });
 
   updateDisplay();
   renderHistory();
-  document.addEventListener("DOMContentLoaded", restoreDesign);})();
+  restoreDesign();
+};
 </script>
 </body>
 </html>
