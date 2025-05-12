@@ -315,6 +315,7 @@
               item.memo = this.value;
               localStorage.setItem("calc_history", JSON.stringify(historyData));
             });
+    }
           } else {
             div.innerHTML = `<div class="exp">空欄</div><textarea></textarea>`;
           }
@@ -362,10 +363,12 @@
         calcPanel.style.backgroundColor = this.value;
         localStorage.setItem("calcBgColor", this.value);
       });
+    }
       document.getElementById("screenBgColor").addEventListener("change", function () {
         document.getElementById('toolcalc-app').style.backgroundColor = this.value;  // 修正箇所：bodyに設定
         localStorage.setItem("screenBgColor", this.value);
       });
+    }
       document.getElementById("bgFile").addEventListener("change", function () {
         const file = this.files[0];
         if (file) {
@@ -378,6 +381,7 @@
           reader.readAsDataURL(file);
         }
       });
+    }
       window.removeBgImage = () => {
         document.getElementById('toolcalc-app').style.backgroundImage = "";  // 修正箇所：bodyに設定
         localStorage.removeItem("bgImageData");
@@ -413,7 +417,9 @@
                key === "-" ? "−" : key;
       }
 
-      document.addEventListener("keydown", e => {
+      document.removeEventListener("keydown", keydownHandler);
+document.addEventListener("keydown", keydownHandler);
+function keydownHandler(e) {
         animateKeyButton(e.key);
 
         const key = e.key;
@@ -428,6 +434,7 @@
           saveHistory();
         }
       });
+    }
       updateDisplay();
       renderHistory();
       restoreDesign();
@@ -436,13 +443,17 @@
         button.addEventListener("mousedown", () => {
           button.classList.add("pressed");
         });
+    }
         button.addEventListener("mouseup", () => {
           button.classList.remove("pressed");
         });
+    }
         button.addEventListener("mouseleave", () => {
           button.classList.remove("pressed");
         });
+    }
       });
+    }
     })();
   </script>
 </body>
