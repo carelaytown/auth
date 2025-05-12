@@ -231,7 +231,7 @@
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
   document.addEventListener("DOMContentLoaded", restoreDesign);
-  };
+    };
 
   function renderHistory() {
     historyListEl.innerHTML = "";
@@ -269,8 +269,9 @@
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
   document.addEventListener("DOMContentLoaded", restoreDesign);
-  };
+    };
 
+  
   
   function restoreDesign() {
     const calcBg = localStorage.getItem("calcBgColor");
@@ -294,6 +295,7 @@
       img.src = bgImg;
     }
   }
+
 
     if (screenBg) {
       document.body.style.backgroundColor = screenBg;
@@ -358,7 +360,7 @@
   updateDisplay();
   renderHistory();
   document.addEventListener("DOMContentLoaded", restoreDesign);
-  
+    
 })();
 </script>
 </body>
