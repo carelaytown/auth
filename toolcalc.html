@@ -48,21 +48,24 @@
 
     .display-area {
       margin-bottom: 12px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
     }
 
     .formula,
     .result {
-      width: 100%;
       padding: 10px;
       margin-bottom: 4px;
       border: 1px solid #ccc;
       border-radius: 6px;
       background: white;
       text-align: right;
+      height: 36px; /* 固定の高さ */
     }
 
     .formula {
-      height: 36px;
+      flex: 1;
       font-size: 24px;
       font-weight: bold;
       overflow: hidden;
@@ -70,9 +73,10 @@
     }
 
     .result {
+      width: 200px; /* 適切な幅に調整 */
       font-size: 24px;
       font-weight: bold;
-      min-height: 36px;
+      min-height: 0; /* 不要なmin-heightを削除 */
     }
 
     .button-grid {
