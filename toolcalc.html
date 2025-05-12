@@ -51,9 +51,11 @@
       text-align: right;
     }
     .formula {
-      font-size: 18px;
+      height: 36px;
+      font-size: 24px;
+      font-weight: bold;
+      overflow: hidden;
       color: #555;
-      min-height: 28px;
     }
     .result {
       font-size: 24px;
@@ -68,6 +70,7 @@
       padding: 10px;
     }
     .button-grid button {
+      height: 60px;
       padding: 16px;
       font-size: 18px;
       font-weight: bold;
@@ -227,6 +230,7 @@
     historyData.unshift(entry); historyData = historyData.slice(0, 5);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
+  document.addEventListener("DOMContentLoaded", restoreDesign);
   };
 
   function renderHistory() {
@@ -264,8 +268,10 @@
     historyData.splice(i, 1);
     localStorage.setItem("calc_history", JSON.stringify(historyData));
     renderHistory();
+  document.addEventListener("DOMContentLoaded", restoreDesign);
   };
 
+  
   function restoreDesign() {
     const calcBg = localStorage.getItem("calcBgColor");
     const screenBg = localStorage.getItem("screenBgColor");
@@ -275,6 +281,20 @@
       calcPanel.style.backgroundColor = calcBg;
       document.getElementById("calcBgColor").value = calcBg;
     }
+    if (screenBg) {
+      document.body.style.backgroundColor = screenBg;
+      document.getElementById("screenBgColor").value = screenBg;
+    }
+    if (bgImg) {
+      const img = new Image();
+      img.onload = () => {
+        document.body.style.backgroundImage = `url('${bgImg}')`;
+        document.body.style.backgroundSize = "cover";
+      };
+      img.src = bgImg;
+    }
+  }
+
     if (screenBg) {
       document.body.style.backgroundColor = screenBg;
       document.getElementById("screenBgColor").value = screenBg;
@@ -332,12 +352,13 @@
       calcFormula = calcFormula.slice(0, -1);
       updateDisplay();
     } else if (key === "c") clearCalc();
-    else if (key === "s") saveHistory();
+    else if (key === "s") { e.preventDefault(); saveHistory(); }
   });
 
   updateDisplay();
   renderHistory();
-  restoreDesign();
+  document.addEventListener("DOMContentLoaded", restoreDesign);
+  
 })();
 </script>
 </body>
