@@ -341,14 +341,14 @@
           document.getElementById("calcBgColor").value = calcBg;
         }
         if (screenBg) {
-          document.body.style.backgroundColor = screenBg;  // 修正箇所：bodyに設定
+          document.getElementById('toolcalc-app').style.backgroundColor = screenBg;  // 修正箇所：bodyに設定
           document.getElementById("screenBgColor").value = screenBg;
         }
         if (bgImg) {
           const img = new Image();
           img.onload = () => {
-            document.body.style.backgroundImage = `url('${bgImg}')`;  // 修正箇所：bodyに設定
-            document.body.style.backgroundSize = "cover";  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundImage = `url('${bgImg}')`;  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
           };
           img.src = bgImg;
         }
@@ -360,7 +360,7 @@
         localStorage.setItem("calcBgColor", this.value);
       });
       document.getElementById("screenBgColor").addEventListener("change", function () {
-        document.body.style.backgroundColor = this.value;  // 修正箇所：bodyに設定
+        document.getElementById('toolcalc-app').style.backgroundColor = this.value;  // 修正箇所：bodyに設定
         localStorage.setItem("screenBgColor", this.value);
       });
       document.getElementById("bgFile").addEventListener("change", function () {
@@ -368,15 +368,15 @@
         if (file) {
           const reader = new FileReader();
           reader.onload = e => {
-            document.body.style.backgroundImage = "url('" + e.target.result + "')";  // 修正箇所：bodyに設定
-            document.body.style.backgroundSize = "cover";  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundImage = "url('" + e.target.result + "')";  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
             localStorage.setItem("bgImageData", e.target.result);
           };
           reader.readAsDataURL(file);
         }
       });
       window.removeBgImage = () => {
-        document.body.style.backgroundImage = "";  // 修正箇所：bodyに設定
+        document.getElementById('toolcalc-app').style.backgroundImage = "";  // 修正箇所：bodyに設定
         localStorage.removeItem("bgImageData");
       };
       window.resetDesign = () => {
@@ -387,7 +387,7 @@
         document.getElementById("screenBgColor").value = "#ffffff";
         removeBgImage();
         calcPanel.style.backgroundColor = "#f5f5f5";
-        document.body.style.backgroundColor = "#ffffff";  // 修正箇所：bodyに設定
+        document.getElementById('toolcalc-app').style.backgroundColor = "#ffffff";  // 修正箇所：bodyに設定
       };
 
       
@@ -428,6 +428,18 @@
       updateDisplay();
       renderHistory();
       restoreDesign();
+// マウスクリック時のボタン押下アニメーション
+      document.querySelectorAll(".button-grid button").forEach(button => {
+        button.addEventListener("mousedown", () => {
+          button.classList.add("pressed");
+        });
+        button.addEventListener("mouseup", () => {
+          button.classList.remove("pressed");
+        });
+        button.addEventListener("mouseleave", () => {
+          button.classList.remove("pressed");
+        });
+      });
     })();
   </script>
 </body>
