@@ -14,15 +14,18 @@
     }
 
     #toolcalc-app {
-  width: 100%;
-  min-height: 100%;
-  box-sizing: border-box;
+      width: 100%;
+      min-height: 100%;
+      box-sizing: border-box;
       font-size: 16px;
       display: flex;
       gap: 40px;
       justify-content: center;
       align-items: flex-start;
       padding: 20px;
+      background-color: var(--toolcalc-bg-color, #ffffff);
+      background-image: var(--toolcalc-bg-image, none);
+      background-size: var(--toolcalc-bg-size, cover);
     }
 
     .left-col {
@@ -63,7 +66,6 @@
       background: white;
       text-align: right;
       height: 48px;
-      /* 固定の高さ */
     }
 
     .formula {
@@ -77,7 +79,6 @@
       font-size: 24px;
       font-weight: bold;
       min-height: 48px;
-      /* 念のため指定 */
     }
 
     .button-grid {
@@ -89,8 +90,6 @@
     }
 
     .button-grid button {
-      transition: transform 0.1s ease;
-
       font-size: 18px;
       height: 60px;
       padding: 16px;
@@ -100,6 +99,7 @@
       border-radius: 6px;
       background-color: #eeeeee;
       cursor: pointer;
+      transition: background-color 0.3s ease;
     }
 
     .button-grid button.op {
@@ -116,6 +116,26 @@
 
     .button-grid button.tax {
       background-color: #c7d2fe;
+    }
+
+    .button-grid button:hover {
+      background-color: #dddddd;
+    }
+
+    .button-grid button.op:hover {
+      background-color: #b9d6f2;
+    }
+
+    .button-grid button.eq:hover {
+      background-color: #f4c11f;
+    }
+
+    .button-grid button.ac:hover {
+      background-color: #f88686;
+    }
+
+    .button-grid button.tax:hover {
+      background-color: #a9bdf0;
     }
 
     .history-item {
@@ -150,6 +170,12 @@
       display: inline-block;
       margin-right: 20px;
     }
+
+    /* ボタン押下時のアニメーション */
+    .pressed {
+      transform: scale(0.95);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   </style>
 </head>
 
@@ -164,7 +190,6 @@
         <div class="button-grid">
           <button class="ac" onclick="clearCalc()">AC</button>
           <button onclick="appendCalc('(')">(</button>
-
           <button onclick="appendCalc(')')">)</button>
           <button class="op" onclick="appendCalc('/')">÷</button>
           <button onclick="appendCalc('7')">7</button>
@@ -174,18 +199,15 @@
           <button onclick="appendCalc('4')">4</button>
           <button onclick="appendCalc('5')">5</button>
           <button onclick="appendCalc('6')">6</button>
-
           <button class="op" onclick="appendCalc('-')">−</button>
           <button onclick="appendCalc('1')">1</button>
           <button onclick="appendCalc('2')">2</button>
           <button onclick="appendCalc('3')">3</button>
-
           <button class="op" onclick="appendCalc('+')">＋</button>
           <button onclick="appendCalc('0')">0</button>
           <button onclick="appendCalc('.')">.</button>
           <button class="eq" onclick="computeCalc()">=</button>
           <button class="eq" onclick="saveHistory()">保存</button>
-
           <button class="tax" onclick="applyTax(1.10)">税10%</button>
           <button class="tax" onclick="applyTax(1.08)">税8%</button>
           <button class="tax" onclick="removeTax()">非課税</button>
@@ -208,16 +230,13 @@
         <div>
           <label>背景画像: <input type="file" id="bgFile" /></label>
           <button onclick="removeBgImage()">背景画像を削除</button><br>
-
           <button onclick="resetDesign()">デザインリセット</button>
         </div>
       </div>
       <div class="panel">
         <h3>キーボード操作ガイド</h3>
         <ul>
-          <li>数字、+ - * / .
-            () で入力
-          </li>
+          <li>数字、+ - * / . () で入力</li>
           <li>Enterで計算、Backspaceで削除</li>
           <li>c: クリア、s: 保存</li>
         </ul>
@@ -231,18 +250,16 @@
       let calcResult = "";
       let prevFormula = "";
       let prevResult = "";
-
       const formulaEl = document.getElementById("formula");
       const resultEl = document.getElementById("result");
       const historyListEl = document.getElementById("history-list");
       const calcPanel = document.getElementById("calcPanel");
-
       let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
+      let lastKeyTime = 0; // 最後にキーが押された時刻を保存
 
       function updateDisplay() {
         formulaEl.textContent = calcFormula || "式";
-        resultEl.textContent = calcResult ||
-          "0";
+        resultEl.textContent = calcResult || "0";
       }
 
       window.appendCalc = val => {
@@ -263,7 +280,6 @@
         try {
           prevFormula = calcFormula;
           prevResult = calcResult;
-          //  eval() is dangerous, consider using a safer math expression parser
           calcResult = eval(calcFormula);
         } catch {
           calcResult = "Error";
@@ -296,7 +312,6 @@
         renderHistory();
       };
 
-
       function renderHistory() {
         historyListEl.innerHTML = "";
         for (let i = 0; i < 5; i++) {
@@ -305,13 +320,12 @@
           div.className = "history-item";
           if (item) {
             div.innerHTML = `
-          <div class="exp"><strong>${item.formula} = ${item.result}</strong></div>
-          <textarea>${item.memo ||
-              ""}</textarea>
-          <button onclick="appendFromHistory(${i})">読込</button>
-          <button onclick="deleteHistory(${i})">削除</button>
+          <div class="exp"><strong>${item.formula} = <span class="math-inline">\{item\.result\}</strong\></div\>
+<textarea\></span>{item.memo || ""}</textarea>
+          <button onclick="appendFromHistory(<span class="math-inline">\{i\}\)"\>読込</button\>
+<button onclick\="deleteHistory\(</span>{i})">削除</button>
         `;
-            div.querySelector("textarea").addEventListener("change", function () {
+            div.querySelector("textarea").addEventListener("change", function() {
               item.memo = this.value;
               localStorage.setItem("calc_history", JSON.stringify(historyData));
             });
@@ -344,42 +358,37 @@
           document.getElementById("calcBgColor").value = calcBg;
         }
         if (screenBg) {
-          document.getElementById('toolcalc-app').style.backgroundColor = screenBg;  // 修正箇所：bodyに設定
+          document.documentElement.style.setProperty('--toolcalc-bg-color', screenBg);
           document.getElementById("screenBgColor").value = screenBg;
         }
         if (bgImg) {
-          const img = new Image();
-          img.onload = () => {
-            document.getElementById('toolcalc-app').style.backgroundImage = `url('${bgImg}')`;  // 修正箇所：bodyに設定
-            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
-          };
-          img.src = bgImg;
+          document.documentElement.style.setProperty('--toolcalc-bg-image', `url('${bgImg}')`);
+          document.documentElement.style.setProperty('--toolcalc-bg-size', 'cover');
         }
       }
 
-
-      document.getElementById("calcBgColor").addEventListener("change", function () {
+      document.getElementById("calcBgColor").addEventListener("change", function() {
         calcPanel.style.backgroundColor = this.value;
         localStorage.setItem("calcBgColor", this.value);
       });
-      document.getElementById("screenBgColor").addEventListener("change", function () {
-        document.getElementById('toolcalc-app').style.backgroundColor = this.value;  // 修正箇所：bodyに設定
+      document.getElementById("screenBgColor").addEventListener("change", function() {
+        document.documentElement.style.setProperty('--toolcalc-bg-color', this.value);
         localStorage.setItem("screenBgColor", this.value);
       });
-      document.getElementById("bgFile").addEventListener("change", function () {
+      document.getElementById("bgFile").addEventListener("change", function() {
         const file = this.files[0];
         if (file) {
           const reader = new FileReader();
           reader.onload = e => {
-            document.getElementById('toolcalc-app').style.backgroundImage = "url('" + e.target.result + "')";  // 修正箇所：bodyに設定
-            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
+            document.documentElement.style.setProperty('--toolcalc-bg-image', `url('${e.target.result}')`);
+            document.documentElement.style.setProperty('--toolcalc-bg-size', 'cover');
             localStorage.setItem("bgImageData", e.target.result);
           };
           reader.readAsDataURL(file);
         }
       });
       window.removeBgImage = () => {
-        document.getElementById('toolcalc-app').style.backgroundImage = "";  // 修正箇所：bodyに設定
+        document.documentElement.style.setProperty('--toolcalc-bg-image', 'none');
         localStorage.removeItem("bgImageData");
       };
       window.resetDesign = () => {
@@ -390,67 +399,49 @@
         document.getElementById("screenBgColor").value = "#ffffff";
         removeBgImage();
         calcPanel.style.backgroundColor = "#f5f5f5";
-        document.getElementById('toolcalc-app').style.backgroundColor = "#ffffff";  // 修正箇所：bodyに設定
+        document.documentElement.style.setProperty('--toolcalc-bg-color', '#ffffff');
+        document.documentElement.style.setProperty('--toolcalc-bg-image', 'none');
+        document.documentElement.style.setProperty('--toolcalc-bg-size', 'cover');
       };
-
-      
-      function animateKeyButton(key) {
-        const btn = Array.from(document.querySelectorAll(".button-grid button"))
-          .find(b => b.textContent === key || b.textContent === translateKey(key));
-        if (btn) {
-          btn.classList.add("pressed");
-          setTimeout(() => btn.classList.remove("pressed"), 100);
-        }
-      }
 
       function translateKey(key) {
         return key === "Enter" ? "=" :
-               key === "c" ? "AC" :
-               key === "s" ? "保存" :
-               key === "*" ? "×" :
-               key === "/" ? "÷" :
-               key === "+" ? "＋" :
-               key === "-" ? "−" : key;
+          key === "c" ? "AC" :
+          key === "s" ? "保存" :
+          key === "*" ? "×" :
+          key === "/" ? "÷" :
+          key === "+" ? "＋" :
+          key === "-" ? "−" : key;
       }
 
       document.addEventListener("keydown", e => {
-        animateKeyButton(e.key);
+        const now = Date.now();
+        if (now - lastKeyTime < 100) { // 連打防止: 100ms以内は無視
+          e.preventDefault();
+          return;
+        }
+        lastKeyTime = now;
 
         const key = e.key;
-        if ("0123456789.+-*/()".includes(key)) appendCalc(key);
-        else if (key === "Enter") computeCalc();
-        else if (key === "Backspace") {
+        if ("0123456789.+-*/()".includes(key)) {
+          appendCalc(key);
+          animateKeyButton(key);
+        } else if (key === "Enter") {
+          computeCalc();
+          animateKeyButton("=");
+        } else if (key === "Backspace") {
           calcFormula = calcFormula.slice(0, -1);
           updateDisplay();
-        } else if (key === "c") clearCalc();
-        else if (key === "s") {
+          animateKeyButton("Backspace");
+        } else if (key === "c") {
+          clearCalc();
+          animateKeyButton("AC");
+        } else if (key === "s") {
           e.preventDefault();
           saveHistory();
+          animateKeyButton("保存");
         }
       });
-      updateDisplay();
-      renderHistory();
-      restoreDesign();
-// マウスクリック時のボタン押下アニメーション
-      document.querySelectorAll(".button-grid button").forEach(button => {
-        button.addEventListener("mousedown", () => {
-          button.classList.add("pressed");
-        });
-        button.addEventListener("mouseup", () => {
-          button.classList.remove("pressed");
-        });
-        button.addEventListener("mouseleave", () => {
-          button.classList.remove("pressed");
-        });
-      });
-    })();
-  </script>
-</body>
 
-</html>
-<style>
-  .button-grid button.pressed {
-    transform: scale(0.95);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-</style>
+      function animateKeyButton(key) {
+        const buttonText = translateKey(key);
