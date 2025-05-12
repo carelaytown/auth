@@ -55,9 +55,7 @@
       font-size: 24px;
       font-weight: bold;
       overflow: hidden;
-      font-size: 18px;
       color: #555;
-      min-height: 28px;
     }
     .result {
       font-size: 24px;
@@ -284,19 +282,7 @@
       document.body.style.backgroundColor = screenBg;
       document.getElementById("screenBgColor").value = screenBg;
     }
-    if (bgImg) {
-      const img = new Image();
-      img.onload = () => {
-        document.body.style.backgroundImage = `url('${bgImg}')`;
-        document.body.style.backgroundSize = "cover";
-      };
-      img.src = bgImg;
-    }
   }
-    if (bgImg) {
-      document.body.style.backgroundImage = `url('${bgImg}')`;
-      document.body.style.backgroundSize = "cover";
-    }
   }
 
   document.getElementById("calcBgColor").addEventListener("change", function () {
@@ -352,25 +338,6 @@
   updateDisplay();
   renderHistory();
   document.addEventListener("DOMContentLoaded", restoreDesign);
-document.addEventListener("DOMContentLoaded", () => {
-  
-  const calcBg = localStorage.getItem("calcBgColor");
-  const screenBg = localStorage.getItem("screenBgColor");
-  const bgImg = localStorage.getItem("bgImageData");
-
-  if (calcBg) {
-    calcPanel.style.setProperty("background-color", calcBg, "important");
-    document.getElementById("calcBgColor").value = calcBg;
-  }
-  if (screenBg) {
-    document.body.style.setProperty("background-color", screenBg, "important");
-    document.getElementById("screenBgColor").value = screenBg;
-  }
-  if (bgImg) {
-    document.body.style.backgroundImage = `url('${bgImg}')`;
-    document.body.style.backgroundSize = "cover";
-  }
-});
 
   
 })();
