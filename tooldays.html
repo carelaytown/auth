@@ -141,7 +141,7 @@
           <h2>【日数計算】</h2>
           <div class="inline-form">
             <label>起算日:
-              <input id="baseDate" type="date">
+              <input id="baseDate" type="date" min="1900-01-01" max="2100-12-31">
               <span class="error" id="baseDateError"></span>
             </label>
             <label><input id="useToday" type="checkbox"> 今日を起算日</label>
@@ -301,6 +301,12 @@ const birth = new Date(birthDateValue);
         }
 
         const base = new Date(baseDateValue);
+        const year = base.getFullYear();
+        if (year < 1900 || year > 2100) {
+          baseDateError.textContent = "西暦は1900年〜2100年の間で入力してください。";
+          afterResultDiv.textContent = "";
+          return;
+        }
         if (isNaN(base.getTime())) {
           baseDateError.textContent = "正しい日付を入力してください。";
           afterResultDiv.textContent = "";
