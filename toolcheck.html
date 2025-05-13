@@ -1,3 +1,4 @@
+<!-- toolcheck.html -->
 <div id="toolcheck-app">
   <style>
     #toolcheck-app * { box-sizing: border-box; }
@@ -93,10 +94,6 @@
       padding: 4px 8px;
       font-size: 12px;
     }
-
-    #toolcheck-app #new-sheet-modal {
-      /* 新規シート用モーダルのスタイル（既存のモーダルと同じ） */
-    }
   </style>
 
   <div class="header-bar">
@@ -115,7 +112,6 @@
       <thead>
         <tr>
           <th>日付</th><th>担当者</th><th>項目</th><th>内容</th><th>締切</th><th>状態</th><th>操作</th>
-       
         </tr>
       </thead>
       <tbody></tbody>
@@ -133,7 +129,6 @@
       </label>
       <label>内容<textarea id="entry-content"></textarea></label>
       <label>締切<input type="date" id="entry-deadline"></label>
-  
       <label>状態
         <select id="entry-status">
           <option>未対応</option><option>対応中</option><option>完了</option>
@@ -159,219 +154,168 @@
 
 <script>
 (() => {
-  try {
-    const root = document.getElementById("toolcheck-app");
-    const modal = root.querySelector("#entry-modal");
-    const tableBody = root.querySelector("#cs-table tbody");
-    const selector = root.querySelector("#sheet-selector");
-    const titleElem = root.querySelector("#sheet-title");
+  // 全処理を即時関数で囲み、window.toolHandlers に登録
+  window.toolHandlers = window.toolHandlers || {};
+  window.toolHandlers["toolcheck"] = () => {
+    try {
+      const root = document.getElementById("toolcheck-app");
+      const modal = root.querySelector("#entry-modal");
+      const tableBody = root.querySelector("#cs-table tbody");
+      const selector = root.querySelector("#sheet-selector");
+      const titleElem = root.querySelector("#sheet-title");
+      const newSheetModal = root.querySelector("#new-sheet-modal");
+      const newSheetNameInput = root.querySelector("#new-sheet-name");
+      const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
+      const newSheetCreateButton = root.querySelector("#new-sheet-create");
 
-    // 新規シート用モーダル要素の取得
-    const newSheetModal = root.querySelector("#new-sheet-modal");
-    const newSheetNameInput = root.querySelector("#new-sheet-name");
-    const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
-    const newSheetCreateButton = root.querySelector("#new-sheet-create");
+      let sheets = {};
+      let currentSheet = null;
 
-    let sheets = {};
-    let currentSheet = null;
-
-    function saveSheets() {
-      localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
-    }
-
-    function loadSheets() {
-      sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
-    }
-
-    function renderSheetOptions() {
-      selector.innerHTML = "";
-      Object.keys(sheets).forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        selector.appendChild(opt);
-      });
-      if (currentSheet && !sheets[currentSheet]) {
-        currentSheet = null;
+      function saveSheets() {
+        localStorage.setItem("toolcheckSheets", JSON.stringify(sheets));
       }
-      if (!currentSheet && Object.keys(sheets).length > 0) {
-        currentSheet = Object.keys(sheets)[0];
+      function loadSheets() {
+        sheets = JSON.parse(localStorage.getItem("toolcheckSheets") || "{}");
       }
-      if (currentSheet) {
-        selector.value = currentSheet;
+      function renderSheetOptions() {
+        selector.innerHTML = "";
+        Object.keys(sheets).forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          selector.appendChild(opt);
+        });
+        if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+        if (!currentSheet && Object.keys(sheets).length > 0)
+          currentSheet = Object.keys(sheets)[0];
+        if (currentSheet) selector.value = currentSheet;
       }
-    }
-
-    function renderTable() {
-      const data = sheets[currentSheet]?.data ||
-      [];
-      const title = sheets[currentSheet]?.title || "新しいチェック表";
-      titleElem.textContent = title;
-
-      tableBody.innerHTML = "";
-      data.forEach((item, i) => {
-        const tr = document.createElement("tr");
-        tr.className = "cs-status-" + item.status;
-        [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
+      function renderTable() {
+        const data = sheets[currentSheet]?.data || [];
+        const title = sheets[currentSheet]?.title || "新しいチェック表";
+        titleElem.textContent = title;
+        tableBody.innerHTML = "";
+        data.forEach((item, i) => {
+          const tr = document.createElement("tr");
+          tr.className = "cs-status-" + item.status;
+          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
+            const td = document.createElement("td");
+            td.textContent = val;
+            tr.appendChild(td);
+          });
           const td = document.createElement("td");
-          td.textContent = val;
+          const deleteButton = document.createElement("button");
+          deleteButton.className = "cs-btn";
+          deleteButton.textContent = "削除";
+          deleteButton.onclick = () => {
+            if (confirm("この行を削除しますか？")) {
+              sheets[currentSheet].data.splice(i, 1);
+              saveSheets(); renderTable();
+            }
+          };
+          const editButton = document.createElement("button");
+          editButton.className = "cs-btn";
+          editButton.textContent = "編集";
+          editButton.onclick = () => openModal(i);
+          td.appendChild(deleteButton);
+          td.appendChild(editButton);
           tr.appendChild(td);
+          tableBody.appendChild(tr);
         });
-        const td = document.createElement("td");
-     
-        // 削除ボタン
-        const deleteButton = document.createElement("button");
-        deleteButton.className = "cs-btn";
-        deleteButton.textContent = "削除";
-        deleteButton.addEventListener("click", () => {
-          if (confirm("この行を削除しますか？")) {
-            sheets[currentSheet].data.splice(i, 1);
-            saveSheets();
-            renderTable();
-          }
-    
-        });
-        td.appendChild(deleteButton);
-
-         // 編集ボタン
-        const editButton = document.createElement("button");
-        editButton.className = "cs-btn";
-        editButton.textContent = "編集";
-        editButton.addEventListener("click", () => {
-          openModal(i); // 編集する行のインデックスを渡す
-        });
-        td.appendChild(editButton);
-
-        tr.appendChild(td);
-        tableBody.appendChild(tr);
-      });
-    }
-
-    function openModal(editIndex = -1) {
-      modal.style.display = "flex";
-
-      if (editIndex >= 0) {
-        // 編集モード
-        const item = sheets[currentSheet].data[editIndex];
-        root.querySelector("#entry-date").value = item.date;
-        root.querySelector("#entry-person").value = item.person;
-        root.querySelector("#entry-type").value = item.type;
-        root.querySelector("#entry-content").value = item.content;
-        root.querySelector("#entry-deadline").value = item.deadline;
-        root.querySelector("#entry-status").value = item.status;
-        root.querySelector("#entry-save").onclick = () => saveEntry(editIndex); // 保存処理にインデックスを渡す
-      } else {
-        // 新規追加モード
-        ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
-          root.querySelector("#" + id).value = "";
-        });
-        root.querySelector("#entry-save").onclick = () => saveEntry(); // 保存処理にインデックスを渡さない
       }
-    }
+      function openModal(editIndex = -1) {
+        modal.style.display = "flex";
+        if (editIndex >= 0) {
+          const item = sheets[currentSheet].data[editIndex];
+          root.querySelector("#entry-date").value = item.date;
+          root.querySelector("#entry-person").value = item.person;
+          root.querySelector("#entry-type").value = item.type;
+          root.querySelector("#entry-content").value = item.content;
+          root.querySelector("#entry-deadline").value = item.deadline;
+          root.querySelector("#entry-status").value = item.status;
+          root.querySelector("#entry-save").onclick = () => saveEntry(editIndex);
+        } else {
+          ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+            root.querySelector("#" + id).value = "";
+          });
+          root.querySelector("#entry-save").onclick = () => saveEntry();
+        }
+      }
+      function closeModal() {
+        modal.style.display = "none";
+      }
+      function saveEntry(editIndex = -1) {
+        const item = {
+          date: root.querySelector("#entry-date").value,
+          person: root.querySelector("#entry-person").value,
+          type: root.querySelector("#entry-type").value,
+          content: root.querySelector("#entry-content").value,
+          deadline: root.querySelector("#entry-deadline").value,
+          status: root.querySelector("#entry-status").value
+        };
+        if (!sheets[currentSheet]) return;
+        if (editIndex >= 0) sheets[currentSheet].data[editIndex] = item;
+        else sheets[currentSheet].data.push(item);
+        saveSheets(); closeModal(); renderTable();
+      }
 
-    function closeModal() {
-      modal.style.display = "none";
-      ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
-        root.querySelector("#" + id).value = "";
-      });
-    }
+      function updateDisplay() {
+        renderTable();
+      }
+      function renderHistory() {}
+      function restoreDesign() {}
 
-    function saveEntry(editIndex = -1) {
-      const item = {
-        date: root.querySelector("#entry-date").value,
-        person: root.querySelector("#entry-person").value,
-        type: root.querySelector("#entry-type").value,
-        content: root.querySelector("#entry-content").value,
-        deadline: root.querySelector("#entry-deadline").value,
-        status: root.querySelector("#entry-status").value
+      root.querySelector("#add-entry").onclick = () => openModal();
+      root.querySelector("#entry-cancel").onclick = closeModal;
+
+      selector.onchange = () => {
+        currentSheet = selector.value;
+        renderTable();
       };
-      if (!sheets[currentSheet]) return;
-      if (editIndex >= 0) {
-        // 編集
-        sheets[currentSheet].data[editIndex] = item;
-      } else {
-        // 新規追加
-        sheets[currentSheet].data.push(item);
-      }
-      saveSheets();
-      closeModal();
-      renderTable();
+      root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
+      newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
+      newSheetCreateButton.onclick = () => {
+        const name = newSheetNameInput.value.trim();
+        if (name && !sheets[name]) {
+          sheets[name] = { title: name, data: [] };
+          currentSheet = name;
+          renderSheetOptions(); renderTable(); saveSheets();
+          newSheetModal.style.display = "none";
+        }
+      };
+      root.querySelector("#sheet-delete").onclick = () => {
+        if (!currentSheet) return;
+        if (confirm("このシートを削除しますか？")) {
+          delete sheets[currentSheet];
+          currentSheet = null;
+          renderSheetOptions(); renderTable(); saveSheets();
+        }
+      };
+      titleElem.onblur = () => {
+        if (currentSheet && sheets[currentSheet]) {
+          sheets[currentSheet].title = titleElem.textContent.trim();
+          saveSheets();
+        }
+      };
+      root.querySelector("#export-csv").onclick = () => {
+        if (!currentSheet || !sheets[currentSheet]) return;
+        const rows = sheets[currentSheet].data;
+        const csv = ["日付,担当者,項目,内容,締切,状態"];
+        rows.forEach(r => {
+          csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
+        });
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+        a.click();
+      };
+
+      loadSheets(); renderSheetOptions();
+      updateDisplay(); renderHistory(); restoreDesign();
+    } catch (e) {
+      console.error("toolcheck error:", e);
     }
-
-    root.querySelector("#add-entry").onclick = () => openModal();
-    root.querySelector("#entry-cancel").onclick = closeModal;
-    root.querySelector("#entry-save").onclick = (e) => saveEntry();
-
-    selector.onchange = () => {
-      currentSheet = selector.value;
-      renderTable();
-    };
-
-    // 新規シート作成モーダルを開く
-    function openNewSheetModal() {
-      newSheetModal.style.display = "flex";
-    }
-
-    // 新規シート作成モーダルを閉じる
-    function closeNewSheetModal() {
-      newSheetModal.style.display = "none";
-      newSheetNameInput.value = ""; // 入力内容をクリア
-    }
-
-    root.querySelector("#sheet-new").onclick = openNewSheetModal;
-
-    newSheetCancelButton.onclick = closeNewSheetModal;
-
-    newSheetCreateButton.onclick = () => {
-      const name = newSheetNameInput.value.trim();
-      if (name && !sheets[name]) {
-        sheets[name] = { title: name, data: [] };
-        currentSheet = name;
-        renderSheetOptions();
-        renderTable();
-        saveSheets();
-        closeNewSheetModal();
-      }
-    };
-
-    root.querySelector("#sheet-delete").onclick = () => {
-      if (!currentSheet) return;
-      if (confirm("このシートを削除しますか？")) {
-        delete sheets[currentSheet];
-        currentSheet = null;
-        renderSheetOptions();
-        renderTable();
-        saveSheets();
-      }
-    };
-
-    titleElem.addEventListener("blur", () => {
-      if (currentSheet && sheets[currentSheet]) {
-        sheets[currentSheet].title = titleElem.textContent.trim();
-        saveSheets();
-      }
-    });
-
-    root.querySelector("#export-csv").onclick = () => {
-      if (!currentSheet || !sheets[currentSheet]) return;
-      const rows = sheets[currentSheet].data;
-      const csv = ["日付,担当者,項目,内容,締切,状態"];
-      rows.forEach(r => {
-        csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
-      });
-      const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
-      a.click();
-    };
-
-    loadSheets();
-    renderSheetOptions();
-    renderTable();
-  } catch (e) {
-   
-    console.error("toolcheck error:", e);
-  }
+  };
 })();
 </script>
