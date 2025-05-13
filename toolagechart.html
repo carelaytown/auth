@@ -1,1 +1,184 @@
+<!-- toolagechart.html -->
+<div id="toolagechart-app" class="carelay-age-chart">
+  <div class="controls">
+    <button id="year-decrease">◀</button>
+    <span id="currentYear"></span> 年基準
+    <button id="year-increase">▶</button>
+    <button id="download-button">画像で保存</button>
+  </div>
+  <div id="pdf-wrapper">
+    <div id="pdf-title" class="pdf-title"></div>
+    <div class="container" id="tableContainer"></div>
+  </div>
+</div>
 
+<style>
+  #toolagechart-app * { box-sizing: border-box; }
+  #toolagechart-app {
+    font-family: sans-serif;
+    padding: 1em;
+    max-width: 1200px;
+    margin: auto;
+  }
+  #toolagechart-app .controls {
+    text-align: center;
+    margin-bottom: 1em;
+  }
+  #toolagechart-app table {
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+  }
+  #toolagechart-app th, #toolagechart-app td {
+    border: 1px solid #999;
+    padding: 4px;
+    font-size: 12px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  #toolagechart-app th:nth-child(1), #toolagechart-app td:nth-child(1) { width: 10%; }
+  #toolagechart-app th:nth-child(2), #toolagechart-app td:nth-child(2) { width: 12%; }
+  #toolagechart-app th:nth-child(3), #toolagechart-app td:nth-child(3) { width: 26%; }
+  #toolagechart-app th:nth-child(4), #toolagechart-app td:nth-child(4) { width: 12%; }
+  #toolagechart-app th:nth-child(5), #toolagechart-app td:nth-child(5) { width: 30%; }
+
+  #toolagechart-app .container {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  #toolagechart-app .table-block {
+    width: 48%;
+  }
+  @media (max-width: 768px) {
+    #toolagechart-app .container { flex-direction: column; }
+    #toolagechart-app .table-block { width: 100%; }
+  }
+
+  #toolagechart-app .reiwa { background-color: #cce5ff; }
+  #toolagechart-app .heisei { background-color: #d4edda; }
+  #toolagechart-app .showa { background-color: #fff3cd; }
+  #toolagechart-app .taisho { background-color: #f8d7da; }
+  #toolagechart-app .meiji { background-color: #e2e3e5; }
+
+  #toolagechart-app .pdf-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 8px;
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<script>
+(() => {
+  let baseYear = parseInt(localStorage.getItem("toolagechart-baseYear")) || new Date().getFullYear();
+
+  const zodiac = ["巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑", "寅", "卯", "辰"];
+  const callings = {
+    15: "志学", 18: "成人", 30: "而立", 40: "不惑", 50: "知命", 60: "還暦／耳順",
+    70: "古希／従心", 77: "喜寿", 80: "傘寿", 88: "米寿", 90: "卒寿", 99: "白寿", 100: "百寿（紀寿）"
+  };
+  const eraList = [
+    { name: "明治", start: 1868, class: "meiji" },
+    { name: "大正", start: 1912, class: "taisho" },
+    { name: "昭和", start: 1926, class: "showa" },
+    { name: "平成", start: 1989, class: "heisei" },
+    { name: "令和", start: 2019, class: "reiwa" }
+  ];
+
+  function getEra(year) {
+    for (let i = 0; i < eraList.length; i++) {
+      const current = eraList[i];
+      const next = eraList[i + 1];
+      if (next && year === next.start) {
+        return {
+          label: `${current.name}${year - current.start + 1}年 / ${next.name}元年`,
+          class: next.class
+        };
+      }
+      if (year >= current.start && (!next || year < next.start)) {
+        const y = year - current.start + 1;
+        return { label: `${current.name}${y === 1 ? '元' : y}年`, class: current.class };
+      }
+    }
+    return { label: "", class: "" };
+  }
+
+  function createTable(startAge, endAge) {
+    const table = document.createElement("table");
+    const header = document.createElement("tr");
+    ["年齢", "西暦", "和暦", "干支", "呼称"].forEach(text => {
+      const th = document.createElement("th");
+      th.textContent = text;
+      header.appendChild(th);
+    });
+    table.appendChild(header);
+
+    for (let age = startAge; age >= endAge; age--) {
+      const year = baseYear - age;
+      const zodiacStr = zodiac[(year - 2025 + 120) % 12];
+      const era = getEra(year);
+      const calling = callings[age] || "";
+      const tr = document.createElement("tr");
+      tr.className = era.class;
+      [age, year, era.label, zodiacStr, calling].forEach(val => {
+        const td = document.createElement("td");
+        td.textContent = val;
+        tr.appendChild(td);
+      });
+      table.appendChild(tr);
+    }
+    return table;
+  }
+
+  function renderTables() {
+    localStorage.setItem("toolagechart-baseYear", baseYear);
+    document.getElementById("currentYear").innerText = baseYear;
+    document.getElementById("pdf-title").innerText = `${baseYear}年 年齢早見表`;
+    const container = document.getElementById("tableContainer");
+    container.innerHTML = "";
+    const leftBlock = document.createElement("div");
+    leftBlock.className = "table-block";
+    leftBlock.appendChild(createTable(100, 51));
+    const rightBlock = document.createElement("div");
+    rightBlock.className = "table-block";
+    rightBlock.appendChild(createTable(50, 0));
+    container.appendChild(leftBlock);
+    container.appendChild(rightBlock);
+  }
+
+  function downloadImage() {
+    const target = document.getElementById("pdf-wrapper");
+    html2canvas(target).then(canvas => {
+      const margin = 20;
+      const newCanvas = document.createElement("canvas");
+      newCanvas.width = canvas.width + margin * 2;
+      newCanvas.height = canvas.height + margin * 2;
+      const ctx = newCanvas.getContext("2d");
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, newCanvas.width, newCanvas.height);
+      ctx.drawImage(canvas, margin, margin);
+      const link = document.createElement("a");
+      link.download = `年齢早見表_${baseYear}年.png`;
+      link.href = newCanvas.toDataURL("image/png");
+      link.click();
+    });
+  }
+
+  document.getElementById("year-decrease").addEventListener("click", () => {
+    baseYear -= 1;
+    renderTables();
+  });
+  document.getElementById("year-increase").addEventListener("click", () => {
+    baseYear += 1;
+    renderTables();
+  });
+  document.getElementById("download-button").addEventListener("click", downloadImage);
+
+  // 初期表示
+  renderTables();
+})();
+</script>
