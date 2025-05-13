@@ -55,7 +55,11 @@
       border-radius: 4px; font-weight: bold; cursor: pointer;
     }
     #main {
-      flex-grow: 1; overflow-y: auto; padding: 20px;
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 20px;
+      min-width: 0;     /* ✨ 子要素の影響で横スクロールしないようにする */
+      max-width: calc(100% - 200px); /* ✨ サイドバーとのバランス保証 */
     }
     footer {
       background-color: #1b355d; color: white;
