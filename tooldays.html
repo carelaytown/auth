@@ -20,7 +20,7 @@
             </select>
           </label>
           <label>年数:
-            <input id="fromYear" placeholder="西暦4桁（例：2024）" type="text" maxlength="4">
+            <input id="fromYear" placeholder="例：2024 または 6" type="text">
           </label>
           <label>変換先:
             <select id="toEra">
@@ -146,7 +146,9 @@
 
   document.getElementById("fromYear").addEventListener("input", e => {
     const val = e.target.value;
-    if (/^\d{4}$/.test(val)) {
+    const first4 = val.slice(0, 4);
+    if (/^\d{4}$/.test(first4)) {
+      e.target.value = first4;
       document.getElementById("toEra").focus();
     }
   });
