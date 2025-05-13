@@ -1,11 +1,132 @@
 <!-- tooldays.html -->
 <div id="tooldays-app">
-  <!-- HTML構造は元コードの通り -->
-  <!-- ここに日付表示、年号変換、誕生日計算、日数加算の4パネル構成 -->
+  <div class="two-rows">
+    <div class="row">
+      <div class="panel">
+        <h2>【今日の日付と関連情報】</h2>
+        <div class="result" id="todayInfo"></div>
+      </div>
+      <div class="panel">
+        <h2>【年号変換】</h2>
+        <div class="inline-form">
+          <label>変換元:
+            <select id="fromEra">
+              <option value="seireki">西暦</option>
+              <option value="令和">令和</option>
+              <option value="平成">平成</option>
+              <option value="昭和">昭和</option>
+              <option value="大正">大正</option>
+              <option value="明治">明治</option>
+            </select>
+          </label>
+          <label>年数:
+            <input id="fromYear" placeholder="例：2024 または 6" type="text">
+          </label>
+          <label>変換先:
+            <select id="toEra">
+              <option value="seireki">西暦</option>
+              <option value="令和">令和</option>
+              <option value="平成">平成</option>
+              <option value="昭和">昭和</option>
+              <option value="大正">大正</option>
+              <option value="明治">明治</option>
+            </select>
+          </label>
+          <button id="convertBtn">変換</button>
+        </div>
+        <div class="result" id="eraResult"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="panel">
+        <h2>【誕生日から年齢情報】</h2>
+        <label>誕生日:
+          <input id="birthDate" type="date">
+        </label>
+        <div class="result" id="birthResult"></div>
+      </div>
+      <div class="panel">
+        <h2>【日数計算】</h2>
+        <div class="inline-form">
+          <label>起算日:
+            <input id="baseDate" type="date">
+          </label>
+          <label><input id="useToday" type="checkbox"> 今日を起算日</label>
+          <label><input id="includeToday" type="checkbox"> 当日を含む</label>
+          <label>日後:<input id="days" type="number"></label>
+          <label>週後:<input id="weeks" type="number"></label>
+          <label>月後:<input id="months" type="number"></label>
+          <label>年後:<input id="years" type="number"></label>
+          <button id="calcBtn">計算</button>
+        </div>
+        <div class="result" id="afterResult"></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <style>
-  /* #tooldays-app にスコープを限定したCSS */
+  #tooldays-app {
+    font-family: "Segoe UI", sans-serif;
+    background: #e1ecf7;
+    padding: 10px 20px 20px;
+    border-radius: 16px;
+    max-width: 1000px;
+    margin: auto;
+  }
+  #tooldays-app .tool-columns, #tooldays-app .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  #tooldays-app .tool-column, #tooldays-app .panel {
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 20px 20px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+  #tooldays-app h2 {
+    border-left: 6px solid #4a90e2;
+    padding-left: 10px;
+    margin-bottom: 5px;
+  }
+  #tooldays-app label {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    white-space: nowrap;
+  }
+  #tooldays-app input, #tooldays-app select {
+    padding: 4px;
+    margin-left: 6px;
+    width: auto;
+  }
+  #tooldays-app .inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+  #tooldays-app .inline-form input[type="number"] {
+    width: 80px;
+  }
+  #tooldays-app .result {
+    background: #dde7f2;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    white-space: pre-line;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+  @media (max-width: 768px) {
+    #tooldays-app .row {
+      flex-direction: column;
+    }
+  }
 </style>
 
 <script>
