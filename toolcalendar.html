@@ -1,0 +1,349 @@
+<!-- toolcalendar.html -->
+<div id="toolcalendar-app" class="calendar-app">
+  <div class="calendar-container">
+    <div class="calendar">
+      <div class="calendar-header">
+        <button id="prevMonth">◀</button>
+        <h3 id="monthYear"></h3>
+        <button id="nextMonth">▶</button>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+    </div>
+    <div class="sidebar">
+      <h3>今日の予定</h3>
+      <div class="event-list" id="todayEvents"></div>
+      <h3>今週の予定</h3>
+      <div class="event-list" id="weekEvents"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay"></div>
+  <div class="modal" id="eventModal">
+    <h3>予定追加/編集</h3>
+    <input type="time" id="eventTime">
+    <input type="text" id="eventTitle" placeholder="予定名">
+    <textarea id="eventDesc" placeholder="詳細"></textarea>
+    <label>繰り返し:</label>
+    <select id="eventRepeat">
+      <option value="none">繰り返しなし</option>
+      <option value="weekly">毎週</option>
+      <option value="monthly">毎月</option>
+    </select>
+    <button id="saveEventBtn">保存</button>
+    <button id="deleteOneBtn">この日だけ削除</button>
+    <button id="deleteAllBtn">以降すべて削除</button>
+    <button id="cancelBtn">キャンセル</button>
+  </div>
+</div>
+
+<style>
+#toolcalendar-app * { box-sizing: border-box; }
+#toolcalendar-app {
+  font-family: sans-serif;
+  padding: 20px;
+  height: 100%;
+}
+#toolcalendar-app .calendar-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  height: 100%;
+}
+#toolcalendar-app .calendar, #toolcalendar-app .sidebar {
+  border: 2px solid black;
+  padding: 10px;
+}
+#toolcalendar-app .calendar {
+  flex: 1 1 60%;
+  min-width: 300px;
+}
+#toolcalendar-app .calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#toolcalendar-app .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+  margin-top: 10px;
+}
+#toolcalendar-app .day {
+  border: 1px solid #ccc;
+  padding: 5px;
+  height: 100px;
+  overflow-y: auto;
+  cursor: pointer;
+}
+#toolcalendar-app .day-name {
+  height: 33px;
+  text-align: center;
+  font-weight: bold;
+  background: #f0f0f0;
+  line-height: 33px;
+  border: 1px solid #ccc;
+}
+#toolcalendar-app .event {
+  font-size: 0.8em;
+  background: #d0e9ff;
+  margin-top: 3px;
+  padding: 2px;
+  border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+#toolcalendar-app .sunday { color: red; }
+#toolcalendar-app .saturday { color: blue; }
+#toolcalendar-app .sidebar {
+  flex: 1 1 30%;
+  min-width: 260px;
+  overflow-y: auto;
+}
+#toolcalendar-app .event-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid black;
+  padding: 5px;
+}
+#toolcalendar-app .modal, #toolcalendar-app .modal-overlay {
+  position: fixed;
+  z-index: 9999;
+}
+#toolcalendar-app .modal {
+  display: none;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 1px solid #ccc;
+  padding: 15px;
+  width: 300px;
+}
+#toolcalendar-app .modal input, #toolcalendar-app .modal textarea, #toolcalendar-app .modal select {
+  width: 100%;
+  margin-bottom: 10px;
+}
+#toolcalendar-app .modal-overlay {
+  display: none;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.3);
+}
+</style>
+
+<script>
+(() => {
+  const appId = "toolcalendar";
+  const storageKey = "todoCalendarEvents";
+  let currentDate = new Date();
+  let selectedDate = null;
+  let editingIndex = null;
+  let originalDateRef = null;
+
+  const formatDate = (date) => {
+    const offset = date.getTimezoneOffset();
+    const adjusted = new Date(date.getTime() - offset * 60000);
+    return adjusted.toISOString().split('T')[0];
+  };
+
+  const getData = () => JSON.parse(localStorage.getItem(storageKey) || '{}');
+  const setData = (data) => localStorage.setItem(storageKey, JSON.stringify(data));
+
+  const openModal = (dateStr, index = null, originalDate = null) => {
+    selectedDate = dateStr;
+    originalDateRef = originalDate || dateStr;
+    const data = getData();
+    const events = data[originalDateRef] || [];
+    const event = index !== null ? events[index] : { time: '', title: '', desc: '', repeat: 'none' };
+    editingIndex = index;
+    document.getElementById('eventTime').value = event.time;
+    document.getElementById('eventTitle').value = event.title;
+    document.getElementById('eventDesc').value = event.desc;
+    document.getElementById('eventRepeat').value = event.repeat;
+    document.getElementById('eventModal').style.display = 'block';
+    document.getElementById('modalOverlay').style.display = 'block';
+  };
+
+  const closeModal = () => {
+    document.getElementById('eventModal').style.display = 'none';
+    document.getElementById('modalOverlay').style.display = 'none';
+    editingIndex = null;
+    originalDateRef = null;
+  };
+
+  const saveEvent = () => {
+    const time = document.getElementById('eventTime').value;
+    const title = document.getElementById('eventTitle').value;
+    const desc = document.getElementById('eventDesc').value;
+    const repeat = document.getElementById('eventRepeat').value;
+    if (!title) return;
+    const data = getData();
+    if (!data[originalDateRef]) data[originalDateRef] = [];
+    const base = data[originalDateRef][editingIndex] || {};
+    const newEvent = {
+      time, title, desc, repeat,
+      exceptions: base.exceptions || [],
+      repeatUntil: base.repeatUntil || null
+    };
+    if (editingIndex !== null) {
+      data[originalDateRef][editingIndex] = newEvent;
+    } else {
+      data[originalDateRef].push(newEvent);
+    }
+    setData(data);
+    closeModal();
+    updateDisplay();
+  };
+
+  const deleteEvent = (deleteAll = false) => {
+    if (editingIndex === null) return;
+    const data = getData();
+    const event = data[originalDateRef][editingIndex];
+    if (event.repeat !== 'none') {
+      if (deleteAll) {
+        event.repeatUntil = selectedDate;
+      } else {
+        event.exceptions = event.exceptions || [];
+        if (!event.exceptions.includes(selectedDate)) event.exceptions.push(selectedDate);
+      }
+    } else {
+      data[originalDateRef].splice(editingIndex, 1);
+      if (data[originalDateRef].length === 0) delete data[originalDateRef];
+    }
+    setData(data);
+    closeModal();
+    updateDisplay();
+  };
+
+  const getEventsForDate = (dateStr) => {
+    const data = getData();
+    const result = [];
+    const target = new Date(dateStr);
+    for (let d in data) {
+      const base = new Date(d);
+      data[d].forEach((e, i) => {
+        if (d === dateStr) {
+          result.push({ ...e, index: i, originalDate: d });
+        } else if (e.repeat && base <= target) {
+          const match =
+            (e.repeat === 'weekly' && base.getDay() === target.getDay()) ||
+            (e.repeat === 'monthly' && base.getDate() === target.getDate());
+          const blocked = (e.repeatUntil && dateStr > e.repeatUntil) || (e.exceptions || []).includes(dateStr);
+          if (match && !blocked) {
+            result.push({ ...e, index: i, originalDate: d });
+          }
+        }
+      });
+    }
+    return result;
+  };
+
+  const renderCalendar = (date) => {
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    document.getElementById('monthYear').textContent = `${year}年${month + 1}月`;
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDay = firstDay.getDay();
+    const dayNames = ['日','月','火','水','木','金','土'];
+    dayNames.forEach((d, i) => {
+      const div = document.createElement('div');
+      div.className = 'day-name';
+      if (i === 0) div.classList.add('sunday');
+      if (i === 6) div.classList.add('saturday');
+      div.textContent = d;
+      grid.appendChild(div);
+    });
+    for (let i = 0; i < startDay; i++) grid.appendChild(document.createElement('div'));
+    for (let i = 1; i <= lastDay.getDate(); i++) {
+      const cell = document.createElement('div');
+      cell.className = 'day';
+      const thisDate = new Date(year, month, i);
+      const key = formatDate(thisDate);
+      const dow = thisDate.getDay();
+      const label = document.createElement('strong');
+      label.textContent = i;
+      if (dow === 0) label.classList.add('sunday');
+      if (dow === 6) label.classList.add('saturday');
+      cell.appendChild(label);
+      const events = getEventsForDate(key);
+      events.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'event';
+        div.textContent = `${e.time} ${e.title}`;
+        div.onclick = (ev) => {
+          ev.stopPropagation();
+          openModal(key, e.index, e.originalDate);
+        };
+        cell.appendChild(div);
+      });
+      cell.onclick = () => openModal(key);
+      grid.appendChild(cell);
+    }
+  };
+
+  const updateTodayAndWeek = () => {
+    const today = new Date();
+    const todayStr = formatDate(today);
+    const todayList = document.getElementById('todayEvents');
+    const weekList = document.getElementById('weekEvents');
+    todayList.innerHTML = '';
+    weekList.innerHTML = '';
+    const events = [];
+    for (let offset = 0; offset <= 6; offset++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + offset);
+      const key = formatDate(date);
+      const items = getEventsForDate(key);
+      if (key === todayStr) {
+        items.forEach(e => {
+          const div = document.createElement('div');
+          div.className = 'event';
+          div.textContent = `${e.time} ${e.title}`;
+          div.onclick = () => openModal(key, e.index, e.originalDate);
+          todayList.appendChild(div);
+        });
+      }
+      items.forEach(e => events.push({ date: key, ...e }));
+    }
+    events.sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)).forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'event';
+      div.textContent = `${e.date}: ${e.time} ${e.title}`;
+      div.onclick = () => openModal(e.date, e.index, e.originalDate);
+      weekList.appendChild(div);
+    });
+  };
+
+  const updateDisplay = () => {
+    renderCalendar(currentDate);
+    updateTodayAndWeek();
+  };
+
+  const renderHistory = () => {};  // dummy placeholder
+  const restoreDesign = () => {};  // dummy placeholder
+
+  document.getElementById('prevMonth').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() - 1);
+    updateDisplay();
+  };
+  document.getElementById('nextMonth').onclick = () => {
+    currentDate.setMonth(currentDate.getMonth() + 1);
+    updateDisplay();
+  };
+  document.getElementById('saveEventBtn').onclick = saveEvent;
+  document.getElementById('deleteOneBtn').onclick = () => deleteEvent(false);
+  document.getElementById('deleteAllBtn').onclick = () => deleteEvent(true);
+  document.getElementById('cancelBtn').onclick = closeModal;
+
+  updateDisplay();
+  renderHistory();
+  restoreDesign();
+
+  window.toolHandlers = window.toolHandlers || {};
+  window.toolHandlers["toolcalendar"] = () => {};
+})();
+</script>
