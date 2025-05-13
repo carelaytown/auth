@@ -110,7 +110,7 @@
               </select>
             </label>
             <label>年数:
-              <input id="fromYear" placeholder="西暦4桁（例：2024）" type="text" maxlength="4" inputmode="numeric">
+              <input id="fromYear" placeholder="西暦4桁（例：2024）" type="text" inputmode="numeric" maxlength="4">
               <span class="error" id="fromYearError"></span>
             </label>
             <label>変換先:
@@ -186,33 +186,13 @@
       const fromYearError = document.getElementById("fromYearError");
 
       fromYearInput.addEventListener("input", () => {
-
-      // 厳密に4桁のみに制限（beforeinputで入力を抑止）
-      fromYearInput.addEventListener("beforeinput", (e) => {
-        const current = fromYearInput.value;
-        const insert = e.data ?? '';
-        const selectionStart = fromYearInput.selectionStart;
-        const selectionEnd = fromYearInput.selectionEnd;
-        const newVal = current.slice(0, selectionStart) + insert + current.slice(selectionEnd);
-        if (!/^\d{0,4}$/.test(newVal)) {
-          e.preventDefault();
-        }
-      });
-        let val = fromYearInput.value;
-        // 数字以外の文字を削除
-        val = val.replace(/[^0-9]/g, '');
-        if (val.length > 4) {
-          val = val.substring(0, 4); // 4桁で切り捨てる
-        }
-        fromYearInput.value = val;
-
-        // エラーメッセージをクリア
-        fromYearError.textContent = "";
-
-        if (val.length === 4) {
-          toEraSelect.focus();
-        }
-      });
+  let val = fromYearInput.value.replace(/\D/g, "").slice(0, 4);
+  fromYearInput.value = val;
+  fromYearError.textContent = "";
+  if (val.length === 4) {
+    toEraSelect.focus();
+  }
+});
 
       document.getElementById("convertBtn").addEventListener("click", () => {
         const from = fromEraSelect.value;
