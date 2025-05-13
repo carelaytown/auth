@@ -1,0 +1,223 @@
+<!-- toolmemo.html -->
+<div id="toolmemo-app" class="stickyboard-app">
+  <div class="controls" id="noteControls">
+    <textarea id="noteText" placeholder="メモを入力"></textarea>
+    <select id="noteColor">
+      <option value="#fff9c4">イエロー</option>
+      <option value="#fce4ec">ピンク</option>
+      <option value="#ffecb3">オレンジ</option>
+      <option value="#e0f2f1">グリーン</option>
+      <option value="#e3f2fd">ブルー</option>
+      <option value="#ede7f6">パープル</option>
+      <option value="#eceff1">グレー</option>
+      <option value="#ffebee">レッド</option>
+      <option value="#e0f7fa">ライトブルー</option>
+      <option value="#e0f7f1">ターコイズ</option>
+    </select>
+    <button id="addNote">メモを追加</button>
+    <button id="rearrangeNotes">再配置</button>
+  </div>
+  <div id="notes" class="notes-area"></div>
+</div>
+
+<style>
+  #toolmemo-app * { box-sizing: border-box; }
+  #toolmemo-app {
+    font-family: sans-serif;
+    position: relative;
+    width: 90%;
+    height: calc(100vh - 180px);
+    background: transparent;
+    overflow: hidden;
+    margin: 0 auto;
+  }
+  #toolmemo-app .controls {
+    height: 60px;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: white;
+    border-bottom: none;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+  }
+  #toolmemo-app .controls textarea { height: 30px; flex: 1; resize: none; }
+  #toolmemo-app .controls select { height: 30px; }
+  #toolmemo-app .controls button { height: 30px; }
+  #toolmemo-app .notes-area {
+    position: absolute;
+    top: 60px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 60px);
+    background: #f9f9f9;
+    border: 3px dashed #ccc;
+    overflow: hidden;
+    z-index: 1;
+  }
+  #toolmemo-app .note {
+    position: absolute;
+    width: 160px;
+    min-height: 60px;
+    padding: 10px;
+    border-radius: 6px;
+    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    cursor: move;
+    background: #fff9c4;
+  }
+  #toolmemo-app .note-menu {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 14px;
+    background: #fff;
+    border-radius: 50%;
+    border: 1px solid #aaa;
+    width: 18px;
+    height: 18px;
+    text-align: center;
+    line-height: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    z-index: 10;
+  }
+</style>
+
+<script>
+(() => {
+  const notesContainer = document.getElementById("notes");
+  const noteText = document.getElementById("noteText");
+  const noteColor = document.getElementById("noteColor");
+  const addNoteBtn = document.getElementById("addNote");
+  const rearrangeBtn = document.getElementById("rearrangeNotes");
+
+  let notes = JSON.parse(localStorage.getItem("toolmemo-notes") || "[]");
+
+  function saveNotes() {
+    localStorage.setItem("toolmemo-notes", JSON.stringify(notes));
+  }
+
+  function renderNotes() {
+    notesContainer.innerHTML = "";
+    notes.forEach(note => {
+      const div = document.createElement("div");
+      div.className = "note";
+      div.style.left = `${note.x}px`;
+      div.style.top = `${note.y}px`;
+      div.style.backgroundColor = note.color;
+
+      const menu = document.createElement("div");
+      menu.className = "note-menu";
+      menu.innerText = "×";
+      menu.onclick = (e) => {
+        e.stopPropagation();
+        notes = notes.filter(n => n !== note);
+        saveNotes();
+        renderNotes();
+      };
+      div.appendChild(menu);
+
+      const content = document.createElement("div");
+      content.textContent = note.text;
+      content.style.cursor = "text";
+      content.ondblclick = () => {
+        const textarea = document.createElement("textarea");
+        textarea.value = note.text;
+        textarea.onblur = () => {
+          note.text = textarea.value.trim();
+          if (!note.text) {
+            notes = notes.filter(n => n !== note);
+          }
+          saveNotes();
+          renderNotes();
+        };
+        div.innerHTML = "";
+        div.appendChild(menu);
+        div.appendChild(textarea);
+        textarea.focus();
+      };
+      div.appendChild(content);
+
+      makeDraggable(div, note);
+      notesContainer.appendChild(div);
+    });
+  }
+
+  function makeDraggable(el, note) {
+    let isDragging = false;
+    let offsetX = 0, offsetY = 0;
+
+    el.addEventListener("mousedown", e => {
+      if (e.target.tagName === "TEXTAREA") return;
+      isDragging = true;
+      offsetX = e.offsetX;
+      offsetY = e.offsetY;
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    });
+
+    function onMouseMove(e) {
+      if (!isDragging) return;
+      const containerRect = notesContainer.getBoundingClientRect();
+      let newX = e.clientX - containerRect.left - offsetX;
+      let newY = e.clientY - containerRect.top - offsetY;
+
+      newX = Math.max(0, Math.min(newX, notesContainer.clientWidth - el.offsetWidth));
+      newY = Math.max(0, Math.min(newY, notesContainer.clientHeight - el.offsetHeight));
+
+      el.style.left = `${newX}px`;
+      el.style.top = `${newY}px`;
+      note.x = newX;
+      note.y = newY;
+    }
+
+    function onMouseUp() {
+      isDragging = false;
+      document.removeEventListener("mousemove", onMouseMove);
+      document.removeEventListener("mouseup", onMouseUp);
+      saveNotes();
+    }
+  }
+
+  function addNote(text, x = 100, y = 100, color = "#fff9c4") {
+    const note = { text, x, y, color };
+    notes.push(note);
+    saveNotes();
+    renderNotes();
+  }
+
+  addNoteBtn.onclick = () => {
+    const text = noteText.value.trim();
+    if (text) {
+      addNote(text, 100, 100, noteColor.value);
+      noteText.value = "";
+    }
+  };
+
+  rearrangeBtn.onclick = () => {
+    const startX = 10, startY = 10;
+    const gap = 10;
+    const boxWidth = 170, boxHeight = 100;
+    const containerWidth = notesContainer.clientWidth;
+    let x = startX, y = startY;
+
+    notes.forEach(note => {
+      note.x = x;
+      note.y = y;
+      x += boxWidth + gap;
+      if (x + boxWidth > containerWidth) {
+        x = startX;
+        y += boxHeight + gap;
+      }
+    });
+    saveNotes();
+    renderNotes();
+  };
+
+  renderNotes();
+})();
+</script>
