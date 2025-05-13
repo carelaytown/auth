@@ -232,22 +232,20 @@
       const birthDateError = document.getElementById("birthDateError");
 
       birthDateInput.addEventListener("change", () => {
-        const birthDateValue = birthDateInput.value;
-        if (!birthDateValue) {
-          birthDateError.textContent = "誕生日を入力してください。";
-          birthResultDiv.textContent = 
-    const birth = new Date(birthDateValue);
-    const year = birth.getFullYear();
-    if (year < 1900 || year > 2100) {
-      birthDateError.textContent = "西暦は1900年〜2100年の間で入力してください。";
+
+    const birthDateValue = birthDateInput.value;
+    if (!birthDateValue) {
+      birthDateError.textContent = "誕生日を入力してください。";
       birthResultDiv.textContent = "";
       return;
     }
-"";
+const birth = new Date(birthDateValue);
+        const year = birth.getFullYear();
+        if (year < 1900 || year > 2100) {
+          birthDateError.textContent = "西暦は1900年〜2100年の間で入力してください。";
+          birthResultDiv.textContent = "";
           return;
         }
-
-        const birth = new Date(birthDateValue);
         if (isNaN(birth.getTime())) {
           birthDateError.textContent = "正しい日付を入力してください。";
           birthResultDiv.textContent = "";
