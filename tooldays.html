@@ -1,0 +1,112 @@
+<!-- tooldays.html -->
+<div id="tooldays-app">
+  <!-- HTML構造は元コードの通り -->
+  <!-- ここに日付表示、年号変換、誕生日計算、日数加算の4パネル構成 -->
+</div>
+
+<style>
+  /* #tooldays-app にスコープを限定したCSS */
+</style>
+
+<script>
+(() => {
+  const today = new Date();
+  const y = today.getFullYear();
+  const m = today.getMonth() + 1;
+  const d = today.getDate();
+  const w = ["日", "月", "火", "水", "木", "金", "土"][today.getDay()];
+  const mmdd = `${String(m).padStart(2, '0')}/${String(d).padStart(2, '0')}`;
+  const anniversaries = {
+    "01/01": "元日", "02/14": "バレンタインデー", "11/11": "介護の日", "12/25": "クリスマス"
+  };
+  document.getElementById("todayInfo").textContent = `今日は ${y}年${m}月${d}日（${w}曜日）
+` +
+    (anniversaries[mmdd] ? `今日は「${anniversaries[mmdd]}」です。` : "");
+
+  document.getElementById("fromYear").addEventListener("input", e => {
+    if (/^\d{4}$/.test(e.target.value)) {
+      document.getElementById("toEra").focus();
+    }
+  });
+
+  document.getElementById("useToday").addEventListener("change", () => {
+    if (document.getElementById("useToday").checked) {
+      const todayStr = new Date().toISOString().split('T')[0];
+      document.getElementById("baseDate").value = todayStr;
+    }
+  });
+
+  document.getElementById("birthDate").addEventListener("change", () => {
+    const birth = new Date(document.getElementById("birthDate").value);
+    if (!birth.getTime()) return;
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    if (now < new Date(now.getFullYear(), birth.getMonth(), birth.getDate())) age--;
+    const countAge = age + 1;
+    const weekday = ["日", "月", "火", "水", "木", "金", "土"][birth.getDay()];
+    const diff = now - birth;
+    const days = Math.floor(diff / 86400000);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44);
+    const years = Math.floor(days / 365.25);
+    const remMonths = Math.floor((days - years * 365.25) / 30.44);
+    const remDays = days - (years * 365.25 + remMonths * 30.44);
+    document.getElementById("birthResult").textContent =
+      `満年齢：${age}歳\n数え年：${countAge}歳\n誕生日の曜日：${weekday}曜日\n生まれてから：\n- 日数：${days}日\n- 年/月/週/日：${years}年 ${remMonths}か月 ${weeks % 4}週 ${Math.floor(remDays)}日`;
+  });
+
+  document.getElementById("convertBtn").addEventListener("click", () => {
+    const from = document.getElementById("fromEra").value;
+    const to = document.getElementById("toEra").value;
+    const year = parseInt(document.getElementById("fromYear").value);
+    if (!year || year < 1) return alert("正しい年数を入力してください。");
+    const eraBase = { "令和": 2018, "平成": 1988, "昭和": 1925, "大正": 1911, "明治": 1867 };
+    let result = "";
+    if (from === "seireki") {
+      result = `${year}年 → ${to === "seireki" ? year + "年" : to + (year - eraBase[to]) + "年"}`;
+    } else {
+      const seireki = eraBase[from] + year;
+      result = `${from}${year}年 → ${to === "seireki" ? seireki + "年" : to + (seireki - eraBase[to]) + "年"}`;
+    }
+    document.getElementById("eraResult").textContent = result;
+  });
+
+  document.getElementById("calcBtn").addEventListener("click", () => {
+    const base = document.getElementById("useToday").checked
+      ? new Date()
+      : new Date(document.getElementById("baseDate").value);
+    if (!base.getTime()) return alert("起算日が不正です。");
+
+    const addDays = parseInt(document.getElementById("days").value) || 0;
+    const addWeeks = (parseInt(document.getElementById("weeks").value) || 0) * 7;
+    const addMonths = parseInt(document.getElementById("months").value) || 0;
+    const addYears = parseInt(document.getElementById("years").value) || 0;
+    const includeToday = document.getElementById("includeToday").checked;
+
+    let resultDate = new Date(base);
+    resultDate.setFullYear(resultDate.getFullYear() + addYears);
+    resultDate.setMonth(resultDate.getMonth() + addMonths);
+    resultDate.setDate(resultDate.getDate() + addDays + addWeeks);
+    if (includeToday) resultDate.setDate(resultDate.getDate() - 1);
+
+    const y = resultDate.getFullYear();
+    const m = resultDate.getMonth() + 1;
+    const d = resultDate.getDate();
+    const w = ["日", "月", "火", "水", "木", "金", "土"][resultDate.getDay()];
+    const totalDays = Math.floor((resultDate - base) / 86400000);
+    const weeks = Math.floor(totalDays / 7);
+    const daysW = totalDays % 7;
+    const monthsT = Math.floor(totalDays / 30.44);
+    const daysM = totalDays - Math.floor(monthsT * 30.44);
+    const yearsT = Math.floor(totalDays / 365.25);
+    const daysY = totalDays - Math.floor(yearsT * 365.25);
+    const monthsY = Math.floor(daysY / 30.44);
+    const daysYM = Math.floor(daysY - monthsY * 30.44);
+
+    document.getElementById("afterResult").textContent =
+      `加算後の日付：${y}年${m}月${d}日（${w}曜日）\n` +
+      `日数：${totalDays} 日\n週数：${weeks} 週 + ${daysW} 日\n月数：${monthsT} ヶ月 + ${daysM} 日\n` +
+      `年数（単純）：${yearsT} 年 + ${daysY} 日\n年数（月換算）：${yearsT} 年 + ${monthsY} ヶ月 + ${daysYM} 日`;
+  });
+})();
+</script>
