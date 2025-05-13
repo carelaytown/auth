@@ -110,7 +110,7 @@
               </select>
             </label>
             <label>年数:
-              <input id="fromYear" placeholder="例：2024 または 6" type="text" maxlength="4">
+              <input id="fromYear" placeholder="西暦4桁（例：2024）" type="text" maxlength="4" inputmode="numeric">
               <span class="error" id="fromYearError"></span>
             </label>
             <label>変換先:
@@ -186,6 +186,18 @@
       const fromYearError = document.getElementById("fromYearError");
 
       fromYearInput.addEventListener("input", () => {
+
+      // 厳密に4桁のみに制限（beforeinputで入力を抑止）
+      fromYearInput.addEventListener("beforeinput", (e) => {
+        const current = fromYearInput.value;
+        const insert = e.data ?? '';
+        const selectionStart = fromYearInput.selectionStart;
+        const selectionEnd = fromYearInput.selectionEnd;
+        const newVal = current.slice(0, selectionStart) + insert + current.slice(selectionEnd);
+        if (!/^\d{0,4}$/.test(newVal)) {
+          e.preventDefault();
+        }
+      });
         let val = fromYearInput.value;
         // 数字以外の文字を削除
         val = val.replace(/[^0-9]/g, '');
