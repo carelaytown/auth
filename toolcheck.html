@@ -1,4 +1,6 @@
-<!-- toolcheck.html -->
+<!-- 完全統合版 toolcheck -->
+<!-- CARELAYタウン対応：モーダル入力 + 複数シート保存 + タイトル編集 -->
+
 <div id="toolcheck-app">
   <style>
     #toolcheck-app * { box-sizing: border-box; }
@@ -8,39 +10,34 @@
       max-width: 1200px;
       margin: auto;
     }
-    #toolcheck-app .cs-container {
+    #toolcheck-app .header-bar {
       display: flex;
-      gap: 16px;
       justify-content: space-between;
-      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 1em;
     }
-    #toolcheck-app .cs-form {
-      width: 30%;
-      min-width: 260px;
-      background-color: #ffeaea;
-      padding: 12px;
-      border-radius: 6px;
-      min-height: 80vh;
-      position: relative;
+    #toolcheck-app .sheet-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      flex: 1;
     }
-    #toolcheck-app .cs-table-wrapper {
-      width: 68%;
+    #toolcheck-app .sheet-title[contenteditable] {
+      background: #eef;
+      padding: 4px;
+      border-radius: 4px;
     }
-    @media (max-width: 768px) {
-      #toolcheck-app .cs-container { flex-direction: column; }
-      #toolcheck-app .cs-form, #toolcheck-app .cs-table-wrapper { width: 100%; }
+    #toolcheck-app .sheet-controls {
+      display: flex;
+      gap: 8px;
     }
-    #toolcheck-app .cs-form input, #toolcheck-app .cs-form select, #toolcheck-app .cs-form textarea {
-      width: 100%;
-      margin-bottom: 8px;
-      padding: 6px;
+    #toolcheck-app select, #toolcheck-app button {
+      padding: 4px 8px;
       font-size: 14px;
     }
-    #toolcheck-app .cs-form textarea { height: 60px; }
-    #toolcheck-app .cs-form label {
-      font-weight: bold;
-      margin-top: 8px;
-      display: block;
+    #toolcheck-app .cs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
     }
     #toolcheck-app .cs-table {
       width: 100%;
@@ -56,83 +53,93 @@
     }
     #toolcheck-app .cs-table th {
       background-color: #f0f0f0;
-      cursor: pointer;
     }
-    #toolcheck-app .cs-table th.sorted-asc::after { content: " \25B2"; }
-    #toolcheck-app .cs-table th.sorted-desc::after { content: " \25BC"; }
     #toolcheck-app .cs-status-未対応 { background-color: #fff3cd; }
     #toolcheck-app .cs-status-対応中 { background-color: #d1ecf1; }
     #toolcheck-app .cs-status-完了 { background-color: #d4edda; }
-    #toolcheck-app .cs-btn {
-      cursor: pointer;
-      padding: 2px 6px;
-      margin: 0 2px;
-      font-size: 11px;
-    }
-    #toolcheck-app .cs-error {
-      color: red;
-      font-size: 12px;
-      margin-top: -6px;
-      margin-bottom: 8px;
+    #toolcheck-app .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
       display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #toolcheck-app .modal-content {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+    #toolcheck-app .modal-content label {
+      font-weight: bold;
+      display: block;
+      margin-top: 0.5em;
+    }
+    #toolcheck-app .modal-content input,
+    #toolcheck-app .modal-content textarea,
+    #toolcheck-app .modal-content select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px;
+    }
+    #toolcheck-app .modal-buttons {
+      margin-top: 1em;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    #toolcheck-app .cs-btn {
+      padding: 4px 8px;
+      font-size: 12px;
     }
   </style>
 
-  <div class="cs-container">
-    <div class="cs-form">
-      <label for="cs-date">日付</label>
-      <input type="date" id="cs-date">
-      <label for="cs-person">担当者</label>
-      <input type="text" id="cs-person" placeholder="例：田中">
-      <label for="cs-type">項目</label>
-      <select id="cs-type">
-        <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
-      </select>
-      <label for="cs-content">内容</label>
-      <textarea id="cs-content" placeholder="例：書類提出"></textarea>
-      <label for="cs-deadline">締切</label>
-      <input type="date" id="cs-deadline">
-      <label for="cs-status">状態</label>
-      <select id="cs-status">
-        <option>未対応</option><option>対応中</option><option>完了</option>
-      </select>
-      <div id="cs-error-msg" class="cs-error">※ 日付・担当者・内容は必須です</div>
-      <button id="cs-submit-btn">追加</button>
-      <button class="cs-btn" id="cs-export-btn">Excel出力</button>
+  <div class="header-bar">
+    <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
+    <div class="sheet-controls">
+      <select id="sheet-selector"></select>
+      <button id="sheet-new">＋新規</button>
+      <button id="sheet-delete">🗑削除</button>
+      <button id="add-entry">予定の追加</button>
+      <button id="export-csv">CSV出力</button>
     </div>
+  </div>
 
-    <div class="cs-table-wrapper">
-      <div class="cs-filter-bar" style="margin-bottom: 12px; display: flex; gap: 12px; align-items: center;">
-        <label for="filter-status">状態</label>
-        <select id="filter-status">
-          <option value="">すべて</option>
-          <option>未対応</option><option>対応中</option><option>完了</option>
-        </select>
-        <label for="filter-type">項目</label>
-        <select id="filter-type">
-          <option value="">すべて</option>
+  <div class="cs-container">
+    <table class="cs-table" id="cs-table">
+      <thead>
+        <tr>
+          <th>日付</th><th>担当者</th><th>項目</th><th>内容</th><th>締切</th><th>状態</th><th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="modal" id="entry-modal">
+    <div class="modal-content">
+      <label>日付<input type="date" id="entry-date"></label>
+      <label>担当者<input type="text" id="entry-person"></label>
+      <label>項目
+        <select id="entry-type">
           <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
         </select>
-        <label for="filter-person">担当者</label>
-        <select id="filter-person">
-          <option value="">すべて</option>
+      </label>
+      <label>内容<textarea id="entry-content"></textarea></label>
+      <label>締切<input type="date" id="entry-deadline"></label>
+      <label>状態
+        <select id="entry-status">
+          <option>未対応</option><option>対応中</option><option>完了</option>
         </select>
+      </label>
+      <div class="modal-buttons">
+        <button id="entry-cancel">閉じる</button>
+        <button id="entry-save">追加</button>
       </div>
-      <table class="cs-table" id="cs-table">
-        <thead>
-          <tr>
-            <th data-sort="date">日付</th>
-            <th data-sort="person">担当者</th>
-            <th data-sort="type">項目</th>
-            <th data-sort="content">内容</th>
-            <th data-sort="deadline">締切</th>
-            <th data-sort="status">状態</th>
-            <th data-sort="completed">完了日</th>
-            <th>操作</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
     </div>
   </div>
 </div>
@@ -140,158 +147,152 @@
 <script>
 (() => {
   const root = document.getElementById("toolcheck-app");
-  let csData = [];
-  let currentSortKey = null;
-  let sortAsc = true;
-  let editingIndex = null;
+  const modal = root.querySelector("#entry-modal");
+  const tableBody = root.querySelector("#cs-table tbody");
+  const selector = root.querySelector("#sheet-selector");
+  const titleElem = root.querySelector("#sheet-title");
 
-  function saveToLocalStorage() {
-    localStorage.setItem("toolcheck-data", JSON.stringify(csData));
+  let sheets = {};
+  let currentSheet = null;
+
+  function saveSheets() {
+    localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
   }
 
-  function loadFromLocalStorage() {
-    const saved = localStorage.getItem("toolcheck-data");
-    if (saved) {
-      csData = JSON.parse(saved);
-    }
+  function loadSheets() {
+    sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
   }
 
-  function clearForm() {
-    ["cs-date", "cs-person", "cs-content", "cs-deadline"].forEach(id => {
-      root.querySelector(`#${id}`).value = "";
+  function renderSheetOptions() {
+    selector.innerHTML = "";
+    Object.keys(sheets).forEach(name => {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      selector.appendChild(opt);
     });
-    root.querySelector("#cs-type").value = "提出";
-    root.querySelector("#cs-status").value = "未対応";
-    root.querySelector("#cs-submit-btn").textContent = "追加";
-    root.querySelector("#cs-error-msg").style.display = "none";
-    editingIndex = null;
+    if (currentSheet && !sheets[currentSheet]) {
+      currentSheet = null;
+    }
+    if (!currentSheet && Object.keys(sheets).length > 0) {
+      currentSheet = Object.keys(sheets)[0];
+    }
+    if (currentSheet) {
+      selector.value = currentSheet;
+    }
   }
 
   function renderTable() {
-    const filterStatus = root.querySelector("#filter-status").value;
-    const filterType = root.querySelector("#filter-type").value;
-    const filterPerson = root.querySelector("#filter-person").value;
-    const tbody = root.querySelector("#cs-table tbody");
-    tbody.innerHTML = "";
+    const data = sheets[currentSheet]?.data || [];
+    const title = sheets[currentSheet]?.title || "新しいチェック表";
+    titleElem.textContent = title;
 
-    const personSelect = root.querySelector("#filter-person");
-    const people = [...new Set(csData.map(item => item.person).filter(Boolean))].sort();
-    personSelect.innerHTML = '<option value="">すべて</option>' + people.map(p => `<option value="${p}"${p === filterPerson ? ' selected' : ''}>${p}</option>`).join('');
-
-    root.querySelectorAll(".cs-table th").forEach(th => {
-      th.classList.remove("sorted-asc", "sorted-desc");
-      const key = th.getAttribute("data-sort");
-      if (key === currentSortKey) {
-        th.classList.add(sortAsc ? "sorted-asc" : "sorted-desc");
-      }
-    });
-
-    csData
-      .filter(item => {
-        return (!filterStatus || item.status === filterStatus) &&
-               (!filterType || item.type === filterType) &&
-               (!filterPerson || item.person === filterPerson);
-      })
-      .forEach((item, index) => {
-        const tr = document.createElement("tr");
-        tr.className = "cs-status-" + item.status;
-        [item.date, item.person, item.type, item.content, item.deadline, item.status, item.completed].forEach(val => {
-          const td = document.createElement("td");
-          td.textContent = val;
-          tr.appendChild(td);
-        });
-        const actionTd = document.createElement("td");
-        actionTd.innerHTML = `
-          <button class="cs-btn" onclick="editItem(${index})">編集</button>
-          <button class="cs-btn" onclick="deleteItem(${index})">削除</button>`;
-        tr.appendChild(actionTd);
-        tbody.appendChild(tr);
+    tableBody.innerHTML = "";
+    data.forEach((item, i) => {
+      const tr = document.createElement("tr");
+      tr.className = "cs-status-" + item.status;
+      [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
+        const td = document.createElement("td");
+        td.textContent = val;
+        tr.appendChild(td);
       });
+      const td = document.createElement("td");
+      td.innerHTML = \`<button class="cs-btn" onclick="deleteRow(\${i})">削除</button>\`;
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+    });
   }
 
-  function addOrUpdateItem() {
-    const now = new Date().toISOString().split("T")[0];
-    const item = {
-      date: root.querySelector("#cs-date").value,
-      person: root.querySelector("#cs-person").value.trim(),
-      type: root.querySelector("#cs-type").value,
-      content: root.querySelector("#cs-content").value.trim(),
-      deadline: root.querySelector("#cs-deadline").value,
-      status: root.querySelector("#cs-status").value,
-      completed: root.querySelector("#cs-status").value === "完了" ? now : ""
-    };
-    const errorMsg = root.querySelector("#cs-error-msg");
-    if (!item.date || !item.person || !item.content) {
-      errorMsg.style.display = "block";
-      return;
-    }
-    errorMsg.style.display = "none";
+  function openModal() {
+    modal.style.display = "flex";
+  }
 
-    if (editingIndex !== null) {
-      csData[editingIndex] = item;
-    } else {
-      csData.push(item);
-    }
-    saveToLocalStorage();
-    clearForm();
+  function closeModal() {
+    modal.style.display = "none";
+    ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+      root.querySelector("#" + id).value = "";
+    });
+  }
+
+  function saveEntry() {
+    const item = {
+      date: root.querySelector("#entry-date").value,
+      person: root.querySelector("#entry-person").value,
+      type: root.querySelector("#entry-type").value,
+      content: root.querySelector("#entry-content").value,
+      deadline: root.querySelector("#entry-deadline").value,
+      status: root.querySelector("#entry-status").value
+    };
+    if (!sheets[currentSheet]) return;
+    sheets[currentSheet].data.push(item);
+    saveSheets();
+    closeModal();
     renderTable();
   }
 
-  function editItem(index) {
-    const item = csData[index];
-    root.querySelector("#cs-date").value = item.date;
-    root.querySelector("#cs-person").value = item.person;
-    root.querySelector("#cs-type").value = item.type;
-    root.querySelector("#cs-content").value = item.content;
-    root.querySelector("#cs-deadline").value = item.deadline;
-    root.querySelector("#cs-status").value = item.status;
-    editingIndex = index;
-    root.querySelector("#cs-submit-btn").textContent = "更新";
-  }
-
-  function deleteItem(index) {
-    if (confirm("この行を削除しますか?")) {
-      csData.splice(index, 1);
-      saveToLocalStorage();
+  window.deleteRow = (index) => {
+    if (confirm("この行を削除しますか？")) {
+      sheets[currentSheet].data.splice(index, 1);
+      saveSheets();
       renderTable();
     }
-  }
+  };
 
-  function sortTable(key) {
-    sortAsc = currentSortKey === key ? !sortAsc : true;
-    currentSortKey = key;
-    csData.sort((a, b) => {
-      if (a[key] < b[key]) return sortAsc ? -1 : 1;
-      if (a[key] > b[key]) return sortAsc ? 1 : -1;
-      return 0;
-    });
+  root.querySelector("#add-entry").onclick = openModal;
+  root.querySelector("#entry-cancel").onclick = closeModal;
+  root.querySelector("#entry-save").onclick = saveEntry;
+
+  selector.onchange = () => {
+    currentSheet = selector.value;
     renderTable();
-  }
+  };
 
-  function exportToExcel() {
-    const header = ["日付", "担当者", "項目", "内容", "締切", "状態", "完了日"];
-    const rows = csData.map(item => [
-      item.date, item.person, item.type, item.content, item.deadline, item.status, item.completed
-    ]);
-    const csv = [header, ...rows].map(r => r.map(f => `"${(f || "").replace(/"/g, '""')}"`).join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "checksheet.csv";
-    link.click();
-  }
+  root.querySelector("#sheet-new").onclick = () => {
+    const name = prompt("新しいチェック表の名前は？");
+    if (name && !sheets[name]) {
+      sheets[name] = { title: name, data: [] };
+      currentSheet = name;
+      renderSheetOptions();
+      renderTable();
+      saveSheets();
+    }
+  };
 
-  // 初期化処理
-  loadFromLocalStorage();
-  renderTable();
-  root.querySelector("#cs-submit-btn").addEventListener("click", addOrUpdateItem);
-  root.querySelector("#cs-export-btn").addEventListener("click", exportToExcel);
-  root.querySelector("#filter-status").addEventListener("change", renderTable);
-  root.querySelector("#filter-type").addEventListener("change", renderTable);
-  root.querySelector("#filter-person").addEventListener("change", renderTable);
-  root.querySelectorAll("th[data-sort]").forEach(th => {
-    th.addEventListener("click", () => sortTable(th.getAttribute("data-sort")));
+  root.querySelector("#sheet-delete").onclick = () => {
+    if (!currentSheet) return;
+    if (confirm("このシートを削除しますか？")) {
+      delete sheets[currentSheet];
+      currentSheet = null;
+      renderSheetOptions();
+      renderTable();
+      saveSheets();
+    }
+  };
+
+  titleElem.addEventListener("blur", () => {
+    if (currentSheet && sheets[currentSheet]) {
+      sheets[currentSheet].title = titleElem.textContent.trim();
+      saveSheets();
+    }
   });
 
+  root.querySelector("#export-csv").onclick = () => {
+    if (!currentSheet || !sheets[currentSheet]) return;
+    const rows = sheets[currentSheet].data;
+    const csv = ["日付,担当者,項目,内容,締切,状態"];
+    rows.forEach(r => {
+      csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => \`"\${(f||"").replace(/"/g,'""')}"\`).join(","));
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+    a.click();
+  };
+
+  // 初期化
+  loadSheets();
+  renderSheetOptions();
+  renderTable();
 })();
 </script>
