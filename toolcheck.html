@@ -152,6 +152,7 @@
     const titleElem = root.querySelector("#sheet-title");
 
     let sheets = {};
+    let editIndex = null;
     let currentSheet = null;
 
     function saveSheets() {
@@ -181,13 +182,56 @@
       }
     }
 
+    
     function renderTable() {
+      const filterPerson = root.querySelector("#filter-person")?.value || "";
+      const filterStatus = root.querySelector("#filter-status")?.value || "";
+      const filterType = root.querySelector("#filter-type")?.value || "";
+  
       const data = sheets[currentSheet]?.data || [];
       const title = sheets[currentSheet]?.title || "新しいチェック表";
       titleElem.textContent = title;
 
+      
       tableBody.innerHTML = "";
-      data.forEach((item, i) => {
+      if (document.getElementById("filter-bar")) {
+        document.getElementById("filter-bar").remove();
+      }
+      const filterBar = document.createElement("div");
+      filterBar.id = "filter-bar";
+      filterBar.innerHTML = `
+        <label>担当者 <input id="filter-person" /></label>
+        <label>状態 
+          <select id="filter-status">
+            <option value="">すべて</option>
+            <option>未対応</option>
+            <option>対応中</option>
+            <option>完了</option>
+          </select>
+        </label>
+        <label>項目 
+          <select id="filter-type">
+            <option value="">すべて</option>
+            <option>提出</option>
+            <option>回収</option>
+            <option>報告</option>
+            <option>伝言</option>
+            <option>その他</option>
+          </select>
+        </label>
+      `;
+      root.insertBefore(filterBar, root.querySelector(".cs-container"));
+      root.querySelectorAll("#filter-bar select, #filter-bar input").forEach(el => {
+        el.addEventListener("change", renderTable);
+      });
+  
+      
+      data.filter(item =>
+        (!filterPerson || item.person.includes(filterPerson)) &&
+        (!filterStatus || item.status === filterStatus) &&
+        (!filterType || item.type === filterType)
+      ).forEach((item, i) => {
+  
         const tr = document.createElement("tr");
         tr.className = "cs-status-" + item.status;
         [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
@@ -207,6 +251,20 @@
           }
         });
         td.appendChild(btn);
+        const editBtn = document.createElement("button");
+        editBtn.className = "cs-btn";
+        editBtn.textContent = "編集";
+        editBtn.addEventListener("click", () => {
+          root.querySelector("#entry-date").value = item.date;
+          root.querySelector("#entry-person").value = item.person;
+          root.querySelector("#entry-type").value = item.type;
+          root.querySelector("#entry-content").value = item.content;
+          root.querySelector("#entry-deadline").value = item.deadline;
+          root.querySelector("#entry-status").value = item.status;
+          editIndex = i;
+          modal.style.display = "flex";
+        });
+        td.appendChild(editBtn);
         tr.appendChild(td);
         tableBody.appendChild(tr);
       });
@@ -216,14 +274,43 @@
       modal.style.display = "flex";
     }
 
+    
     function closeModal() {
+      modal.style.display = "none";
+      ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+        root.querySelector("#" + id).value = "";
+      });
+      editIndex = null;
+    }
+  
       modal.style.display = "none";
       ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
         root.querySelector("#" + id).value = "";
       });
     }
 
+    
     function saveEntry() {
+      const item = {
+        date: root.querySelector("#entry-date").value,
+        person: root.querySelector("#entry-person").value,
+        type: root.querySelector("#entry-type").value,
+        content: root.querySelector("#entry-content").value,
+        deadline: root.querySelector("#entry-deadline").value,
+        status: root.querySelector("#entry-status").value
+      };
+      if (!sheets[currentSheet]) return;
+      if (editIndex !== null) {
+        sheets[currentSheet].data[editIndex] = item;
+        editIndex = null;
+      } else {
+        sheets[currentSheet].data.push(item);
+      }
+      saveSheets();
+      closeModal();
+      renderTable();
+    }
+  
       const item = {
         date: root.querySelector("#entry-date").value,
         person: root.querySelector("#entry-person").value,
