@@ -230,13 +230,6 @@
     renderTable();
   }
 
-  window.deleteRow = (index) => {
-    if (confirm("この行を削除しますか？")) {
-      sheets[currentSheet].data.splice(index, 1);
-      saveSheets();
-      renderTable();
-    }
-  };
 
   root.querySelector("#add-entry").onclick = openModal;
   root.querySelector("#entry-cancel").onclick = closeModal;
