@@ -20,7 +20,7 @@
             </select>
           </label>
           <label>年数:
-            <input id="fromYear" placeholder="例：2024 または 6" type="text">
+            <input id="fromYear" placeholder="西暦4桁（例：2024）" type="text" maxlength="4">
           </label>
           <label>変換先:
             <select id="toEra">
@@ -145,7 +145,8 @@
     (anniversaries[mmdd] ? `今日は「${anniversaries[mmdd]}」です。` : "");
 
   document.getElementById("fromYear").addEventListener("input", e => {
-    if (/^\d{4}$/.test(e.target.value)) {
+    const val = e.target.value;
+    if (/^\d{4}$/.test(val)) {
       document.getElementById("toEra").focus();
     }
   });
