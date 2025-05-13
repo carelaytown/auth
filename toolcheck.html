@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <title>ToolCheck</title>
+  <title>ToolCheck 締切赤字</title>
   <style>
     #toolcheck-app * { box-sizing: border-box; }
     #toolcheck-app {
@@ -75,18 +75,6 @@
       width: 90%;
       max-width: 400px;
     }
-    #toolcheck-app .modal-content label {
-      font-weight: bold;
-      display: block;
-      margin-top: 0.5em;
-    }
-    #toolcheck-app .modal-content input,
-    #toolcheck-app .modal-content textarea,
-    #toolcheck-app .modal-content select {
-      width: 100%;
-      margin-top: 4px;
-      padding: 6px;
-    }
     #toolcheck-app .modal-buttons {
       margin-top: 1em;
       display: flex;
@@ -145,206 +133,166 @@
         </div>
       </div>
     </div>
-
-    <div class="modal" id="new-sheet-modal">
-      <div class="modal-content">
-        <label>新しいチェック表の名前<input type="text" id="new-sheet-name"></label>
-        <div class="modal-buttons">
-          <button id="new-sheet-cancel">キャンセル</button>
-          <button id="new-sheet-create">作成</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="modal" id="confirm-modal">
-      <div class="modal-content">
-        <p id="confirm-message">削除してもよろしいですか？</p>
-        <div class="modal-buttons">
-          <button id="confirm-cancel">キャンセル</button>
-          <button id="confirm-ok">OK</button>
-        </div>
-      </div>
-    </div>
   </div>
 
   <script>
-    (() => {
-      const root = document.getElementById("toolcheck-app");
-      const modal = root.querySelector("#entry-modal");
-      const tableBody = root.querySelector("#cs-table tbody");
-      const selector = root.querySelector("#sheet-selector");
-      const titleElem = root.querySelector("#sheet-title");
-      const newSheetModal = root.querySelector("#new-sheet-modal");
-      const newSheetNameInput = root.querySelector("#new-sheet-name");
-      const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
-      const newSheetCreateButton = root.querySelector("#new-sheet-create");
+  (() => {
+    const root = document.getElementById("toolcheck-app");
+    const modal = root.querySelector("#entry-modal");
+    const tableBody = root.querySelector("#cs-table tbody");
+    const selector = root.querySelector("#sheet-selector");
+    const titleElem = root.querySelector("#sheet-title");
 
-      const confirmModal = root.querySelector("#confirm-modal");
-      const confirmMessage = root.querySelector("#confirm-message");
-      const confirmCancel = root.querySelector("#confirm-cancel");
-      const confirmOk = root.querySelector("#confirm-ok");
-      let confirmCallback = null;
+    let sheets = {};
+    let currentSheet = null;
 
-      confirmCancel.onclick = () => {
-        confirmModal.style.display = "none";
-        confirmCallback = null;
-      };
-      confirmOk.onclick = () => {
-        confirmModal.style.display = "none";
-        if (typeof confirmCallback === "function") confirmCallback();
-      };
-      function showConfirm(msg, callback) {
-        confirmMessage.textContent = msg;
-        confirmCallback = callback;
-        confirmModal.style.display = "flex";
-      }
-
-      let sheets = {};
-      let currentSheet = null;
-
-      function saveSheets() {
-        localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
-      }
-      function loadSheets() {
-        sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
-      }
-      function renderSheetOptions() {
-        selector.innerHTML = "";
-        Object.keys(sheets).forEach(name => {
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          selector.appendChild(opt);
-        });
-        if (currentSheet && !sheets[currentSheet]) currentSheet = null;
-        if (!currentSheet && Object.keys(sheets).length > 0) {
-          currentSheet = Object.keys(sheets)[0];
-        }
-        if (currentSheet) selector.value = currentSheet;
-      }
-      function renderTable() {
-        const data = sheets[currentSheet]?.data || [];
-        const title = sheets[currentSheet]?.title || "新しいチェック表";
-        titleElem.textContent = title;
-        tableBody.innerHTML = "";
-        data.forEach((item, i) => {
-          const tr = document.createElement("tr");
-          tr.className = "cs-status-" + item.status;
-          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
-            const td = document.createElement("td");
-            td.textContent = val;
-            tr.appendChild(td);
-          });
+    function saveSheets() {
+      localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
+    }
+    function loadSheets() {
+      sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
+    }
+    function renderSheetOptions() {
+      selector.innerHTML = "";
+      Object.keys(sheets).forEach(name => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        selector.appendChild(opt);
+      });
+      if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+      if (!currentSheet && Object.keys(sheets).length > 0)
+        currentSheet = Object.keys(sheets)[0];
+      if (currentSheet) selector.value = currentSheet;
+    }
+    function renderTable() {
+      const data = sheets[currentSheet]?.data || [];
+      const title = sheets[currentSheet]?.title || "新しいチェック表";
+      titleElem.textContent = title;
+      tableBody.innerHTML = "";
+      const today = new Date();
+      data.forEach((item, i) => {
+        const tr = document.createElement("tr");
+        tr.className = "cs-status-" + item.status;
+        [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach((val, idx) => {
           const td = document.createElement("td");
-          const del = document.createElement("button");
-          del.className = "cs-btn";
-          del.textContent = "削除";
-          del.onclick = () => {
-            showConfirm("この行を削除しますか？", () => {
-              sheets[currentSheet].data.splice(i, 1);
-              saveSheets(); renderTable();
-            });
-          };
-          const edit = document.createElement("button");
-          edit.className = "cs-btn";
-          edit.textContent = "編集";
-          edit.onclick = () => openModal(i);
-          td.appendChild(del);
-          td.appendChild(edit);
+          td.textContent = val;
+          if (idx === 4 && val) {
+            const diff = (new Date(val) - today) / (1000 * 60 * 60 * 24);
+            if (diff >= 0 && diff <= 3) {
+              td.style.color = "red";
+              td.style.fontWeight = "bold";
+            }
+          }
           tr.appendChild(td);
-          tableBody.appendChild(tr);
         });
-      }
-
-      function openModal(index = -1) {
-        modal.style.display = "flex";
-        if (index >= 0) {
-          const item = sheets[currentSheet].data[index];
-          root.querySelector("#entry-date").value = item.date;
-          root.querySelector("#entry-person").value = item.person;
-          root.querySelector("#entry-type").value = item.type;
-          root.querySelector("#entry-content").value = item.content;
-          root.querySelector("#entry-deadline").value = item.deadline;
-          root.querySelector("#entry-status").value = item.status;
-          root.querySelector("#entry-save").onclick = () => saveEntry(index);
-        } else {
-          ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
-            root.querySelector("#" + id).value = "";
-          });
-          root.querySelector("#entry-save").onclick = () => saveEntry();
-        }
-      }
-      function closeModal() {
-        modal.style.display = "none";
-      }
-      function saveEntry(index = -1) {
-        const item = {
-          date: root.querySelector("#entry-date").value,
-          person: root.querySelector("#entry-person").value,
-          type: root.querySelector("#entry-type").value,
-          content: root.querySelector("#entry-content").value,
-          deadline: root.querySelector("#entry-deadline").value,
-          status: root.querySelector("#entry-status").value
+        const td = document.createElement("td");
+        const delBtn = document.createElement("button");
+        delBtn.className = "cs-btn";
+        delBtn.textContent = "削除";
+        delBtn.onclick = () => {
+          sheets[currentSheet].data.splice(i, 1);
+          saveSheets();
+          renderTable();
         };
-        if (!sheets[currentSheet]) return;
-        if (index >= 0) sheets[currentSheet].data[index] = item;
-        else sheets[currentSheet].data.push(item);
-        saveSheets(); closeModal(); renderTable();
+        const editBtn = document.createElement("button");
+        editBtn.className = "cs-btn";
+        editBtn.textContent = "編集";
+        editBtn.onclick = () => openModal(i);
+        td.appendChild(delBtn);
+        td.appendChild(editBtn);
+        tr.appendChild(td);
+        tableBody.appendChild(tr);
+      });
+    }
+    function openModal(index = -1) {
+      modal.style.display = "flex";
+      if (index >= 0) {
+        const item = sheets[currentSheet].data[index];
+        root.querySelector("#entry-date").value = item.date;
+        root.querySelector("#entry-person").value = item.person;
+        root.querySelector("#entry-type").value = item.type;
+        root.querySelector("#entry-content").value = item.content;
+        root.querySelector("#entry-deadline").value = item.deadline;
+        root.querySelector("#entry-status").value = item.status;
+        root.querySelector("#entry-save").onclick = () => saveEntry(index);
+      } else {
+        ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+          root.querySelector("#" + id).value = "";
+        });
+        root.querySelector("#entry-save").onclick = () => saveEntry();
       }
-
-      root.querySelector("#add-entry").onclick = () => openModal();
-      root.querySelector("#entry-cancel").onclick = closeModal;
-      selector.onchange = () => {
-        currentSheet = selector.value;
-        renderTable();
+    }
+    function closeModal() {
+      modal.style.display = "none";
+    }
+    function saveEntry(index = -1) {
+      const item = {
+        date: root.querySelector("#entry-date").value,
+        person: root.querySelector("#entry-person").value,
+        type: root.querySelector("#entry-type").value,
+        content: root.querySelector("#entry-content").value,
+        deadline: root.querySelector("#entry-deadline").value,
+        status: root.querySelector("#entry-status").value
       };
-      root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
-      newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
-      newSheetCreateButton.onclick = () => {
-        const name = newSheetNameInput.value.trim();
-        if (name && !sheets[name]) {
-          sheets[name] = { title: name, data: [] };
-          currentSheet = name;
-          renderSheetOptions();
-          renderTable();
-          saveSheets();
-          newSheetModal.style.display = "none";
-        }
-      };
-      root.querySelector("#sheet-delete").onclick = () => {
-        if (!currentSheet) return;
-        showConfirm("このシートを削除しますか？", () => {
-          delete sheets[currentSheet];
-          currentSheet = null;
-          renderSheetOptions();
-          renderTable();
-          saveSheets();
-        });
-      };
-      titleElem.onblur = () => {
-        if (currentSheet && sheets[currentSheet]) {
-          sheets[currentSheet].title = titleElem.textContent.trim();
-          saveSheets();
-        }
-      };
-      root.querySelector("#export-csv").onclick = () => {
-        if (!currentSheet || !sheets[currentSheet]) return;
-        const rows = sheets[currentSheet].data;
-        const csv = ["日付,担当者,項目,内容,締切,状態"];
-        rows.forEach(r => {
-          csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
-        });
-        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
-        a.click();
-      };
-
-      loadSheets();
-      renderSheetOptions();
+      if (!sheets[currentSheet]) return;
+      if (index >= 0) sheets[currentSheet].data[index] = item;
+      else sheets[currentSheet].data.push(item);
+      saveSheets();
+      closeModal();
       renderTable();
-    })();
+    }
+
+    root.querySelector("#add-entry").onclick = () => openModal();
+    root.querySelector("#entry-cancel").onclick = closeModal;
+    selector.onchange = () => {
+      currentSheet = selector.value;
+      renderTable();
+    };
+    root.querySelector("#sheet-new").onclick = () => {
+      const name = prompt("新しいチェック表の名前を入力してください");
+      if (name && !sheets[name]) {
+        sheets[name] = { title: name, data: [] };
+        currentSheet = name;
+        renderSheetOptions();
+        renderTable();
+        saveSheets();
+      }
+    };
+    root.querySelector("#sheet-delete").onclick = () => {
+      if (!currentSheet) return;
+      if (confirm("このシートを削除しますか？")) {
+        delete sheets[currentSheet];
+        currentSheet = null;
+        renderSheetOptions();
+        renderTable();
+        saveSheets();
+      }
+    };
+    titleElem.onblur = () => {
+      if (currentSheet && sheets[currentSheet]) {
+        sheets[currentSheet].title = titleElem.textContent.trim();
+        saveSheets();
+      }
+    };
+    root.querySelector("#export-csv").onclick = () => {
+      if (!currentSheet || !sheets[currentSheet]) return;
+      const rows = sheets[currentSheet].data;
+      const csv = ["日付,担当者,項目,内容,締切,状態"];
+      rows.forEach(r => {
+        csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
+      });
+      const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+      a.click();
+    };
+
+    loadSheets();
+    renderSheetOptions();
+    renderTable();
+  })();
   </script>
 </body>
 </html>
