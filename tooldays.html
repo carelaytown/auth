@@ -132,7 +132,7 @@
         <div class="panel">
           <h2>【誕生日から年齢情報】</h2>
           <label>誕生日:
-            <input id="birthDate" type="date">
+            <input id="birthDate" type="date" min="1900-01-01" max="2100-12-31">
             <span class="error" id="birthDateError"></span>
           </label>
           <div class="result" id="birthResult"></div>
@@ -235,7 +235,15 @@
         const birthDateValue = birthDateInput.value;
         if (!birthDateValue) {
           birthDateError.textContent = "誕生日を入力してください。";
-          birthResultDiv.textContent = "";
+          birthResultDiv.textContent = 
+    const birth = new Date(birthDateValue);
+    const year = birth.getFullYear();
+    if (year < 1900 || year > 2100) {
+      birthDateError.textContent = "西暦は1900年〜2100年の間で入力してください。";
+      birthResultDiv.textContent = "";
+      return;
+    }
+"";
           return;
         }
 
