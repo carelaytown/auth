@@ -214,7 +214,17 @@
         tr.className = "cs-status-" + item.status;
         [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
           const td = document.createElement("td");
-          td.textContent = val;
+          
+        if (key === "deadline") {
+          const today = new Date();
+          const deadlineDate = new Date(val);
+          const diffDays = Math.ceil((deadlineDate - today) / (1000 * 60 * 60 * 24));
+          if (!isNaN(diffDays) && diffDays >= 0 && diffDays <= 3) {
+            td.style.color = "red";
+          }
+        }
+
+        td.textContent = val;
           tr.appendChild(td);
         });
         const td = document.createElement("td");
