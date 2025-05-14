@@ -148,19 +148,7 @@
         <label>日付<input type="date" id="entry-date"></label>
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目
-          <input id="entry-type" list="type-list">
-<datalist id="type-list"></datalist>
-<button id="delete-type">×</button>
-              <option value="提出">提出</option>
-              <option value="回収">回収</option>
-              <option value="報告">報告</option>
-              <option value="伝言">伝言</option>
-              <option value="その他">その他</option>
-              <!-- 追加項目は JS で動的に追加 -->
-              <option value="__add__">＋新しい項目を追加</option>
-              <option value="__delete__">▼選択中の追加項目を削除</option>
-              <option value="__add__">＋新しい項目を追加</option>
-              <option value="__delete__">▼選択中の追加項目を削除</option>
+          <select id="entry-type">
             <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
           </select>
         </label>
@@ -287,16 +275,6 @@
           personSelect.appendChild(opt);
         });
         personSelect.value = filterPerson;
-const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
-        const typeSelect = document.getElementById("filter-type");
-        typeSelect.innerHTML = '<option value="">すべて</option>';
-        typeSet.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          typeSelect.appendChild(opt);
-        });
-        typeSelect.value = filterType;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
@@ -482,82 +460,6 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
-const entryTypeSelect = document.getElementById("entry-type");
-const initialTypes = ["提出", "回収", "報告", "伝言", "その他"];
-
-entryTypeSelect.addEventListener("change", (e) => {
-  const val = e.target.value;
-  if (val === "__add__") {
-    const newType = prompt("追加する項目名を入力してください");
-    if (newType && ![...entryTypeSelect.options].some(o => o.value === newType)) {
-      const opt = document.createElement("option");
-      opt.value = newType;
-      opt.textContent = newType;
-      entryTypeSelect.insertBefore(opt, entryTypeSelect.querySelector('option[value="__add__"]'));
-      entryTypeSelect.value = newType;
-    } else {
-      entryTypeSelect.value = "提出";
-    }
-  } else if (val === "__delete__") {
-    const selected = entryTypeSelect.value;
-    if (!initialTypes.includes(selected) && selected !== "__add__" && selected !== "__delete__") {
-      const opt = entryTypeSelect.querySelector(`option[value="${selected}"]`);
-      if (opt) {
-        opt.remove();
-        alert(`「${selected}」を削除しました`);
-      }
-      entryTypeSelect.value = "提出";
-    } else {
-      alert("この項目は削除できません");
-      entryTypeSelect.value = "提出";
-    }
-  }
-});
-const typeSet = new Set();
-const personSet = new Set();
-
-function updateDatalist(set, datalistId) {
-  const datalist = document.getElementById(datalistId);
-  datalist.innerHTML = "";
-  Array.from(set).forEach(value => {
-    const opt = document.createElement("option");
-    opt.value = value;
-    datalist.appendChild(opt);
-  });
-}
-
-// 登録時に自動追加
-function registerType(value) {
-  if (value && !typeSet.has(value)) {
-    typeSet.add(value);
-    updateDatalist(typeSet, "type-list");
-  }
-}
-function registerPerson(value) {
-  if (value && !personSet.has(value)) {
-    personSet.add(value);
-    updateDatalist(personSet, "person-list");
-  }
-}
-
-// 削除ボタン
-document.getElementById("delete-type").addEventListener("click", () => {
-  const value = document.getElementById("entry-type").value;
-  if (typeSet.has(value)) {
-    typeSet.delete(value);
-    updateDatalist(typeSet, "type-list");
-    alert(`「${value}」を削除しました`);
-  }
-});
-
-document.getElementById("delete-person").addEventListener("click", () => {
-  const value = document.getElementById("entry-person").value;
-  if (personSet.has(value)) {
-    personSet.delete(value);
-    updateDatalist(personSet, "person-list");
-    alert(`「${value}」を削除しました`);
-  }
-});
 })();
   </script>
 </body>
