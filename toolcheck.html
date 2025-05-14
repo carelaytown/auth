@@ -257,7 +257,7 @@
         titleElem.textContent = title;
         tableBody.innerHTML = "";
 
-        const personSet = new Set(data.map(d => d.person).filter(Boolean));
+        const personSet = new Set(rawData.map(d => d.person).filter(Boolean));
         const personSelect = document.getElementById("filter-person");
         personSelect.innerHTML = '<option value="">すべて</option>';
         personSet.forEach(p => {
