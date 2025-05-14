@@ -149,8 +149,14 @@
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目
           <select id="entry-type">
-            <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
-          </select>
+  <option value="提出">提出</option>
+  <option value="回収">回収</option>
+  <option value="報告">報告</option>
+  <option value="伝言">伝言</option>
+  <option value="その他">その他</option>
+  <option value="__add__">＋新しい項目を追加</option>
+  <option value="__delete__">▼追加項目を削除</option>
+</select>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
         <label>締切<input type="date" id="entry-deadline"></label>
@@ -306,6 +312,39 @@
       
 
       renderTable();
+const entryTypeSelect = root.querySelector("#entry-type");
+      const initialTypes = new Set(["提出", "回収", "報告", "伝言", "その他"]);
+      entryTypeSelect.addEventListener("change", (e) => {
+        const val = e.target.value;
+        if (val === "") {
+          const newType = prompt("追加する項目名を入力してください");
+          if (newType && ![...entryTypeSelect.options].some(o => o.value === newType)) {
+            const opt = document.createElement("option");
+            opt.value = newType;
+            opt.textContent = newType;
+            entryTypeSelect.appendChild(opt);
+            entryTypeSelect.value = newType;
+          } else if (newType) {
+            entryTypeSelect.value = newType; // 既存の同名項目があれば選択だけ
+          }
+        } else if (val === "__delete__") {
+          const current = entryTypeSelect.value;
+          const toDelete = prompt("削除したい項目名を入力してください");
+          if (toDelete && !initialTypes.has(toDelete)) {
+            const target = [...entryTypeSelect.options].find(o => o.value === toDelete);
+            if (target) {
+              target.remove();
+              alert(`「${toDelete}」を削除しました`);
+              entryTypeSelect.value = "提出";
+            } else {
+              alert("該当する追加項目が見つかりません");
+            }
+          } else if (initialTypes.has(toDelete)) {
+            alert("初期項目は削除できません");
+            entryTypeSelect.value = "提出";
+          }
+        }
+      });
 window.sortBy = function(key) {
   if (sortConfig.key === key) {
     sortConfig.asc = !sortConfig.asc;
@@ -449,6 +488,73 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
+const entryTypeSelect = document.getElementById("entry-type");
+const initialTypes = new Set(["提出", "回収", "報告", "伝言", "その他"]);
+
+entryTypeSelect.addEventListener("change", (e) => {
+  const val = e.target.value;
+  if (val === "__add__") {
+    const newType = prompt("追加する項目名を入力してください");
+    if (newType && ![...entryTypeSelect.options].some(o => o.value === newType)) {
+      const opt = document.createElement("option");
+      opt.value = newType;
+      opt.textContent = newType;
+      entryTypeSelect.insertBefore(opt, entryTypeSelect.querySelector('option[value="__add__"]'));
+      entryTypeSelect.value = newType;
+    } else if (newType) {
+      entryTypeSelect.value = newType;
+    }
+  } else if (val === "__delete__") {
+    const toDelete = prompt("削除したい項目名を入力してください");
+    if (toDelete && !initialTypes.has(toDelete)) {
+      const opt = [...entryTypeSelect.options].find(o => o.value === toDelete);
+      if (opt) {
+        opt.remove();
+        alert(`「${toDelete}」を削除しました`);
+        entryTypeSelect.value = "提出";
+      } else {
+        alert("その項目は見つかりませんでした");
+        entryTypeSelect.value = "提出";
+      }
+    } else if (initialTypes.has(toDelete)) {
+      alert("初期項目は削除できません");
+      entryTypeSelect.value = "提出";
+    }
+  }
+});
+const entryTypeSelect = document.getElementById("entry-type");
+const initialTypes = new Set(["提出", "回収", "報告", "伝言", "その他"]);
+
+entryTypeSelect.addEventListener("change", (e) => {
+  const val = e.target.value;
+  if (val === "__add__") {
+    const newType = prompt("追加する項目名を入力してください");
+    if (newType && ![...entryTypeSelect.options].some(o => o.value === newType)) {
+      const opt = document.createElement("option");
+      opt.value = newType;
+      opt.textContent = newType;
+      entryTypeSelect.insertBefore(opt, entryTypeSelect.querySelector('option[value="__add__"]'));
+      entryTypeSelect.value = newType;
+    } else if (newType) {
+      entryTypeSelect.value = newType;
+    } else {
+      entryTypeSelect.value = "提出";
+    }
+  } else if (val === "__delete__") {
+    const toDelete = entryTypeSelect.value;
+    if (!initialTypes.has(toDelete) && toDelete !== "__add__" && toDelete !== "__delete__") {
+      const opt = entryTypeSelect.querySelector(`option[value="${toDelete}"]`);
+      if (opt) {
+        opt.remove();
+        alert(`「${toDelete}」を削除しました`);
+      }
+      entryTypeSelect.value = "提出";
+    } else {
+      alert("この項目は削除できません");
+      entryTypeSelect.value = "提出";
+    }
+  }
+});
 })();
   </script>
 </body>
