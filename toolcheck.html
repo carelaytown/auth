@@ -260,7 +260,6 @@
                  (!filterType || item.type === filterType) &&
                  (!filterStatus || item.status === filterStatus);
         });
-        const data = sheets[currentSheet]?.data || [];
         const title = sheets[currentSheet]?.title || "新しいチェック表";
         titleElem.textContent = title;
         tableBody.innerHTML = "";
