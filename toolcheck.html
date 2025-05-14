@@ -429,7 +429,16 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   filterStatus = e.target.value;
   renderTable();
 });
-    })();
+    window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+};
+})();
   </script>
 </body>
 </html>
