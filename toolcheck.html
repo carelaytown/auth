@@ -528,8 +528,8 @@ entryTypeSelect.addEventListener("change", (e) => {
   } else if (val === "__delete__") {
     const selected = entryTypeSelect.value;
     if (!initialTypes.includes(selected) && selected !== "__add__" && selected !== "__delete__") {
-      entryTypeSelect.querySelector(`option[value="\${selected}"]`)?.remove();
-      alert(`「\${selected}」を削除しました`);
+      entryTypeSelect.querySelector(`option[value="${selected}"]`)?.remove();
+      alert(`「${selected}」を削除しました`);
       entryTypeSelect.value = "提出";
     } else {
       alert("この項目は削除できません");
