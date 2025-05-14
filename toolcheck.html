@@ -391,6 +391,15 @@
       loadSheets();
       renderSheetOptions();
       renderTable();
+const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+const personSelect = document.getElementById("filter-person");
+personSelect.innerHTML = '<option value="">すべて</option>';
+personSet.forEach(p => {
+  const opt = document.createElement("option");
+  opt.value = p;
+  opt.textContent = p;
+  personSelect.appendChild(opt);
+});
 document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
   renderTable();
