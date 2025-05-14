@@ -97,8 +97,7 @@
       padding: 4px 8px;
       font-size: 12px;
     }
-  th[onclick] { cursor: pointer; }
-</style>
+  </style>
 </head>
 <body>
   <div id="toolcheck-app">
@@ -137,7 +136,7 @@
       <table class="cs-table" id="cs-table">
         <thead>
           <tr>
-            <th onclick="sortBy('date')" data-label="日付">日付 ⇅</th><th onclick="sortBy('person')" data-label="担当者">担当者 ⇅</th><th onclick="sortBy('type')" data-label="項目">項目 ⇅</th><th onclick="sortBy('content')" data-label="内容">内容 ⇅</th><th onclick="sortBy('deadline')" data-label="締切">締切 ⇅</th><th onclick="sortBy('status')" data-label="状態">状態 ⇅</th><th>操作</th>
+            <th onclick="sortBy('date')">日付</th><th onclick="sortBy('person')">担当者</th><th onclick="sortBy('type')">項目</th><th onclick="sortBy('content')">内容</th><th onclick="sortBy('deadline')">締切</th><th onclick="sortBy('status')">状態</th><th>操作</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -265,29 +264,6 @@
         const title = sheets[currentSheet]?.title || "新しいチェック表";
         titleElem.textContent = title;
         tableBody.innerHTML = "";
-// ソート状態の視覚表示（記号の増殖防止）
-        const headers = document.querySelectorAll("th[onclick]");
-        headers.forEach(th => {
-          const key = th.getAttribute("onclick").match(/'(\w+)'/)[1];
-          const base = th.dataset.label || th.textContent.replace(/[▲▼⇅]+$/, '');
-          if (sortConfig.key === key) {
-            th.textContent = base + (sortConfig.asc ? " ▲" : " ▼");
-          } else {
-            th.textContent = base + " ⇅";
-          }
-        });
-// ソート状態の視覚表示
-        const headers = document.querySelectorAll("th[onclick]");
-        headers.forEach(th => {
-          const key = th.getAttribute("onclick").match(/'(\w+)'/)[1];
-          let label = th.textContent.replace(/[▲▼↕︎]$/, '');
-          if (sortConfig.key === key) {
-            label += sortConfig.asc ? '▲' : '▼';
-          } else {
-            label += '↕︎';
-          }
-          th.textContent = label;
-        });
 
         data.forEach((item, i) => {
           const tr = document.createElement("tr");
@@ -454,24 +430,6 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   renderTable();
 });
     window.sortBy = function(key) {
-  if (sortConfig.key === key) {
-    sortConfig.asc = !sortConfig.asc;
-  } else {
-    sortConfig.key = key;
-    sortConfig.asc = true;
-  }
-  renderTable();
-};
-window.sortBy = function(key) {
-  if (sortConfig.key === key) {
-    sortConfig.asc = !sortConfig.asc;
-  } else {
-    sortConfig.key = key;
-    sortConfig.asc = true;
-  }
-  renderTable();
-};
-window.sortBy = function(key) {
   if (sortConfig.key === key) {
     sortConfig.asc = !sortConfig.asc;
   } else {
