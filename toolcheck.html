@@ -257,16 +257,6 @@
         titleElem.textContent = title;
         tableBody.innerHTML = "";
 
-        const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
-        const personSelect = document.getElementById("filter-person");
-        personSelect.innerHTML = '<option value="">すべて</option>';
-        personSet.forEach(p => {
-          const opt = document.createElement("option");
-          opt.value = p;
-          opt.textContent = p;
-          personSelect.appendChild(opt);
-        });
-
         data.forEach((item, i) => {
           const tr = document.createElement("tr");
           tr.className = "cs-status-" + item.status;
