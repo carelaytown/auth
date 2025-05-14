@@ -296,18 +296,9 @@
       
       
 
-      document.getElementById("filter-person").onchange = (e) => {
-        filterPerson = e.target.value;
-        renderTable();
-      };
-      document.getElementById("filter-type").onchange = (e) => {
-        filterType = e.target.value;
-        renderTable();
-      };
-      document.getElementById("filter-status").onchange = (e) => {
-        filterStatus = e.target.value;
-        renderTable();
-      };
+      
+      
+      
       renderTable();
       };
       
@@ -413,8 +404,20 @@
       };
 
       loadSheets();
-      renderSheetOptions();
-      renderTable();
+renderSheetOptions();
+renderTable();
+document.getElementById("filter-person").onchange = (e) => {
+  filterPerson = e.target.value;
+  renderTable();
+};
+document.getElementById("filter-type").onchange = (e) => {
+  filterType = e.target.value;
+  renderTable();
+};
+document.getElementById("filter-status").onchange = (e) => {
+  filterStatus = e.target.value;
+  renderTable();
+};
     })();
   </script>
 </body>
