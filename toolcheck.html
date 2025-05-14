@@ -292,20 +292,23 @@
             showConfirm("この行を削除しますか？", () => {
               sheets[currentSheet].data.splice(i, 1);
               saveSheets(); 
-      document.getElementById("filter-person").onchange = (e) => {
-        filterPerson = e.target.value;
-        renderTable();
-      };
-      document.getElementById("filter-type").onchange = (e) => {
-        filterType = e.target.value;
-        renderTable();
-      };
-      document.getElementById("filter-status").onchange = (e) => {
-        filterStatus = e.target.value;
-        renderTable();
-      };
+      
+      
+      
 
       renderTable();
+document.getElementById("filter-person").onchange = (e) => {
+  filterPerson = e.target.value;
+  renderTable();
+};
+document.getElementById("filter-type").onchange = (e) => {
+  filterType = e.target.value;
+  renderTable();
+};
+document.getElementById("filter-status").onchange = (e) => {
+  filterStatus = e.target.value;
+  renderTable();
+};
             });
           };
           const edit = document.createElement("button");
