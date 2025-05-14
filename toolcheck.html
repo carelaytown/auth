@@ -462,6 +462,15 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
+window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+};
 })();
   </script>
 </body>
