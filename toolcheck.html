@@ -264,6 +264,17 @@
         const title = sheets[currentSheet]?.title || "新しいチェック表";
         titleElem.textContent = title;
         tableBody.innerHTML = "";
+// 担当者フィルターを更新
+        const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+        const personSelect = document.getElementById("filter-person");
+        personSelect.innerHTML = '<option value="">すべて</option>';
+        personSet.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          personSelect.appendChild(opt);
+        });
+        personSelect.value = filterPerson;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
