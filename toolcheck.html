@@ -148,7 +148,11 @@
         <label>日付<input type="date" id="entry-date"></label>
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目
-          <select id="entry-type"></select>
+          <select id="entry-type">
+              <option value="__add__">＋新しい項目を追加</option>
+              <option value="__delete__">▼選択中の追加項目を削除</option>
+            <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
+          </select>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
         <label>締切<input type="date" id="entry-deadline"></label>
@@ -273,16 +277,6 @@
           personSelect.appendChild(opt);
         });
         personSelect.value = filterPerson;
-        const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
-        const typeSelect = document.getElementById("filter-type");
-        typeSelect.innerHTML = '<option value="">すべて</option>';
-        typeSet.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          typeSelect.appendChild(opt);
-        });
-        typeSelect.value = filterType;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
@@ -469,48 +463,7 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   renderTable();
 };
 const entryTypeSelect = document.getElementById("entry-type");
-const initialTypes = new Set(["提出", "回収", "報告", "伝言", "その他"]);
-
-entryTypeSelect.addEventListener("change", (e) => {
-  const val = e.target.value;
-  if (val === "__add__") {
-    const newType = prompt("追加する項目名を入力してください");
-    if (newType && ![...entryTypeSelect.options].some(o => o.value === newType)) {
-      const opt = document.createElement("option");
-      opt.value = newType;
-      opt.textContent = newType;
-      entryTypeSelect.insertBefore(opt, entryTypeSelect.querySelector('option[value="__add__"]'));
-      entryTypeSelect.value = newType;
-    } else {
-      entryTypeSelect.value = "提出";
-    }
-  } else if (val === "__delete__") {
-    const selected = entryTypeSelect.value;
-    if (!initialTypes.has(selected) && selected !== "__add__" && selected !== "__delete__") {
-      entryTypeSelect.querySelector(`option[value="${selected}"]`)?.remove();
-      alert(`「${selected}」を削除しました`);
-      entryTypeSelect.value = "提出";
-    } else {
-      alert("この項目は削除できません");
-      entryTypeSelect.value = "提出";
-    }
-  }
-});
-const entryTypeSelect = document.getElementById("entry-type");
 const initialTypes = ["提出", "回収", "報告", "伝言", "その他"];
-
-function initializeEntryTypeOptions() {
-  entryTypeSelect.innerHTML = "";
-  initialTypes.forEach(type => {
-    const opt = document.createElement("option");
-    opt.value = type;
-    opt.textContent = type;
-    entryTypeSelect.appendChild(opt);
-  });
-  entryTypeSelect.appendChild(new Option("＋新しい項目を追加", "__add__"));
-  entryTypeSelect.appendChild(new Option("▼選択中の追加項目を削除", "__delete__"));
-}
-initializeEntryTypeOptions();
 
 entryTypeSelect.addEventListener("change", (e) => {
   const val = e.target.value;
@@ -528,8 +481,11 @@ entryTypeSelect.addEventListener("change", (e) => {
   } else if (val === "__delete__") {
     const selected = entryTypeSelect.value;
     if (!initialTypes.includes(selected) && selected !== "__add__" && selected !== "__delete__") {
-      entryTypeSelect.querySelector(`option[value="${selected}"]`)?.remove();
-      alert(`「${selected}」を削除しました`);
+      const opt = entryTypeSelect.querySelector(`option[value="${selected}"]`);
+      if (opt) {
+        opt.remove();
+        alert(`「${selected}」を削除しました`);
+      }
       entryTypeSelect.value = "提出";
     } else {
       alert("この項目は削除できません");
@@ -537,8 +493,6 @@ entryTypeSelect.addEventListener("change", (e) => {
     }
   }
 });
-
-// フィルター（項目）の更新も renderTable 内に加える
 })();
   </script>
 </body>
