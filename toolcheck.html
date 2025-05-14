@@ -230,11 +230,20 @@
         data.forEach((item, i) => {
           const tr = document.createElement("tr");
           tr.className = "cs-status-" + item.status;
-          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(val => {
-            const td = document.createElement("td");
-            td.textContent = val;
-            tr.appendChild(td);
-          });
+          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(function(val, idx) {
+  const td = document.createElement("td");
+  td.textContent = val;
+  if (idx === 4 && val) {
+    const today = new Date();
+    const deadline = new Date(val);
+    const diff = (deadline - today) / (1000 * 60 * 60 * 24);
+    if (diff >= 0 && diff <= 3) {
+      td.style.color = "red";
+      td.style.fontWeight = "bold";
+    }
+  }
+  tr.appendChild(td);
+});
           const td = document.createElement("td");
           const del = document.createElement("button");
           del.className = "cs-btn";
