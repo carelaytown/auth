@@ -149,6 +149,14 @@
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目
           <select id="entry-type">
+              <option value="提出">提出</option>
+              <option value="回収">回収</option>
+              <option value="報告">報告</option>
+              <option value="伝言">伝言</option>
+              <option value="その他">その他</option>
+              <!-- 追加項目は JS で動的に追加 -->
+              <option value="__add__">＋新しい項目を追加</option>
+              <option value="__delete__">▼選択中の追加項目を削除</option>
               <option value="__add__">＋新しい項目を追加</option>
               <option value="__delete__">▼選択中の追加項目を削除</option>
             <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
@@ -277,6 +285,16 @@
           personSelect.appendChild(opt);
         });
         personSelect.value = filterPerson;
+const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
+        const typeSelect = document.getElementById("filter-type");
+        typeSelect.innerHTML = '<option value="">すべて</option>';
+        typeSet.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+        typeSelect.value = filterType;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
