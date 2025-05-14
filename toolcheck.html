@@ -97,7 +97,8 @@
       padding: 4px 8px;
       font-size: 12px;
     }
-  </style>
+  th[onclick] { cursor: pointer; }
+</style>
 </head>
 <body>
   <div id="toolcheck-app">
@@ -264,6 +265,18 @@
         const title = sheets[currentSheet]?.title || "新しいチェック表";
         titleElem.textContent = title;
         tableBody.innerHTML = "";
+// ソート状態の視覚表示
+        const headers = document.querySelectorAll("th[onclick]");
+        headers.forEach(th => {
+          const key = th.getAttribute("onclick").match(/'(\w+)'/)[1];
+          let label = th.textContent.replace(/[▲▼↕︎]$/, '');
+          if (sortConfig.key === key) {
+            label += sortConfig.asc ? '▲' : '▼';
+          } else {
+            label += '↕︎';
+          }
+          th.textContent = label;
+        });
 
         data.forEach((item, i) => {
           const tr = document.createElement("tr");
