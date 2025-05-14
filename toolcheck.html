@@ -148,7 +148,9 @@
         <label>日付<input type="date" id="entry-date"></label>
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目
-          <select id="entry-type">
+          <input id="entry-type" list="type-list">
+<datalist id="type-list"></datalist>
+<button id="delete-type">×</button>
               <option value="提出">提出</option>
               <option value="回収">回収</option>
               <option value="報告">報告</option>
@@ -509,6 +511,51 @@ entryTypeSelect.addEventListener("change", (e) => {
       alert("この項目は削除できません");
       entryTypeSelect.value = "提出";
     }
+  }
+});
+const typeSet = new Set();
+const personSet = new Set();
+
+function updateDatalist(set, datalistId) {
+  const datalist = document.getElementById(datalistId);
+  datalist.innerHTML = "";
+  Array.from(set).forEach(value => {
+    const opt = document.createElement("option");
+    opt.value = value;
+    datalist.appendChild(opt);
+  });
+}
+
+// 登録時に自動追加
+function registerType(value) {
+  if (value && !typeSet.has(value)) {
+    typeSet.add(value);
+    updateDatalist(typeSet, "type-list");
+  }
+}
+function registerPerson(value) {
+  if (value && !personSet.has(value)) {
+    personSet.add(value);
+    updateDatalist(personSet, "person-list");
+  }
+}
+
+// 削除ボタン
+document.getElementById("delete-type").addEventListener("click", () => {
+  const value = document.getElementById("entry-type").value;
+  if (typeSet.has(value)) {
+    typeSet.delete(value);
+    updateDatalist(typeSet, "type-list");
+    alert(`「${value}」を削除しました`);
+  }
+});
+
+document.getElementById("delete-person").addEventListener("click", () => {
+  const value = document.getElementById("entry-person").value;
+  if (personSet.has(value)) {
+    personSet.delete(value);
+    updateDatalist(personSet, "person-list");
+    alert(`「${value}」を削除しました`);
   }
 });
 })();
