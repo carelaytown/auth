@@ -1,1100 +1,873 @@
-<style>
-    #toolcheck-app * {
-        box-sizing: border-box;
-    }
-
+  <style>
+    #toolcheck-app * { box-sizing: border-box; }
     #toolcheck-app {
-        font-family: sans-serif;
-        padding: 1em;
-        max-width: 1200px;
-        margin: auto;
+      font-family: sans-serif;
+      padding: 1em;
+      max-width: 1200px;
+      margin: auto;
     }
-
     #toolcheck-app .header-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1em;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1em;
     }
-
     #toolcheck-app .sheet-title {
-        font-size: 1.5em;
-        font-weight: bold;
-        flex: 1;
+      font-size: 1.5em;
+      font-weight: bold;
+      flex: 1;
     }
-
     #toolcheck-app .sheet-title[contenteditable] {
-        background: #eef;
-        padding: 4px;
-        border-radius: 4px;
+      background: #eef;
+      padding: 4px;
+      border-radius: 4px;
     }
-
     #toolcheck-app .sheet-controls {
-        display: flex;
-        gap: 8px;
+      display: flex;
+      gap: 8px;
     }
-
-    #toolcheck-app select,
-    #toolcheck-app button {
-        padding: 4px 8px;
-        font-size: 14px;
+    #toolcheck-app select, #toolcheck-app button {
+      padding: 4px 8px;
+      font-size: 14px;
     }
-
     #toolcheck-app .cs-container {
-        display: flex;
-        flex-direction: column;
-        gap: 1em;
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
     }
-
     #toolcheck-app .cs-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
     }
-
-    #toolcheck-app .cs-table th,
-    #toolcheck-app .cs-table td {
-        border: 1px solid #ccc;
-        padding: 4px;
-        font-size: 12px;
-        text-align: center;
-        word-wrap: break-word;
+    #toolcheck-app .cs-table th, #toolcheck-app .cs-table td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      font-size: 12px;
+      text-align: center;
+      word-wrap: break-word;
     }
-
     #toolcheck-app .cs-table th {
-        background-color: #f0f0f0;
+      background-color: #f0f0f0;
     }
-
-    #toolcheck-app .cs-status-未対応 {
-        background-color: #fff3cd;
-    }
-
-    #toolcheck-app .cs-status-対応中 {
-        background-color: #d1ecf1;
-    }
-
-    #toolcheck-app .cs-status-完了 {
-        background-color: #d4edda;
-    }
-
+    #toolcheck-app .cs-status-未対応 { background-color: #fff3cd; }
+    #toolcheck-app .cs-status-対応中 { background-color: #d1ecf1; }
+    #toolcheck-app .cs-status-完了 { background-color: #d4edda; }
     #toolcheck-app .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
     }
-
     #toolcheck-app .modal-content {
-        background: white;
-        padding: 1em;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 400px;
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
     }
-
     #toolcheck-app .modal-content label {
-        font-weight: bold;
-        display: block;
-        margin-top: 0.5em;
+      font-weight: bold;
+      display: block;
+      margin-top: 0.5em;
     }
-
     #toolcheck-app .modal-content input,
     #toolcheck-app .modal-content textarea,
     #toolcheck-app .modal-content select {
-        width: 100%;
-        margin-top: 4px;
-        padding: 6px;
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px;
     }
-
     #toolcheck-app .modal-buttons {
-        margin-top: 1em;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
+      margin-top: 1em;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
     }
-
     #toolcheck-app .cs-btn {
-        padding: 4px 8px;
-        font-size: 12px;
+      padding: 4px 8px;
+      font-size: 12px;
     }
-
     #toolcheck-app .history-list span {
-        display: inline-block;
-        background: #eee;
-        margin: 2px;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 12px;
+      display: inline-block;
+      background: #eee;
+      margin: 2px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
     }
-
     #toolcheck-app .history-list span button {
-        margin-left: 4px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: red;
+      margin-left: 4px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: red;
     }
-
     #toolcheck-app .sheet-selector {
-        padding: 6px 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: white;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        width: 250px;
+      padding: 6px 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 250px;
     }
-
-    #toolcheck-app .sheet-combo {
-        padding: 6px 30px 6px 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: white;
-        width: 250px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0,0 L6,8 L12,0 Z' fill='%23666'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 12px 8px;
-    }
-</style>
-
+  </style>
 <div id="toolcheck-app">
-    <div class="header-bar">
-        <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
-        <div class="sheet-controls">
-            <input type="text" id="sheet-selector" list="sheet-options" class="sheet-combo">
-<datalist id="sheet-options"></datalist>
-            <button id="sheet-new">＋新規</button>
-            <button id="sheet-delete">🗑削除</button>
-            <button id="add-entry">予定の追加</button>
-            <button id="export-csv">CSV出力</button>
-        </div>
+  <div class="header-bar">
+    <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
+    <div class="sheet-controls">
+      <select id="sheet-selector" class="sheet-selector"></select>
+      <button id="sheet-new">＋新規</button>
+      <button id="sheet-delete">🗑削除</button>
+      <button id="add-entry">予定の追加</button>
+      <button id="export-csv">CSV出力</button>
     </div>
+  </div>
 
-    <div class="cs-container">
-        <div class="filter-bar" style="margin-bottom: 1em;">
-            担当者：
-            <select id="filter-person">
-                <option value="">すべて</option>
-            </select>
-            項目：
-            <select id="filter-type">
-                <option value="">すべて</option>
-            </select>
-            状態：
-            <select id="filter-status">
-                <option value="">すべて</option>
-                <option value="未対応">未対応</option>
-                <option value="対応中">対応中</option>
-                <option value="完了">完了</option>
-            </select>
-        </div>
-        <table class="cs-table" id="cs-table">
-            <thead>
-                <tr>
-                    <th onclick="sortBy('date')" data-label="日付">日付 ⇅</th>
-                    <th onclick="sortBy('person')" data-label="担当者">担当者 ⇅</th>
-                    <th onclick="sortBy('type')" data-label="項目">項目 ⇅</th>
-                    <th onclick="sortBy('content')" data-label="内容">内容 ⇅</th>
-                    <th onclick="sortBy('deadline')" data-label="締切">締切 ⇅</th>
-                    <th onclick="sortBy('status')" data-label="状態">状態 ⇅</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
+  <div class="cs-container">
+    <div class="filter-bar" style="margin-bottom: 1em;">
+      担当者：
+      <select id="filter-person"><option value="">すべて</option></select>
+      項目：
+      <select id="filter-type"><option value="">すべて</option></select>
+      状態：
+      <select id="filter-status">
+        <option value="">すべて</option>
+        <option value="未対応">未対応</option>
+        <option value="対応中">対応中</option>
+        <option value="完了">完了</option>
+      </select>
     </div>
+    <table class="cs-table" id="cs-table">
+      <thead>
+        <tr>
+          <th onclick="sortBy('date')" data-label="日付">日付 ⇅</th>
+          <th onclick="sortBy('person')" data-label="担当者">担当者 ⇅</th>
+          <th onclick="sortBy('type')" data-label="項目">項目 ⇅</th>
+          <th onclick="sortBy('content')" data-label="内容">内容 ⇅</th>
+          <th onclick="sortBy('deadline')" data-label="締切">締切 ⇅</th>
+          <th onclick="sortBy('status')" data-label="状態">状態 ⇅</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    <div class="modal" id="entry-modal">
-        <div class="modal-content">
-            <label>日付<input type="date" id="entry-date"></label>
-            <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
-            <datalist id="person-suggestions"></datalist>
-            <div id="person-history" class="history-list"></div>
-            <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
-            <datalist id="type-suggestions"></datalist>
-            <div id="type-history" class="history-list"></div>
-            </label>
-            <label>内容<textarea id="entry-content"></textarea></label>
-            <label>締切<input type="date" id="entry-deadline"></label>
-            <label>状態
-                <select id="entry-status">
-                    <option>未対応</option>
-                    <option>対応中</option>
-                    <option>完了</option>
-                </select>
-            </label>
-            <div class="modal-buttons">
-                <button id="entry-cancel">閉じる</button>
-                <button id="entry-save">保存</button>
-            </div>
-        </div>
+  <!-- モーダル：予定追加 -->
+  <div class="modal" id="entry-modal">
+    <div class="modal-content">
+      <label>日付<input type="date" id="entry-date"></label>
+      <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
+      <datalist id="person-suggestions"></datalist>
+      <div id="person-history" class="history-list"></div>
+      <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
+      <datalist id="type-suggestions"></datalist>
+      <div id="type-history" class="history-list"></div>
+      <label>内容<textarea id="entry-content"></textarea></label>
+      <label>締切<input type="date" id="entry-deadline"></label>
+      <label>状態
+        <select id="entry-status">
+          <option>未対応</option>
+          <option>対応中</option>
+          <option>完了</option>
+        </select>
+      </label>
+      <div class="modal-buttons">
+        <button id="entry-cancel">閉じる</button>
+        <button id="entry-save">保存</button>
+      </div>
     </div>
+  </div>
 
-    <div class="modal" id="new-sheet-modal">
-        <div class="modal-content">
-            <label>新しいチェック表の名前<input type="text" id="new-sheet-name"></label>
-            <div class="modal-buttons">
-                <button id="new-sheet-cancel">キャンセル</button>
-                <button id="new-sheet-create">作成</button>
-            </div>
-        </div>
+  <!-- モーダル：新規シート作成 -->
+  <div class="modal" id="new-sheet-modal">
+    <div class="modal-content">
+      <label>新しいチェック表の名前<input type="text" id="new-sheet-name"></label>
+      <div class="modal-buttons">
+        <button id="new-sheet-cancel">キャンセル</button>
+        <button id="new-sheet-create">作成</button>
+      </div>
     </div>
+  </div>
 
-    <div class="modal" id="confirm-modal">
-        <div class="modal-content">
-            <p id="confirm-message">削除してもよろしいですか？</p>
-            <div class="modal-buttons">
-                <button id="confirm-cancel">キャンセル</button>
-                <button id="confirm-ok">OK</button>
-            </div>
-        </div>
+  <!-- モーダル：確認 -->
+  <div class="modal" id="confirm-modal">
+    <div class="modal-content">
+      <p id="confirm-message">削除してもよろしいですか？</p>
+      <div class="modal-buttons">
+        <button id="confirm-cancel">キャンセル</button>
+        <button id="confirm-ok">OK</button>
+      </div>
     </div>
+  </div>
 </div>
-
 <script>
-    (() => {
-        // === 共通関数定義 ===
-        const getSavedList = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-        const saveToList = (key, value) => {
-            if (!value) return;
-            const list = getSavedList(key);
-            if (!list.includes(value)) {
-                list.push(value);
-                localStorage.setItem(key, JSON.stringify(list));
-            }
-        };
-        const removeFromList = (key, value) => {
-            const list = getSavedList(key).filter(v => v !== value);
-            localStorage.setItem(key, JSON.stringify(list));
-        };
-        const renderSuggestions = (key, datalistElem) => {
-            if (!datalistElem) return;
-            datalistElem.innerHTML = "";
-            getSavedList(key).forEach(v => {
-                const opt = document.createElement("option");
-                opt.value = v;
-                datalistElem.appendChild(opt);
-            });
-        };
-        const renderHistory = (key, containerId, suggestionId, inputId) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = "";
-            getSavedList(key).forEach(val => {
-                const span = document.createElement("span");
-                span.textContent = val;
-                span.onclick = () => {
-                    const input = document.getElementById(inputId);
-                    if (input) input.value = val;
-                };
-                const btn = document.createElement("button");
-                btn.textContent = "×";
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    removeFromList(key, val);
-                    renderHistory(key, containerId, suggestionId, inputId);
-                    renderSuggestions(key, document.getElementById(suggestionId));
-                };
-                span.appendChild(btn);
-                container.appendChild(span);
-            });
-        };
-
-        // === グローバル変数 ===
-        const root = document.getElementById("toolcheck-app");
-        const modal = root.querySelector("#entry-modal");
-        const tableBody = root.querySelector("#cs-table tbody");
-        const selector = root.querySelector("#sheet-selector");
-        const titleElem = root.querySelector("#sheet-title");
-        const newSheetModal = root.querySelector("#new-sheet-modal");
-        const newSheetNameInput = root.querySelector("#new-sheet-name");
-        const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
-        const newSheetCreateButton = root.querySelector("#new-sheet-create");
-        const confirmModal = root.querySelector("#confirm-modal");
-        const confirmMessage = root.querySelector("#confirm-message");
-        const confirmCancel = root.querySelector("#confirm-cancel");
-        const confirmOk = root.querySelector("#confirm-ok");
-
-        let confirmCallback = null;
-        let sheets = {};
-        let currentSheet = null;
-        let filterPerson = "";
-        let filterType = "";
-        let filterStatus = "";
-        let sortConfig = {
-            key: null,
-            asc: true
-        };
-
-        // === 共通処理 ===
-        const showConfirm = (msg, callback) => {
-            confirmMessage.textContent = msg;
-            confirmCallback = callback;
-            confirmModal.style.display = "flex";
-        };
-        const hideConfirm = () => {
-            confirmModal.style.display = "none";
-            confirmCallback = null;
-        };
-
-        // === シート管理 ===
-        const saveSheets = () => localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
-        const loadSheets = () => sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
-        const renderSheetOptions = () => {
-            const datalist = document.getElementById("sheet-options");
-            if (datalist) datalist.innerHTML = "";
-            Object.keys(sheets).forEach(name => {
-                const opt = document.createElement("option");
-                opt.value = name;
-                opt.textContent = name;
-                if (datalist) datalist.appendChild(opt);
-            });
-            if (currentSheet && !sheets[currentSheet]) currentSheet = null;
-            if (!currentSheet && Object.keys(sheets).length > 0) {
-                currentSheet = Object.keys(sheets)[0];
-            }
-            if (currentSheet) selector.value = currentSheet;
-        };
-        const createNewSheet = (name) => {
-            if (!name || sheets[name]) return false;
-            sheets[name] = {
-                title: name,
-                data: []
-            };
-            currentSheet = name;
-            saveSheets();
-            renderSheetOptions();
-            renderTable();
-            return true;
-        };
-        const deleteCurrentSheet = () => {
-            if (!currentSheet) return;
-            delete sheets[currentSheet];
-            currentSheet = Object.keys(sheets).length > 0 ? Object.keys(sheets)[0] : null;
-            saveSheets();
-            renderSheetOptions();
-            renderTable();
-        };
-        const updateSheetTitle = (title) => {
-            if (!currentSheet || !sheets[currentSheet]) return;
-            sheets[currentSheet].title = title.trim();
-            saveSheets();
-        };
-
-        // === テーブル描画 ===
-        const renderTable = () => {
-            const currentSheetData = sheets[currentSheet]?.data || [];
-
-            const filteredData = currentSheetData.filter(item =>
-                (!filterPerson || item.person === filterPerson) &&
-                (!filterType || item.type === filterType) &&
-                (!filterStatus || item.status === filterStatus)
-            );
-
-            if (sortConfig.key) {
-                filteredData.sort((a, b) => {
-                    const valA = a[sortConfig.key] || "";
-                    const valB = b[sortConfig.key] || "";
-                    return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                });
-            }
-
-            titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
-
-            // フィルター更新
-            updateFilterOptions("filter-person", currentSheetData.map(d => d.person), filterPerson);
-            updateFilterOptions("filter-type", currentSheetData.map(d => d.type), filterType);
-            updateSortHeaders();
-            updateTableBody(filteredData);
-        };
-
-        const updateFilterOptions = (selectId, dataArray, currentValue) => {
-            const selectElement = document.getElementById(selectId);
-            selectElement.innerHTML = '<option value="">すべて</option>';
-<style>
-    #toolcheck-app * {
-        box-sizing: border-box;
-    }
-
-    #toolcheck-app {
-        font-family: sans-serif;
-        padding: 1em;
-        max-width: 1200px;
-        margin: auto;
-    }
-
-    #toolcheck-app .header-bar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1em;
-    }
-
-    #toolcheck-app .sheet-title {
-        font-size: 1.5em;
-        font-weight: bold;
-        flex: 1;
-    }
-
-    #toolcheck-app .sheet-title[contenteditable] {
-        background: #eef;
-        padding: 4px;
-        border-radius: 4px;
-    }
-
-    #toolcheck-app .sheet-controls {
-        display: flex;
-        gap: 8px;
-    }
-
-    #toolcheck-app select,
-    #toolcheck-app button {
-        padding: 4px 8px;
-        font-size: 14px;
-    }
-
-    #toolcheck-app .cs-container {
-        display: flex;
-        flex-direction: column;
-        gap: 1em;
-    }
-
-    #toolcheck-app .cs-table {
-        width: 100%;
-        border-collapse: collapse;
-        table-layout: fixed;
-    }
-
-    #toolcheck-app .cs-table th,
-    #toolcheck-app .cs-table td {
-        border: 1px solid #ccc;
-        padding: 4px;
-        font-size: 12px;
-        text-align: center;
-        word-wrap: break-word;
-    }
-
-    #toolcheck-app .cs-table th {
-        background-color: #f0f0f0;
-    }
-
-    #toolcheck-app .cs-status-未対応 {
-        background-color: #fff3cd;
-    }
-
-    #toolcheck-app .cs-status-対応中 {
-        background-color: #d1ecf1;
-    }
-
-    #toolcheck-app .cs-status-完了 {
-        background-color: #d4edda;
-    }
-
-    #toolcheck-app .modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        display: none;
-        align-items: center;
-        justify-content: center;
-        z-index: 1000;
-    }
-
-    #toolcheck-app .modal-content {
-        background: white;
-        padding: 1em;
-        border-radius: 8px;
-        width: 90%;
-        max-width: 400px;
-    }
-
-    #toolcheck-app .modal-content label {
-        font-weight: bold;
-        display: block;
-        margin-top: 0.5em;
-    }
-
-    #toolcheck-app .modal-content input,
-    #toolcheck-app .modal-content textarea,
-    #toolcheck-app .modal-content select {
-        width: 100%;
-        margin-top: 4px;
-        padding: 6px;
-    }
-
-    #toolcheck-app .modal-buttons {
-        margin-top: 1em;
-        display: flex;
-        justify-content: flex-end;
-        gap: 10px;
-    }
-
-    #toolcheck-app .cs-btn {
-        padding: 4px 8px;
-        font-size: 12px;
-    }
-
-    #toolcheck-app .history-list span {
-        display: inline-block;
-        background: #eee;
-        margin: 2px;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 12px;
-    }
-
-    #toolcheck-app .history-list span button {
-        margin-left: 4px;
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: red;
-    }
-
-    #toolcheck-app .sheet-selector {
-        padding: 6px 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: white;
-        appearance: none;
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        width: 250px;
-    }
-
-    #toolcheck-app .sheet-combo {
-        padding: 6px 30px 6px 10px;
-        font-size: 16px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        background-color: white;
-        width: 250px;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M0,0 L6,8 L12,0 Z' fill='%23666'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 10px center;
-        background-size: 12px 8px;
-    }
-</style>
-
-<div id="toolcheck-app">
-    <div class="header-bar">
-        <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
-        <div class="sheet-controls">
-            <input type="text" id="sheet-selector" list="sheet-options" class="sheet-combo">
-<datalist id="sheet-options"></datalist>
-            <button id="sheet-new">＋新規</button>
-            <button id="sheet-delete">🗑削除</button>
-            <button id="add-entry">予定の追加</button>
-            <button id="export-csv">CSV出力</button>
-        </div>
-    </div>
-
-    <div class="cs-container">
-        <div class="filter-bar" style="margin-bottom: 1em;">
-            担当者：
-            <select id="filter-person">
-                <option value="">すべて</option>
-            </select>
-            項目：
-            <select id="filter-type">
-                <option value="">すべて</option>
-            </select>
-            状態：
-            <select id="filter-status">
-                <option value="">すべて</option>
-                <option value="未対応">未対応</option>
-                <option value="対応中">対応中</option>
-                <option value="完了">完了</option>
-            </select>
-        </div>
-        <table class="cs-table" id="cs-table">
-            <thead>
-                <tr>
-                    <th onclick="sortBy('date')" data-label="日付">日付 ⇅</th>
-                    <th onclick="sortBy('person')" data-label="担当者">担当者 ⇅</th>
-                    <th onclick="sortBy('type')" data-label="項目">項目 ⇅</th>
-                    <th onclick="sortBy('content')" data-label="内容">内容 ⇅</th>
-                    <th onclick="sortBy('deadline')" data-label="締切">締切 ⇅</th>
-                    <th onclick="sortBy('status')" data-label="状態">状態 ⇅</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-
-    <div class="modal" id="entry-modal">
-        <div class="modal-content">
-            <label>日付<input type="date" id="entry-date"></label>
-            <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
-            <datalist id="person-suggestions"></datalist>
-            <div id="person-history" class="history-list"></div>
-            <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
-            <datalist id="type-suggestions"></datalist>
-            <div id="type-history" class="history-list"></div>
-            </label>
-            <label>内容<textarea id="entry-content"></textarea></label>
-            <label>締切<input type="date" id="entry-deadline"></label>
-            <label>状態
-                <select id="entry-status">
-                    <option>未対応</option>
-                    <option>対応中</option>
-                    <option>完了</option>
-                </select>
-            </label>
-            <div class="modal-buttons">
-                <button id="entry-cancel">閉じる</button>
-                <button id="entry-save">保存</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="new-sheet-modal">
-        <div class="modal-content">
-            <label>新しいチェック表の名前<input type="text" id="new-sheet-name"></label>
-            <div class="modal-buttons">
-                <button id="new-sheet-cancel">キャンセル</button>
-                <button id="new-sheet-create">作成</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal" id="confirm-modal">
-        <div class="modal-content">
-            <p id="confirm-message">削除してもよろしいですか？</p>
-            <div class="modal-buttons">
-                <button id="confirm-cancel">キャンセル</button>
-                <button id="confirm-ok">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script>
-    (() => {
-        // === 共通関数定義 ===
-        const getSavedList = (key) => JSON.parse(localStorage.getItem(key) || "[]");
-        const saveToList = (key, value) => {
-            if (!value) return;
-            const list = getSavedList(key);
-            if (!list.includes(value)) {
-                list.push(value);
-                localStorage.setItem(key, JSON.stringify(list));
-            }
-        };
-        const removeFromList = (key, value) => {
-            const list = getSavedList(key).filter(v => v !== value);
-            localStorage.setItem(key, JSON.stringify(list));
-        };
-        const renderSuggestions = (key, datalistElem) => {
-            if (!datalistElem) return;
-            datalistElem.innerHTML = "";
-            getSavedList(key).forEach(v => {
-                const opt = document.createElement("option");
-                opt.value = v;
-                datalistElem.appendChild(opt);
-            });
-        };
-        const renderHistory = (key, containerId, suggestionId, inputId) => {
-            const container = document.getElementById(containerId);
-            if (!container) return;
-            container.innerHTML = "";
-            getSavedList(key).forEach(val => {
-                const span = document.createElement("span");
-                span.textContent = val;
-                span.onclick = () => {
-                    const input = document.getElementById(inputId);
-                    if (input) input.value = val;
-                };
-                const btn = document.createElement("button");
-                btn.textContent = "×";
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    removeFromList(key, val);
-                    renderHistory(key, containerId, suggestionId, inputId);
-                    renderSuggestions(key, document.getElementById(suggestionId));
-                };
-                span.appendChild(btn);
-                container.appendChild(span);
-            });
-        };
 
-        // === グローバル変数 ===
-        const root = document.getElementById("toolcheck-app");
-        const modal = root.querySelector("#entry-modal");
-        const tableBody = root.querySelector("#cs-table tbody");
-        const selector = root.querySelector("#sheet-selector");
-        const titleElem = root.querySelector("#sheet-title");
-        const newSheetModal = root.querySelector("#new-sheet-modal");
-        const newSheetNameInput = root.querySelector("#new-sheet-name");
-        const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
-        const newSheetCreateButton = root.querySelector("#new-sheet-create");
-        const confirmModal = root.querySelector("#confirm-modal");
-        const confirmMessage = root.querySelector("#confirm-message");
-        const confirmCancel = root.querySelector("#confirm-cancel");
-        const confirmOk = root.querySelector("#confirm-ok");
 
-        let confirmCallback = null;
-        let sheets = {};
-        let currentSheet = null;
-        let filterPerson = "";
-        let filterType = "";
-        let filterStatus = "";
-        let sortConfig = {
-            key: null,
-            asc: true
-        };
+// ---- 共通関数 ----
+// ---- 共通関数 ----
+function getSavedList(key) {
+function getSavedList(key) {
+  return JSON.parse(localStorage.getItem(key) || "[]");
+  return JSON.parse(localStorage.getItem(key) || "[]");
+}
+}
+function saveToList(key, value) {
+function saveToList(key, value) {
+  if (!value) return;
+  if (!value) return;
+  const list = getSavedList(key);
+  const list = getSavedList(key);
+  if (!list.includes(value)) {
+  if (!list.includes(value)) {
+    list.push(value);
+    list.push(value);
+    localStorage.setItem(key, JSON.stringify(list));
+    localStorage.setItem(key, JSON.stringify(list));
+  }
+  }
+}
+}
+function removeFromList(key, value) {
+function removeFromList(key, value) {
+  const list = getSavedList(key).filter(v => v !== value);
+  const list = getSavedList(key).filter(v => v !== value);
+  localStorage.setItem(key, JSON.stringify(list));
+  localStorage.setItem(key, JSON.stringify(list));
+}
+}
+function renderSuggestions(key, datalistElem) {
+function renderSuggestions(key, datalistElem) {
+  const list = getSavedList(key);
+  const list = getSavedList(key);
+  datalistElem.innerHTML = "";
+  datalistElem.innerHTML = "";
+  list.forEach(v => {
+  list.forEach(v => {
+    const opt = document.createElement("option");
+    const opt = document.createElement("option");
+    opt.value = v;
+    opt.value = v;
+    datalistElem.appendChild(opt);
+    datalistElem.appendChild(opt);
+  });
+  });
+}
+}
+function renderHistory(key, containerId, suggestionId, inputId) {
+function renderHistory(key, containerId, suggestionId, inputId) {
+  const container = document.getElementById(containerId);
+  const container = document.getElementById(containerId);
+  const list = getSavedList(key);
+  const list = getSavedList(key);
+  container.innerHTML = "";
+  container.innerHTML = "";
+  list.forEach(val => {
+  list.forEach(val => {
+    const span = document.createElement("span");
+    const span = document.createElement("span");
+    span.textContent = val;
+    span.textContent = val;
+    span.onclick = () => {
+    span.onclick = () => {
+      const input = document.getElementById(inputId);
+      const input = document.getElementById(inputId);
+      if (input) input.value = val;
+      if (input) input.value = val;
+    };
+    };
+    const btn = document.createElement("button");
+    const btn = document.createElement("button");
+    btn.textContent = "×";
+    btn.textContent = "×";
+    btn.onclick = (e) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      e.stopPropagation();
+      removeFromList(key, val);
+      removeFromList(key, val);
+      renderHistory(key, containerId, suggestionId, inputId);
+      renderHistory(key, containerId, suggestionId, inputId);
+      renderSuggestions(key, document.getElementById(suggestionId));
+      renderSuggestions(key, document.getElementById(suggestionId));
+    };
+    };
+    span.appendChild(btn);
+    span.appendChild(btn);
+    container.appendChild(span);
+    container.appendChild(span);
+  });
+  });
+}
+}
 
-        // === 共通処理 ===
-        const showConfirm = (msg, callback) => {
-            confirmMessage.textContent = msg;
-            confirmCallback = callback;
-            confirmModal.style.display = "flex";
-        };
-        const hideConfirm = () => {
-            confirmModal.style.display = "none";
-            confirmCallback = null;
-        };
 
-        // === シート管理 ===
-        const saveSheets = () => localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
-        const loadSheets = () => sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
-        const renderSheetOptions = () => {
-            const datalist = document.getElementById("sheet-options");
-            if (datalist) datalist.innerHTML = "";
-            Object.keys(sheets).forEach(name => {
-                const opt = document.createElement("option");
-                opt.value = name;
-                opt.textContent = name;
-                if (datalist) datalist.appendChild(opt);
-            });
-            if (currentSheet && !sheets[currentSheet]) currentSheet = null;
-            if (!currentSheet && Object.keys(sheets).length > 0) {
-                currentSheet = Object.keys(sheets)[0];
-            }
-            if (currentSheet) selector.value = currentSheet;
-        };
-        const createNewSheet = (name) => {
-            if (!name || sheets[name]) return false;
-            sheets[name] = {
-                title: name,
-                data: []
-            };
-            currentSheet = name;
-            saveSheets();
-            renderSheetOptions();
-            renderTable();
-            return true;
-        };
-        const deleteCurrentSheet = () => {
-            if (!currentSheet) return;
-            delete sheets[currentSheet];
-            currentSheet = Object.keys(sheets).length > 0 ? Object.keys(sheets)[0] : null;
-            saveSheets();
-            renderSheetOptions();
-            renderTable();
-        };
-        const updateSheetTitle = (title) => {
-            if (!currentSheet || !sheets[currentSheet]) return;
-            sheets[currentSheet].title = title.trim();
-            saveSheets();
-        };
+// ---- アプリ初期化 ----
+// ---- アプリ初期化 ----
+(() => {
+(() => {
+  const root = document.getElementById("toolcheck-app");
+  const root = document.getElementById("toolcheck-app");
+  const modal = root.querySelector("#entry-modal");
+  const modal = root.querySelector("#entry-modal");
+  const tableBody = root.querySelector("#cs-table tbody");
+  const tableBody = root.querySelector("#cs-table tbody");
+  const selector = root.querySelector("#sheet-selector");
+  const selector = root.querySelector("#sheet-selector");
+  const titleElem = root.querySelector("#sheet-title");
+  const titleElem = root.querySelector("#sheet-title");
+  const newSheetModal = root.querySelector("#new-sheet-modal");
+  const newSheetModal = root.querySelector("#new-sheet-modal");
+  const newSheetNameInput = root.querySelector("#new-sheet-name");
+  const newSheetNameInput = root.querySelector("#new-sheet-name");
+  const confirmModal = root.querySelector("#confirm-modal");
+  const confirmModal = root.querySelector("#confirm-modal");
+  const confirmMessage = root.querySelector("#confirm-message");
+  const confirmMessage = root.querySelector("#confirm-message");
+  const confirmCancel = root.querySelector("#confirm-cancel");
+  const confirmCancel = root.querySelector("#confirm-cancel");
+  const confirmOk = root.querySelector("#confirm-ok");
+  const confirmOk = root.querySelector("#confirm-ok");
 
-        // === テーブル描画 ===
-        const renderTable = () => {
-            const currentSheetData = sheets[currentSheet]?.data || [];
 
-            const filteredData = currentSheetData.filter(item =>
-                (!filterPerson || item.person === filterPerson) &&
-                (!filterType || item.type === filterType) &&
-                (!filterStatus || item.status === filterStatus)
-            );
+  let sheets = {};
+  let sheets = {};
+  let currentSheet = null;
+  let currentSheet = null;
+  let confirmCallback = null;
+  let confirmCallback = null;
+  let filterPerson = "";
+  let filterPerson = "";
+  let filterType = "";
+  let filterType = "";
+  let filterStatus = "";
+  let filterStatus = "";
+  let sortConfig = { key: null, asc: true };
+  let sortConfig = { key: null, asc: true };
 
-            if (sortConfig.key) {
-                filteredData.sort((a, b) => {
-                    const valA = a[sortConfig.key] || "";
-                    const valB = b[sortConfig.key] || "";
-                    return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-                });
-            }
 
-            titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
+  function showConfirm(msg, callback) {
+  function showConfirm(msg, callback) {
+    confirmMessage.textContent = msg;
+    confirmMessage.textContent = msg;
+    confirmCallback = callback;
+    confirmCallback = callback;
+    confirmModal.style.display = "flex";
+    confirmModal.style.display = "flex";
+  }
+  }
 
-            // フィルター更新
-            updateFilterOptions("filter-person", currentSheetData.map(d => d.person), filterPerson);
-            updateFilterOptions("filter-type", currentSheetData.map(d => d.type), filterType);
-            updateSortHeaders();
-            updateTableBody(filteredData);
-        };
 
-        const updateFilterOptions = (selectId, dataArray, currentValue) => {
-            const selectElement = document.getElementById(selectId);
-            selectElement.innerHTML = '<option value="">すべて</option>';
-            const uniqueValues = [...new Set(dataArray)].sort(); // 重複排除してソート
-            uniqueValues.forEach(value => {
-                const option = document.createElement('option');
-                option.value = value;
-                option.textContent = value;
-                if (value === currentValue) {
-                    option.selected = true;
-                }
-                selectElement.appendChild(option);
-            });
-        };
+  confirmCancel.onclick = () => {
+  confirmCancel.onclick = () => {
+    confirmModal.style.display = "none";
+    confirmModal.style.display = "none";
+    confirmCallback = null;
+    confirmCallback = null;
+  };
+  };
+  confirmOk.onclick = () => {
+  confirmOk.onclick = () => {
+    confirmModal.style.display = "none";
+    confirmModal.style.display = "none";
+    if (typeof confirmCallback === "function") confirmCallback();
+    if (typeof confirmCallback === "function") confirmCallback();
+  };
+  };
 
-        const updateSortHeaders = () => {
-            const headers = document.querySelectorAll('#cs-table th');
-            headers.forEach(header => {
-                const key = header.getAttribute('onclick').split("'")[1];
-                if (key === sortConfig.key) {
-                    header.textContent = header.dataset.label + (sortConfig.asc ? ' ↑' : ' ↓');
-                } else {
-                    header.textContent = header.dataset.label + ' ⇅';
-                }
-            });
-        };
 
-        const updateTableBody = (dataArray) =>
-{
-            let tableHTML = '';
-            dataArray.forEach(item => {
-                tableHTML += `
-                    <tr class="cs-row">
-                        <td>${item.date}</td>
-                        <td>${item.person}</td>
-                        <td>${item.type}</td>
-                        <td>${item.content}</td>
-                        <td>${item.deadline}</td>
-                        <td class="cs-status-${item.status}">${item.status}</td>
-                        <td>
-                            <button class="cs-btn edit-btn" data-id="${item.id}">編集</button>
-                            <button class="cs-btn delete-btn" data-id="${item.id}">削除</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            tableBody.innerHTML = tableHTML;
-        };
+  function saveSheets() {
+  function saveSheets() {
+    localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
+    localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
+  }
+  }
+  function loadSheets() {
+  function loadSheets() {
+    sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
+    sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
+  }
+  }
 
-        // === イベントハンドラ ===
-        const setupEventListeners = () => {
-            root.querySelector("#add-entry").addEventListener("click", () => {
-                modal.style.display = "flex";
-                clearEntryModal();
-            });
 
-            root.querySelector("#entry-cancel").addEventListener("click", () => {
-                modal.style.display = "none";
-            });
+  function renderSheetOptions() {
+  function renderSheetOptions() {
+    selector.innerHTML = "";
+    selector.innerHTML = "";
+    Object.keys(sheets).forEach(name => {
+    Object.keys(sheets).forEach(name => {
+      const opt = document.createElement("option");
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.value = name;
+      opt.textContent = name;
+      opt.textContent = name;
+      selector.appendChild(opt);
+      selector.appendChild(opt);
+    });
+    });
+    if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+    if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+    if (!currentSheet && Object.keys(sheets).length > 0) {
+    if (!currentSheet && Object.keys(sheets).length > 0) {
+      currentSheet = Object.keys(sheets)[0];
+      currentSheet = Object.keys(sheets)[0];
+    }
+    }
+    if (currentSheet) selector.value = currentSheet;
+    if (currentSheet) selector.value = currentSheet;
+  }
+  }
 
-            root.querySelector("#entry-save").addEventListener("click", () => {
-                saveEntry();
-                modal.style.display = "none";
-            });
 
-            tableBody.addEventListener("click", (e) => {
-                if (e.target.classList.contains("delete-btn")) {
-                    const id = e.target.dataset.id;
-                    showConfirm("この予定を削除しますか？", () => {
-                        deleteEntry(id);
-                        hideConfirm();
-                    });
-                } else if (e.target.classList.contains("edit-btn")) {
-                    const id = e.target.dataset.id;
-                    editEntry(id);
-                    modal.style.display = "flex";
-                }
-            });
+  function renderTable() {
+  function renderTable() {
+    const title = sheets[currentSheet]?.title || "新しいチェック表";
+    const title = sheets[currentSheet]?.title || "新しいチェック表";
+    titleElem.textContent = title;
+    titleElem.textContent = title;
+    const rows = sheets[currentSheet]?.data || [];
+    const rows = sheets[currentSheet]?.data || [];
+    let data = rows.filter(item =>
+    let data = rows.filter(item =>
+      (!filterPerson || item.person === filterPerson) &&
+      (!filterPerson || item.person === filterPerson) &&
+      (!filterType || item.type === filterType) &&
+      (!filterType || item.type === filterType) &&
+      (!filterStatus || item.status === filterStatus)
+      (!filterStatus || item.status === filterStatus)
+    );
+    );
+    if (sortConfig.key) {
+    if (sortConfig.key) {
+      data.sort((a, b) => {
+      data.sort((a, b) => {
+        const valA = a[sortConfig.key] || "";
+        const valA = a[sortConfig.key] || "";
+        const valB = b[sortConfig.key] || "";
+        const valB = b[sortConfig.key] || "";
+        return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+      });
+    }
+    }
 
-            selector.addEventListener("change", () => {
-                currentSheet = selector.value;
-                renderTable();
-            });
 
-            titleElem.addEventListener("input", () => {
-                updateSheetTitle(titleElem.textContent);
-            });
+    tableBody.innerHTML = "";
+    tableBody.innerHTML = "";
+    const personSet = new Set(rows.map(d => d.person).filter(Boolean));
+    const personSet = new Set(rows.map(d => d.person).filter(Boolean));
+    const personSelect = document.getElementById("filter-person");
+    const personSelect = document.getElementById("filter-person");
+    personSelect.innerHTML = '<option value="">すべて</option>';
+    personSelect.innerHTML = '<option value="">すべて</option>';
+    personSet.forEach(p => {
+    personSet.forEach(p => {
+      const opt = document.createElement("option");
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.value = p;
+      opt.textContent = p;
+      opt.textContent = p;
+      personSelect.appendChild(opt);
+      personSelect.appendChild(opt);
+    });
+    });
+    personSelect.value = filterPerson;
+    personSelect.value = filterPerson;
 
-            root.querySelector("#sheet-new").addEventListener("click", () => {
-                newSheetModal.style.display = "flex";
-            });
 
-            newSheetCancelButton.addEventListener("click", () => {
-                newSheetModal.style.display = "none";
-            });
+    const typeSet = new Set(rows.map(d => d.type).filter(Boolean));
+    const typeSet = new Set(rows.map(d => d.type).filter(Boolean));
+    const typeSelect = document.getElementById("filter-type");
+    const typeSelect = document.getElementById("filter-type");
+    typeSelect.innerHTML = '<option value="">すべて</option>';
+    typeSelect.innerHTML = '<option value="">すべて</option>';
+    typeSet.forEach(t => {
+    typeSet.forEach(t => {
+      const opt = document.createElement("option");
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.value = t;
+      opt.textContent = t;
+      opt.textContent = t;
+      typeSelect.appendChild(opt);
+      typeSelect.appendChild(opt);
+    });
+    });
+    typeSelect.value = filterType;
+    typeSelect.value = filterType;
 
-            newSheetCreateButton.addEventListener("click", () => {
-                if (createNewSheet(newSheetNameInput.value)) {
-                    newSheetModal.style.display = "none";
-                    newSheetNameInput.value = "";
-                } else {
-                    alert("同じ名前のシートが既に存在します。");
-                }
-            });
 
-            root.querySelector("#sheet-delete").addEventListener("click", () => {
-                if (!currentSheet) return;
-                showConfirm("現在のシートを削除しますか？", () => {
-                    deleteCurrentSheet();
-                    hideConfirm();
-                });
-            });
+    document.querySelectorAll("th[onclick]").forEach(th => {
+    document.querySelectorAll("th[onclick]").forEach(th => {
+      const key = th.getAttribute("onclick").match(/'(.+?)'/)[1];
+      const key = th.getAttribute("onclick").match(/'(.+?)'/)[1];
+      const base = th.dataset.label || th.textContent.replace(/[▲▼⇅]+$/, '');
+      const base = th.dataset.label || th.textContent.replace(/[▲▼⇅]+$/, '');
+      if (sortConfig.key === key) {
+      if (sortConfig.key === key) {
+        th.textContent = base + (sortConfig.asc ? " ▲" : " ▼");
+        th.textContent = base + (sortConfig.asc ? " ▲" : " ▼");
+      } else {
+      } else {
+        th.textContent = base + " ⇅";
+        th.textContent = base + " ⇅";
+      }
+      }
+    });
+    });
 
-            confirmCancel.addEventListener("click", hideConfirm);
-            confirmOk.addEventListener("click", () => {
-                if (confirmCallback) confirmCallback();
-            });
 
-            root.querySelector("#filter-person").addEventListener("change", (e) => {
-                filterPerson = e.target.value;
-                renderTable();
-            });
+    data.forEach((item, i) => {
+    data.forEach((item, i) => {
+      const tr = document.createElement("tr");
+      const tr = document.createElement("tr");
+      tr.className = "cs-status-" + item.status;
+      tr.className = "cs-status-" + item.status;
+      [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach((val, idx) => {
+      [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach((val, idx) => {
+        const td = document.createElement("td");
+        const td = document.createElement("td");
+        td.textContent = val;
+        td.textContent = val;
+        if (idx === 4 && val) {
+        if (idx === 4 && val) {
+          const today = new Date();
+          const today = new Date();
+          const deadline = new Date(val);
+          const deadline = new Date(val);
+          const diff = (deadline - today) / (1000 * 60 * 60 * 24);
+          const diff = (deadline - today) / (1000 * 60 * 60 * 24);
+          if (diff >= 0 && diff <= 3) {
+          if (diff >= 0 && diff <= 3) {
+            td.style.color = "red";
+            td.style.color = "red";
+            td.style.fontWeight = "bold";
+            td.style.fontWeight = "bold";
+          }
+          }
+        }
+        }
+        tr.appendChild(td);
+        tr.appendChild(td);
+      });
+      });
+      const td = document.createElement("td");
+      const td = document.createElement("td");
+      const edit = document.createElement("button");
+      const edit = document.createElement("button");
+      edit.className = "cs-btn";
+      edit.className = "cs-btn";
+      edit.textContent = "編集";
+      edit.textContent = "編集";
+      edit.onclick = () => openModal(i);
+      edit.onclick = () => openModal(i);
+      const del = document.createElement("button");
+      const del = document.createElement("button");
+      del.className = "cs-btn";
+      del.className = "cs-btn";
+      del.textContent = "削除";
+      del.textContent = "削除";
+      del.onclick = () => {
+      del.onclick = () => {
+        showConfirm("この行を削除しますか？", () => {
+        showConfirm("この行を削除しますか？", () => {
+          sheets[currentSheet].data.splice(i, 1);
+          sheets[currentSheet].data.splice(i, 1);
+          saveSheets();
+          saveSheets();
+          renderTable();
+          renderTable();
+        });
+        });
+      };
+      };
+      td.appendChild(edit);
+      td.appendChild(edit);
+      td.appendChild(del);
+      td.appendChild(del);
+      tr.appendChild(td);
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+      tableBody.appendChild(tr);
+    });
+    });
+  }
+  }
 
-            root.querySelector("#filter-type").addEventListener("change", (e) => {
-                filterType = e.target.value;
-                renderTable();
-            });
 
-            root.querySelector("#filter-status").addEventListener("change", (e) => {
-                filterStatus = e.target.value;
-                renderTable();
-            });
+  function openModal(index = -1) {
+  function openModal(index = -1) {
+    modal.style.display = "flex";
+    modal.style.display = "flex";
+    if (index >= 0) {
+    if (index >= 0) {
+      const item = sheets[currentSheet].data[index];
+      const item = sheets[currentSheet].data[index];
+      root.querySelector("#entry-date").value = item.date;
+      root.querySelector("#entry-date").value = item.date;
+      root.querySelector("#entry-person").value = item.person;
+      root.querySelector("#entry-person").value = item.person;
+      root.querySelector("#entry-type").value = item.type;
+      root.querySelector("#entry-type").value = item.type;
+      root.querySelector("#entry-content").value = item.content;
+      root.querySelector("#entry-content").value = item.content;
+      root.querySelector("#entry-deadline").value = item.deadline;
+      root.querySelector("#entry-deadline").value = item.deadline;
+      root.querySelector("#entry-status").value = item.status;
+      root.querySelector("#entry-status").value = item.status;
+      root.querySelector("#entry-save").onclick = () => saveEntry(index);
+      root.querySelector("#entry-save").onclick = () => saveEntry(index);
+    } else {
+    } else {
+      ["entry-date", "entry-person", "entry-type", "entry-content", "entry-deadline"].forEach(id => {
+      ["entry-date", "entry-person", "entry-type", "entry-content", "entry-deadline"].forEach(id => {
+        root.querySelector("#" + id).value = "";
+        root.querySelector("#" + id).value = "";
+      });
+      });
+      root.querySelector("#entry-status").value = "未対応";
+      root.querySelector("#entry-status").value = "未対応";
+      root.querySelector("#entry-save").onclick = () => saveEntry();
+      root.querySelector("#entry-save").onclick = () => saveEntry();
+    }
+    }
+  }
+  }
 
-            root.querySelector("#export-csv").addEventListener("click", exportToCSV);
-        };
 
-        // === エントリー処理 ===
-        const clearEntryModal = () => {
-            root.querySelector("#entry-date").value = "";
-            root.querySelector("#entry-person").value = "";
-            root.querySelector("#entry-type").value = "";
-            root.querySelector("#entry-content").value = "";
-            root.querySelector("#entry-deadline").value = "";
-            root.querySelector("#entry-status").value = "未対応";
-            root.querySelector("#entry-save").dataset.id = "";
-        };
+  function closeModal() {
+  function closeModal() {
+    modal.style.display = "none";
+    modal.style.display = "none";
+  }
+  }
 
-        const saveEntry = () => {
-            if (!currentSheet) return;
 
-            const entry = {
-                id: root.querySelector("#entry-save").dataset.id || String(Date.now()),
-                date: root.querySelector("#entry-date").value,
-                person: root.querySelector("#entry-person").value,
-                type: root.querySelector("#entry-type").value,
-                content: root.querySelector("#entry-content").value,
-                deadline: root.querySelector("#entry-deadline").value,
-                status: root.querySelector("#entry-status").value
-            };
+  function saveEntry(index = -1) {
+  function saveEntry(index = -1) {
+    const item = {
+    const item = {
+      date: root.querySelector("#entry-date").value,
+      date: root.querySelector("#entry-date").value,
+      person: root.querySelector("#entry-person").value,
+      person: root.querySelector("#entry-person").value,
+      type: root.querySelector("#entry-type").value,
+      type: root.querySelector("#entry-type").value,
+      content: root.querySelector("#entry-content").value,
+      content: root.querySelector("#entry-content").value,
+      deadline: root.querySelector("#entry-deadline").value,
+      deadline: root.querySelector("#entry-deadline").value,
+      status: root.querySelector("#entry-status").value
+      status: root.querySelector("#entry-status").value
+    };
+    };
+    saveToList("toolcheck-persons", item.person);
+    saveToList("toolcheck-persons", item.person);
+    saveToList("toolcheck-types", item.type);
+    saveToList("toolcheck-types", item.type);
+    renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+    renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+    renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+    renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+    renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+    renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+    renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+    renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
 
-            const sheetData = sheets[currentSheet].data;
-            const existingIndex = sheetData.findIndex(item => item.id === entry.id);
 
-            if (existingIndex > -1) {
-                sheetData.splice(existingIndex, 1, entry); // Update existing
-            } else {
-                sheetData.push(entry); // Add new
-            }
+    if (!sheets[currentSheet]) return;
+    if (!sheets[currentSheet]) return;
+    if (index >= 0) sheets[currentSheet].data[index] = item;
+    if (index >= 0) sheets[currentSheet].data[index] = item;
+    else sheets[currentSheet].data.push(item);
+    else sheets[currentSheet].data.push(item);
+    saveSheets();
+    saveSheets();
+    closeModal();
+    closeModal();
+    renderTable();
+    renderTable();
+  }
+  }
 
-            sheets[currentSheet].data = sheetData;
-            saveSheets();
 
-            saveToList("toolcheck-persons", entry.person);
-            saveToList("toolcheck-types", entry.type);
+  document.getElementById("add-entry").onclick = () => openModal();
+  document.getElementById("add-entry").onclick = () => openModal();
+  document.getElementById("entry-cancel").onclick = closeModal;
+  document.getElementById("entry-cancel").onclick = closeModal;
+  document.getElementById("sheet-new").onclick = () => newSheetModal.style.display = "flex";
+  document.getElementById("sheet-new").onclick = () => newSheetModal.style.display = "flex";
+  document.getElementById("new-sheet-cancel").onclick = () => newSheetModal.style.display = "none";
+  document.getElementById("new-sheet-cancel").onclick = () => newSheetModal.style.display = "none";
+  document.getElementById("new-sheet-create").onclick = () => {
+  document.getElementById("new-sheet-create").onclick = () => {
+    const name = newSheetNameInput.value.trim();
+    const name = newSheetNameInput.value.trim();
+    if (name && !sheets[name]) {
+    if (name && !sheets[name]) {
+      sheets[name] = { title: name, data: [] };
+      sheets[name] = { title: name, data: [] };
+      currentSheet = name;
+      currentSheet = name;
+      renderSheetOptions();
+      renderSheetOptions();
+      renderTable();
+      renderTable();
+      saveSheets();
+      saveSheets();
+      newSheetModal.style.display = "none";
+      newSheetModal.style.display = "none";
+    }
+    }
+  };
+  };
+  document.getElementById("sheet-delete").onclick = () => {
+  document.getElementById("sheet-delete").onclick = () => {
+    if (!currentSheet) return;
+    if (!currentSheet) return;
+    showConfirm("このシートを削除しますか？", () => {
+    showConfirm("このシートを削除しますか？", () => {
+      delete sheets[currentSheet];
+      delete sheets[currentSheet];
+      currentSheet = null;
+      currentSheet = null;
+      renderSheetOptions();
+      renderSheetOptions();
+      renderTable();
+      renderTable();
+      saveSheets();
+      saveSheets();
+    });
+    });
+  };
+  };
+  titleElem.onblur = () => {
+  titleElem.onblur = () => {
+    if (currentSheet && sheets[currentSheet]) {
+    if (currentSheet && sheets[currentSheet]) {
+      sheets[currentSheet].title = titleElem.textContent.trim();
+      sheets[currentSheet].title = titleElem.textContent.trim();
+      saveSheets();
+      saveSheets();
+    }
+    }
+  };
+  };
+  document.getElementById("sheet-selector").onchange = (e) => {
+  document.getElementById("sheet-selector").onchange = (e) => {
+    currentSheet = e.target.value;
+    currentSheet = e.target.value;
+    renderTable();
+    renderTable();
+  };
+  };
 
-            renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-            renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
-            renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
-            renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
 
-            renderTable();
-        };
+  document.getElementById("export-csv").onclick = () => {
+  document.getElementById("export-csv").onclick = () => {
+    if (!currentSheet || !sheets[currentSheet]) return;
+    if (!currentSheet || !sheets[currentSheet]) return;
+    const rows = sheets[currentSheet].data;
+    const rows = sheets[currentSheet].data;
+    const csv = ["日付,担当者,項目,内容,締切,状態"];
+    const csv = ["日付,担当者,項目,内容,締切,状態"];
+    rows.forEach(r => {
+    rows.forEach(r => {
+      csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => 
+      csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => 
+        '"' + (f || "").replace(/"/g, '""') + '"').join(","));
+        '"' + (f || "").replace(/"/g, '""') + '"').join(","));
+    });
+    });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.href = URL.createObjectURL(blob);
+    a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+    a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+    a.click();
+    a.click();
+  };
+  };
 
-        const deleteEntry = (id) => {
-            if (!currentSheet) return;
-            sheets[currentSheet].data = sheets[currentSheet].data.filter(item => item.id !== id);
-            saveSheets();
-            renderTable();
-        };
 
-        const editEntry = (id) => {
-            if (!currentSheet) return;
-            const entry = sheets[currentSheet].data.find(item => item.id === id);
-            if (entry) {
-                root.querySelector("#entry-date").value = entry.date;
-                root.querySelector("#entry-person").value = entry.person;
-                root.querySelector("#entry-type").value = entry.type;
-                root.querySelector("#entry-content").value = entry.content;
-                root.querySelector("#entry-deadline").value = entry.deadline;
-                root.querySelector("#entry-status").value = entry.status;
-                root.querySelector("#entry-save").dataset.id = entry.id;
-            }
-        };
+  document.getElementById("filter-person").onchange = (e) => {
+  document.getElementById("filter-person").onchange = (e) => {
+    filterPerson = e.target.value;
+    filterPerson = e.target.value;
+    renderTable();
+    renderTable();
+  };
+  };
+  document.getElementById("filter-type").onchange = (e) => {
+  document.getElementById("filter-type").onchange = (e) => {
+    filterType = e.target.value;
+    filterType = e.target.value;
+    renderTable();
+    renderTable();
+  };
+  };
+  document.getElementById("filter-status").onchange = (e) => {
+  document.getElementById("filter-status").onchange = (e) => {
+    filterStatus = e.target.value;
+    filterStatus = e.target.value;
+    renderTable();
+    renderTable();
+  };
+  };
 
-        // === ソート処理 ===
-        const sortBy = (key) => {
-            if (sortConfig.key === key) {
-                sortConfig.asc = !sortConfig.asc;
-            } else {
-                sortConfig.key = key;
-                sortConfig.asc = true;
-            }
-            renderTable();
-        };
 
-        // === CSV出力 ===
-        const exportToCSV = () => {
-            if (!currentSheet || sheets[currentSheet].data.length === 0) {
-                alert("エクスポートするデータがありません。");
-                return;
-            }
+  window.sortBy = function(key) {
+  window.sortBy = function(key) {
+    if (sortConfig.key === key) {
+    if (sortConfig.key === key) {
+      sortConfig.asc = !sortConfig.asc;
+      sortConfig.asc = !sortConfig.asc;
+    } else {
+    } else {
+      sortConfig.key = key;
+      sortConfig.key = key;
+      sortConfig.asc = true;
+      sortConfig.asc = true;
+    }
+    }
+    renderTable();
+    renderTable();
+  };
+  };
 
-            const csvRows = [];
-            const headers = Object.keys(sheets[currentSheet].data[0]).join(',');
-            csvRows.push(headers);
 
-            sheets[currentSheet].data.forEach(row => {
-                const values = Object.values(row).map(value => `"${value}"`).join(',');
-                csvRows.push(values);
-            });
-
-            const csvContent = csvRows.join('\n');
-            const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' }); // BOMを付与
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${sheets[currentSheet].title}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        };
-
-        // === 初期化 ===
-        const init = () => {
-            loadSheets();
-            renderSheetOptions();
-            setupEventListeners();
-            renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
-            renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-            renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
-            renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
-            renderTable();
-        };
-
-        init();
-    })();
+  renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+  renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+  renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+  renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+  renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+  renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+  renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+  renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+  loadSheets();
+  loadSheets();
+  renderSheetOptions();
+  renderSheetOptions();
+  renderTable();
+  renderTable();
+})();
+})();
 </script>
+</script>
+</body>
+</html>
