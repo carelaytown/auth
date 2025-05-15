@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>ToolCheck</title>
-  <style>
+<style>
     #toolcheck-app * { box-sizing: border-box; }
     #toolcheck-app {
       font-family: sans-serif;
@@ -98,9 +93,8 @@
       font-size: 12px;
     }
   </style>
-</head>
-<body>
-  <div id="toolcheck-app">
+
+<div id="toolcheck-app">
     <div class="header-bar">
       <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
       <div class="sheet-controls">
@@ -147,8 +141,10 @@
       <div class="modal-content">
         <label>日付<input type="date" id="entry-date"></label>
         <label>担当者<input type="text" id="entry-person"></label>
-        <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
-<datalist id="type-suggestions"></datalist>
+        <label>項目
+          <select id="entry-type">
+            <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
+          </select>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
         <label>締切<input type="date" id="entry-deadline"></label>
@@ -185,52 +181,8 @@
     </div>
   </div>
 
-  <script>
+<script>
     (() => {
-      const typeInput = document.getElementById("entry-type");
-      const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
-
-      function getSavedTypes() {
-        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
-      }
-
-      function saveType(type) {
-        if (!type) return;
-        const types = getSavedTypes();
-        if (!types.includes(type)) {
-          types.push(type);
-          localStorage.setItem("toolcheck-types", JSON.stringify(types));
-        }
-      }
-
-      function renderTypeSuggestions() {
-        const types = getSavedTypes();
-        typeDatalist.innerHTML = "";
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          typeDatalist.appendChild(opt);
-        });
-      }
-
-      function renderFilterTypes() {
-        const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          filterType.appendChild(opt);
-        });
-        filterType.value = filterType.value || "";
-      }
-
-      window.addEventListener("load", () => {
-        renderTypeSuggestions();
-        renderFilterTypes();
-      });
-
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
       const tableBody = root.querySelector("#cs-table tbody");
@@ -382,7 +334,6 @@ window.sortBy = function(key) {
           tr.appendChild(td);
           tableBody.appendChild(tr);
         });
-        renderFilterTypes();
       }
 
       function openModal(index = -1) {
@@ -407,10 +358,6 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
-        const typeVal = root.querySelector('#entry-type').value.trim();
-        if (typeVal) saveType(typeVal);
-        renderTypeSuggestions();
-        renderFilterTypes();
         const item = {
           date: root.querySelector("#entry-date").value,
           person: root.querySelector("#entry-person").value,
@@ -509,5 +456,3 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
 };
 })();
   </script>
-</body>
-</html>
