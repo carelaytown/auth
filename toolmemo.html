@@ -1,223 +1,502 @@
-<!-- toolmemo.html -->
-<div id="toolmemo-app" class="stickyboard-app">
-  <div class="controls" id="noteControls">
-    <textarea id="noteText" placeholder="メモを入力"></textarea>
-    <select id="noteColor">
-      <option value="#fff9c4">イエロー</option>
-      <option value="#fce4ec">ピンク</option>
-      <option value="#ffecb3">オレンジ</option>
-      <option value="#e0f2f1">グリーン</option>
-      <option value="#e3f2fd">ブルー</option>
-      <option value="#ede7f6">パープル</option>
-      <option value="#eceff1">グレー</option>
-      <option value="#ffebee">レッド</option>
-      <option value="#e0f7fa">ライトブルー</option>
-      <option value="#e0f7f1">ターコイズ</option>
-    </select>
-    <button id="addNote">メモを追加</button>
-    <button id="rearrangeNotes">再配置</button>
-  </div>
-  <div id="notes" class="notes-area"></div>
-</div>
-
 <style>
-  #toolmemo-app * { box-sizing: border-box; }
-  #toolmemo-app {
-    font-family: sans-serif;
-    position: relative;
-    width: 90%;
-    height: calc(100vh - 180px);
-    background: transparent;
-    overflow: hidden;
-    margin: 0 auto;
-  }
-  #toolmemo-app .controls {
-    height: 60px;
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: white;
-    border-bottom: none;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-  }
-  #toolmemo-app .controls textarea { height: 30px; flex: 1; resize: none; }
-  #toolmemo-app .controls select { height: 30px; }
-  #toolmemo-app .controls button { height: 30px; }
-  #toolmemo-app .notes-area {
-    position: absolute;
-    top: 60px;
-    left: 0;
-    width: 100%;
-    height: calc(100% - 60px);
-    background: #f9f9f9;
-    border: 3px dashed #ccc;
-    overflow: hidden;
-    z-index: 1;
-  }
-  #toolmemo-app .note {
-    position: absolute;
-    width: 160px;
-    min-height: 60px;
-    padding: 10px;
-    border-radius: 6px;
-    box-shadow: 2px 2px 6px rgba(0,0,0,0.2);
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
-    cursor: move;
-    background: #fff9c4;
-  }
-  #toolmemo-app .note-menu {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    font-size: 14px;
-    background: #fff;
-    border-radius: 50%;
-    border: 1px solid #aaa;
-    width: 18px;
-    height: 18px;
-    text-align: center;
-    line-height: 16px;
-    cursor: pointer;
-    font-weight: bold;
-    z-index: 10;
-  }
-</style>
+    #toolcheck-app * { box-sizing: border-box; }
+    #toolcheck-app {
+      font-family: sans-serif;
+      padding: 1em;
+      max-width: 1200px;
+      margin: auto;
+    }
+    #toolcheck-app .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1em;
+    }
+    #toolcheck-app .sheet-title {
+      font-size: 1.5em;
+      font-weight: bold;
+      flex: 1;
+    }
+    #toolcheck-app .sheet-title[contenteditable] {
+      background: #eef;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    #toolcheck-app .sheet-controls {
+      display: flex;
+      gap: 8px;
+    }
+    #toolcheck-app select, #toolcheck-app button {
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+    #toolcheck-app .cs-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1em;
+    }
+    #toolcheck-app .cs-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    #toolcheck-app .cs-table th, #toolcheck-app .cs-table td {
+      border: 1px solid #ccc;
+      padding: 4px;
+      font-size: 12px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+    #toolcheck-app .cs-table th {
+      background-color: #f0f0f0;
+    }
+    #toolcheck-app .cs-status-未対応 { background-color: #fff3cd; }
+    #toolcheck-app .cs-status-対応中 { background-color: #d1ecf1; }
+    #toolcheck-app .cs-status-完了 { background-color: #d4edda; }
+    #toolcheck-app .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    #toolcheck-app .modal-content {
+      background: white;
+      padding: 1em;
+      border-radius: 8px;
+      width: 90%;
+      max-width: 400px;
+    }
+    #toolcheck-app .modal-content label {
+      font-weight: bold;
+      display: block;
+      margin-top: 0.5em;
+    }
+    #toolcheck-app .modal-content input,
+    #toolcheck-app .modal-content textarea,
+    #toolcheck-app .modal-content select {
+      width: 100%;
+      margin-top: 4px;
+      padding: 6px;
+    }
+    #toolcheck-app .modal-buttons {
+      margin-top: 1em;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    #toolcheck-app .cs-btn {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  </style>
+
+<div id="toolcheck-app">
+    <div class="header-bar">
+      <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
+      <div class="sheet-controls">
+        <select id="sheet-selector"></select>
+        <button id="sheet-new">＋新規</button>
+        <button id="sheet-delete">🗑削除</button>
+        <button id="add-entry">予定の追加</button>
+        <button id="export-csv">CSV出力</button>
+      </div>
+    </div>
+
+    <div class="cs-container">
+  <div class="filter-bar" style="margin-bottom: 1em;">
+  担当者：
+  <select id="filter-person"><option value="">すべて</option></select>
+  項目：
+  <select id="filter-type">
+    <option value="">すべて</option>
+    <option value="提出">提出</option>
+    <option value="回収">回収</option>
+    <option value="報告">報告</option>
+    <option value="伝言">伝言</option>
+    <option value="その他">その他</option>
+  </select>
+  状態：
+  <select id="filter-status">
+    <option value="">すべて</option>
+    <option value="未対応">未対応</option>
+    <option value="対応中">対応中</option>
+    <option value="完了">完了</option>
+  </select>
+</div>
+      <table class="cs-table" id="cs-table">
+        <thead>
+          <tr>
+            <th onclick="sortBy('date')" data-label="日付">日付 ⇅</th><th onclick="sortBy('person')" data-label="担当者">担当者 ⇅</th><th onclick="sortBy('type')" data-label="項目">項目 ⇅</th><th onclick="sortBy('content')" data-label="内容">内容 ⇅</th><th onclick="sortBy('deadline')" data-label="締切">締切 ⇅</th><th onclick="sortBy('status')" data-label="状態">状態 ⇅</th><th>操作</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="modal" id="entry-modal">
+      <div class="modal-content">
+        <label>日付<input type="date" id="entry-date"></label>
+        <label>担当者<input type="text" id="entry-person"></label>
+        <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
+<datalist id="type-suggestions"></datalist>
+        </label>
+        <label>内容<textarea id="entry-content"></textarea></label>
+        <label>締切<input type="date" id="entry-deadline"></label>
+        <label>状態
+          <select id="entry-status">
+            <option>未対応</option><option>対応中</option><option>完了</option>
+          </select>
+        </label>
+        <div class="modal-buttons">
+          <button id="entry-cancel">閉じる</button>
+          <button id="entry-save">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="new-sheet-modal">
+      <div class="modal-content">
+        <label>新しいチェック表の名前<input type="text" id="new-sheet-name"></label>
+        <div class="modal-buttons">
+          <button id="new-sheet-cancel">キャンセル</button>
+          <button id="new-sheet-create">作成</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="confirm-modal">
+      <div class="modal-content">
+        <p id="confirm-message">削除してもよろしいですか？</p>
+        <div class="modal-buttons">
+          <button id="confirm-cancel">キャンセル</button>
+          <button id="confirm-ok">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
 <script>
-(() => {
-  const notesContainer = document.getElementById("notes");
-  const noteText = document.getElementById("noteText");
-  const noteColor = document.getElementById("noteColor");
-  const addNoteBtn = document.getElementById("addNote");
-  const rearrangeBtn = document.getElementById("rearrangeNotes");
+    (() => {
+      const typeInput = document.getElementById("entry-type");
+      const typeDatalist = document.getElementById("type-suggestions");
+      const filterType = document.getElementById("filter-type");
 
-  let notes = JSON.parse(localStorage.getItem("toolmemo-notes") || "[]");
-
-  function saveNotes() {
-    localStorage.setItem("toolmemo-notes", JSON.stringify(notes));
-  }
-
-  function renderNotes() {
-    notesContainer.innerHTML = "";
-    notes.forEach(note => {
-      const div = document.createElement("div");
-      div.className = "note";
-      div.style.left = `${note.x}px`;
-      div.style.top = `${note.y}px`;
-      div.style.backgroundColor = note.color;
-
-      const menu = document.createElement("div");
-      menu.className = "note-menu";
-      menu.innerText = "×";
-      menu.onclick = (e) => {
-        e.stopPropagation();
-        notes = notes.filter(n => n !== note);
-        saveNotes();
-        renderNotes();
-      };
-      div.appendChild(menu);
-
-      const content = document.createElement("div");
-      content.textContent = note.text;
-      content.style.cursor = "text";
-      content.ondblclick = () => {
-        const textarea = document.createElement("textarea");
-        textarea.value = note.text;
-        textarea.onblur = () => {
-          note.text = textarea.value.trim();
-          if (!note.text) {
-            notes = notes.filter(n => n !== note);
-          }
-          saveNotes();
-          renderNotes();
-        };
-        div.innerHTML = "";
-        div.appendChild(menu);
-        div.appendChild(textarea);
-        textarea.focus();
-      };
-      div.appendChild(content);
-
-      makeDraggable(div, note);
-      notesContainer.appendChild(div);
-    });
-  }
-
-  function makeDraggable(el, note) {
-    let isDragging = false;
-    let offsetX = 0, offsetY = 0;
-
-    el.addEventListener("mousedown", e => {
-      if (e.target.tagName === "TEXTAREA") return;
-      isDragging = true;
-      offsetX = e.offsetX;
-      offsetY = e.offsetY;
-      document.addEventListener("mousemove", onMouseMove);
-      document.addEventListener("mouseup", onMouseUp);
-    });
-
-    function onMouseMove(e) {
-      if (!isDragging) return;
-      const containerRect = notesContainer.getBoundingClientRect();
-      let newX = e.clientX - containerRect.left - offsetX;
-      let newY = e.clientY - containerRect.top - offsetY;
-
-      newX = Math.max(0, Math.min(newX, notesContainer.clientWidth - el.offsetWidth));
-      newY = Math.max(0, Math.min(newY, notesContainer.clientHeight - el.offsetHeight));
-
-      el.style.left = `${newX}px`;
-      el.style.top = `${newY}px`;
-      note.x = newX;
-      note.y = newY;
-    }
-
-    function onMouseUp() {
-      isDragging = false;
-      document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
-      saveNotes();
-    }
-  }
-
-  function addNote(text, x = 100, y = 100, color = "#fff9c4") {
-    const note = { text, x, y, color };
-    notes.push(note);
-    saveNotes();
-    renderNotes();
-  }
-
-  addNoteBtn.onclick = () => {
-    const text = noteText.value.trim();
-    if (text) {
-      addNote(text, 100, 100, noteColor.value);
-      noteText.value = "";
-    }
-  };
-
-  rearrangeBtn.onclick = () => {
-    const startX = 10, startY = 10;
-    const gap = 10;
-    const boxWidth = 170, boxHeight = 100;
-    const containerWidth = notesContainer.clientWidth;
-    let x = startX, y = startY;
-
-    notes.forEach(note => {
-      note.x = x;
-      note.y = y;
-      x += boxWidth + gap;
-      if (x + boxWidth > containerWidth) {
-        x = startX;
-        y += boxHeight + gap;
+      function getSavedTypes() {
+        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
       }
-    });
-    saveNotes();
-    renderNotes();
-  };
 
-  renderNotes();
+      function saveType(type) {
+        if (!type) return;
+        const types = getSavedTypes();
+        if (!types.includes(type)) {
+          types.push(type);
+          localStorage.setItem("toolcheck-types", JSON.stringify(types));
+        }
+      }
+
+      function renderTypeSuggestions() {
+        const types = getSavedTypes();
+        typeDatalist.innerHTML = "";
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          typeDatalist.appendChild(opt);
+        });
+      }
+
+      function renderFilterTypes() {
+        const types = getSavedTypes();
+        filterType.innerHTML = '<option value="">すべて</option>';
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          filterType.appendChild(opt);
+        });
+        filterType.value = filterType.value || "";
+      }
+
+      renderTypeSuggestions();
+      renderFilterTypes();
+
+      const root = document.getElementById("toolcheck-app");
+      const modal = root.querySelector("#entry-modal");
+      const tableBody = root.querySelector("#cs-table tbody");
+      const selector = root.querySelector("#sheet-selector");
+      const titleElem = root.querySelector("#sheet-title");
+      const newSheetModal = root.querySelector("#new-sheet-modal");
+      const newSheetNameInput = root.querySelector("#new-sheet-name");
+      const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
+      const newSheetCreateButton = root.querySelector("#new-sheet-create");
+
+      const confirmModal = root.querySelector("#confirm-modal");
+      const confirmMessage = root.querySelector("#confirm-message");
+      const confirmCancel = root.querySelector("#confirm-cancel");
+      const confirmOk = root.querySelector("#confirm-ok");
+      let confirmCallback = null;
+
+      confirmCancel.onclick = () => {
+        confirmModal.style.display = "none";
+        confirmCallback = null;
+      };
+      confirmOk.onclick = () => {
+        confirmModal.style.display = "none";
+        if (typeof confirmCallback === "function") confirmCallback();
+      };
+      function showConfirm(msg, callback) {
+        confirmMessage.textContent = msg;
+        confirmCallback = callback;
+        confirmModal.style.display = "flex";
+      }
+
+      let sheets = {};
+      let currentSheet = null;
+
+      let filterPerson = "";
+      let filterType = "";
+      let filterStatus = "";
+      let sortConfig = { key: null, asc: true };
+
+
+      function saveSheets() {
+        localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
+      }
+      function loadSheets() {
+        sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
+      }
+      function renderSheetOptions() {
+        selector.innerHTML = "";
+        Object.keys(sheets).forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          selector.appendChild(opt);
+        });
+        if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+        if (!currentSheet && Object.keys(sheets).length > 0) {
+          currentSheet = Object.keys(sheets)[0];
+        }
+        if (currentSheet) selector.value = currentSheet;
+      }
+      function renderTable() {
+        let data = (sheets[currentSheet]?.data || []).filter(item => {
+          return (!filterPerson || item.person === filterPerson) &&
+                 (!filterType || item.type === filterType) &&
+                 (!filterStatus || item.status === filterStatus);
+        });
+        if (sortConfig.key) {
+          data.sort((a, b) => {
+            const valA = a[sortConfig.key] || "";
+            const valB = b[sortConfig.key] || "";
+            return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          });
+        }
+        const title = sheets[currentSheet]?.title || "新しいチェック表";
+        titleElem.textContent = title;
+        tableBody.innerHTML = "";
+// 担当者フィルターを更新
+        const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+        const personSelect = document.getElementById("filter-person");
+        personSelect.innerHTML = '<option value="">すべて</option>';
+        personSet.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          personSelect.appendChild(opt);
+        });
+        personSelect.value = filterPerson;
+// ソート記号の更新
+        const headers = document.querySelectorAll("th[onclick]");
+        headers.forEach(th => {
+          const key = th.getAttribute("onclick").match(/'(\w+)'/)[1];
+          const base = th.dataset.label || th.textContent.replace(/[▲▼⇅]+$/, '');
+          if (sortConfig.key === key) {
+            th.textContent = base + (sortConfig.asc ? " ▲" : " ▼");
+          } else {
+            th.textContent = base + " ⇅";
+          }
+        });
+
+        data.forEach((item, i) => {
+          const tr = document.createElement("tr");
+          tr.className = "cs-status-" + item.status;
+          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(function(val, idx) {
+  const td = document.createElement("td");
+  td.textContent = val;
+  if (idx === 4 && val) {
+    const today = new Date();
+    const deadline = new Date(val);
+    const diff = (deadline - today) / (1000 * 60 * 60 * 24);
+    if (diff >= 0 && diff <= 3) {
+      td.style.color = "red";
+      td.style.fontWeight = "bold";
+    }
+  }
+  tr.appendChild(td);
+});
+          const td = document.createElement("td");
+          const del = document.createElement("button");
+          del.className = "cs-btn";
+          del.textContent = "削除";
+          del.onclick = () => {
+            showConfirm("この行を削除しますか？", () => {
+              sheets[currentSheet].data.splice(i, 1);
+              saveSheets(); 
+      
+      
+      
+
+      renderTable();
+window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+};
+
+
+
+            });
+          };
+          const edit = document.createElement("button");
+          edit.className = "cs-btn";
+          edit.textContent = "編集";
+          edit.onclick = () => openModal(i);
+          td.appendChild(edit);
+          td.appendChild(del);
+          tr.appendChild(td);
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function openModal(index = -1) {
+        modal.style.display = "flex";
+        if (index >= 0) {
+          const item = sheets[currentSheet].data[index];
+          root.querySelector("#entry-date").value = item.date;
+          root.querySelector("#entry-person").value = item.person;
+          root.querySelector("#entry-type").value = item.type;
+          root.querySelector("#entry-content").value = item.content;
+          root.querySelector("#entry-deadline").value = item.deadline;
+          root.querySelector("#entry-status").value = item.status;
+          root.querySelector("#entry-save").onclick = () => saveEntry(index);
+        } else {
+          ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+            root.querySelector("#" + id).value = "";
+          });
+          root.querySelector("#entry-save").onclick = () => saveEntry();
+        }
+      }
+      function closeModal() {
+        modal.style.display = "none";
+      }
+      function saveEntry(index = -1) {
+        const typeVal = root.querySelector('#entry-type').value.trim();
+        if (typeVal) saveType(typeVal);
+        renderTypeSuggestions();
+        renderFilterTypes();
+        const item = {
+          date: root.querySelector("#entry-date").value,
+          person: root.querySelector("#entry-person").value,
+          type: root.querySelector("#entry-type").value,
+          content: root.querySelector("#entry-content").value,
+          deadline: root.querySelector("#entry-deadline").value,
+          status: root.querySelector("#entry-status").value
+        };
+        if (!sheets[currentSheet]) return;
+        if (index >= 0) sheets[currentSheet].data[index] = item;
+        else sheets[currentSheet].data.push(item);
+        saveSheets(); closeModal(); renderTable();
+      }
+
+      root.querySelector("#add-entry").onclick = () => openModal();
+      root.querySelector("#entry-cancel").onclick = closeModal;
+      selector.onchange = () => {
+        currentSheet = selector.value;
+        renderTable();
+      };
+      root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
+      newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
+      newSheetCreateButton.onclick = () => {
+        const name = newSheetNameInput.value.trim();
+        if (name && !sheets[name]) {
+          sheets[name] = { title: name, data: [] };
+          currentSheet = name;
+          renderSheetOptions();
+          renderTable();
+          saveSheets();
+          newSheetModal.style.display = "none";
+        }
+      };
+      root.querySelector("#sheet-delete").onclick = () => {
+        if (!currentSheet) return;
+        showConfirm("このシートを削除しますか？", () => {
+          delete sheets[currentSheet];
+          currentSheet = null;
+          renderSheetOptions();
+          renderTable();
+          saveSheets();
+        });
+      };
+      titleElem.onblur = () => {
+        if (currentSheet && sheets[currentSheet]) {
+          sheets[currentSheet].title = titleElem.textContent.trim();
+          saveSheets();
+        }
+      };
+      root.querySelector("#export-csv").onclick = () => {
+        if (!currentSheet || !sheets[currentSheet]) return;
+        const rows = sheets[currentSheet].data;
+        const csv = ["日付,担当者,項目,内容,締切,状態"];
+        rows.forEach(r => {
+          csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
+        });
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+        a.click();
+      };
+
+      loadSheets();
+      renderSheetOptions();
+      renderTable();
+const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+const personSelect = document.getElementById("filter-person");
+personSelect.innerHTML = '<option value="">すべて</option>';
+personSet.forEach(p => {
+  const opt = document.createElement("option");
+  opt.value = p;
+  opt.textContent = p;
+  personSelect.appendChild(opt);
+});
+document.getElementById("filter-person").addEventListener("change", (e) => {
+  filterPerson = e.target.value;
+  renderTable();
+});
+document.getElementById("filter-type").addEventListener("change", (e) => {
+  filterType = e.target.value;
+  renderTable();
+});
+document.getElementById("filter-status").addEventListener("change", (e) => {
+  filterStatus = e.target.value;
+  renderTable();
+});
+    window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+};
 })();
-</script>
+  </script>
