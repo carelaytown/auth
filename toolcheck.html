@@ -120,41 +120,13 @@
       width: 250px;
     }
 
-
-#toolcheck-app .sheet-combo-wrapper {
-  position: relative;
-  width: 250px;
-}
-#toolcheck-app .sheet-combo-wrapper input {
-  width: 100%;
-  padding: 6px 30px 6px 10px;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  appearance: none;
-  background-color: white;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23333'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
-}
-
 </style>
 
 <div id="toolcheck-app">
     <div class="header-bar">
-      
-<div class="sheet-combo-wrapper">
-  <input id="sheet-combo" list="sheet-options" placeholder="チェック表名を入力・選択">
-  <datalist id="sheet-options"></datalist>
-</div>
-<div class="sheet-controls">
-  <button id="sheet-new">＋新規</button>
-  <button id="sheet-delete">🗑削除</button>
-  <button id="add-entry">予定の追加</button>
-  <button id="export-csv">CSV出力</button>
-</div>
-
+      <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
+      <div class="sheet-controls">
+        <select id="sheet-selector" class="sheet-selector"></select>
         <button id="sheet-new">＋新規</button>
         <button id="sheet-delete">🗑削除</button>
         <button id="add-entry">予定の追加</button>
@@ -290,6 +262,8 @@ function renderHistory(key, containerId, suggestionId, inputId) {
 const root = document.getElementById("toolcheck-app");
 const modal = root.querySelector("#entry-modal");
 const tableBody = root.querySelector("#cs-table tbody");
+const selector = root.querySelector("#sheet-selector");
+const titleElem = root.querySelector("#sheet-title");
 const newSheetModal = root.querySelector("#new-sheet-modal");
 const newSheetNameInput = root.querySelector("#new-sheet-name");
 const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
@@ -382,7 +356,7 @@ function renderTable() {
       return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
   }
-  combo.value = sheets[currentSheet]?.title || "新しいチェック表";
+  titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
   tableBody.innerHTML = "";
 
   
@@ -492,55 +466,6 @@ function saveEntry(index = -1) {
 }
 
 // --- イベント登録 ---
-
-const combo = document.getElementById("sheet-combo");
-const datalist = document.getElementById("sheet-options");
-
-function renderSheetOptions() {
-  datalist.innerHTML = "";
-  Object.keys(sheets).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    datalist.appendChild(opt);
-  });
-
-  if (!currentSheet && Object.keys(sheets).length > 0) {
-    currentSheet = Object.keys(sheets)[0];
-  }
-  if (currentSheet) combo.value = currentSheet;
-}
-
-combo.addEventListener("change", () => {
-  const val = combo.value;
-  if (sheets[val]) {
-    currentSheet = val;
-    renderTable();
-  }
-});
-
-combo.addEventListener("blur", () => {
-  const newName = combo.value.trim();
-  if (currentSheet && newName && newName !== currentSheet && !sheets[newName]) {
-    sheets[newName] = sheets[currentSheet];
-    delete sheets[currentSheet];
-    currentSheet = newName;
-    saveSheets();
-    renderSheetOptions();
-    renderTable();
-  }
-});
-
-document.getElementById("sheet-new").onclick = () => {
-  const name = combo.value.trim();
-  if (name && !sheets[name]) {
-    sheets[name] = { title: name, data: [] };
-    currentSheet = name;
-    saveSheets();
-    renderSheetOptions();
-    renderTable();
-  }
-};
-
 
 document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
