@@ -213,8 +213,10 @@
         filterType.value = filterType.value || "";
       }
 
-      renderTypeSuggestions();
-      renderFilterTypes();
+      window.addEventListener("load", () => {
+        renderTypeSuggestions();
+        renderFilterTypes();
+      });
 
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
@@ -342,7 +344,18 @@
       
       
       
-renderTable();
+
+      renderTable();
+window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+};
+
 
 
             });
@@ -480,16 +493,5 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
-
-      window.sortBy = function(key) {
-        if (sortConfig.key === key) {
-          sortConfig.asc = !sortConfig.asc;
-        } else {
-          sortConfig.key = key;
-          sortConfig.asc = true;
-        }
-        renderTable();
-      };
-
 })();
   </script>
