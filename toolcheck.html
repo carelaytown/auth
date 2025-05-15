@@ -107,13 +107,26 @@
   cursor: pointer;
   color: red;
 }
+
+    #toolcheck-app .sheet-selector {
+      padding: 6px 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: white;
+      appearance: none;
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      width: 250px;
+    }
+
 </style>
 
 <div id="toolcheck-app">
     <div class="header-bar">
       <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
       <div class="sheet-controls">
-        <select id="sheet-selector"></select>
+        <select id="sheet-selector" class="sheet-selector"></select>
         <button id="sheet-new">＋新規</button>
         <button id="sheet-delete">🗑削除</button>
         <button id="add-entry">予定の追加</button>
