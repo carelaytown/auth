@@ -206,7 +206,7 @@
 
 <script>
     (() => {
-      // === 安定した候補履歴関数 ===
+      // --- 履歴管理共通関数 ---
       function getSavedList(key) {
         return JSON.parse(localStorage.getItem(key) || "[]");
       }
@@ -224,63 +224,6 @@
         const list = getSavedList(key).filter(v => v !== value);
         localStorage.setItem(key, JSON.stringify(list));
       }
-
-      function renderSuggestions(key, datalistElem) {
-        const list = getSavedList(key);
-        if (datalistElem) {
-          datalistElem.innerHTML = "";
-          list.forEach(v => {
-            const opt = document.createElement("option");
-            opt.value = v;
-            datalistElem.appendChild(opt);
-          });
-        }
-      }
-
-      function renderHistory(key, containerId, suggestionId, inputId) {
-        const container = document.getElementById(containerId);
-        const list = getSavedList(key);
-        if (!container) return;
-        container.innerHTML = "";
-        list.forEach(val => {
-          const span = document.createElement("span");
-          span.textContent = val;
-          span.onclick = () => {
-            const input = document.getElementById(inputId);
-            if (input) input.value = val;
-          };
-          const btn = document.createElement("button");
-          btn.textContent = "×";
-          btn.onclick = (e) => {
-            e.stopPropagation();
-            removeFromList(key, val);
-            renderHistory(key, containerId, suggestionId, inputId);
-            renderSuggestions(key, document.getElementById(suggestionId));
-          };
-          span.appendChild(btn);
-          container.appendChild(span);
-        });
-      }
-
-      // 初期描画
-      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
-      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
-
-      // --- 履歴管理共通関数 ---
-      
-
-      function saveToList(key, value) {
-        if (!value) return;
-        const list = getSavedList(key);
-        if (!list.includes(value)) {
-          list.push(value);
-          localStorage.setItem(key, JSON.stringify(list));
-        }
-      }
-
-      
 
       
       function renderHistory(key, containerId, suggestionId, inputId) {
