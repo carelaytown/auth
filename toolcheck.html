@@ -302,6 +302,34 @@ function saveSheets() {
 function loadSheets() {
   sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
 }
+
+function updateFilterOptions() {
+  const data = sheets[currentSheet]?.data || [];
+  const persons = [...new Set(data.map(d => d.person))];
+  const types = [...new Set(data.map(d => d.type))];
+
+  const personSelect = document.getElementById("filter-person");
+  const typeSelect = document.getElementById("filter-type");
+
+  personSelect.innerHTML = '<option value="">すべて</option>';
+  typeSelect.innerHTML = '<option value="">すべて</option>';
+
+  persons.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p;
+    opt.textContent = p;
+    personSelect.appendChild(opt);
+  });
+
+  types.forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t;
+    opt.textContent = t;
+    typeSelect.appendChild(opt);
+  });
+}
+
+
 function renderSheetOptions() {
   selector.innerHTML = "";
   Object.keys(sheets).forEach(name => {
@@ -408,6 +436,9 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
     td.appendChild(del);
     tr.appendChild(td);
     tableBody.appendChild(tr);
+  
+  updateFilterOptions();
+
   });
 }
 
@@ -426,6 +457,12 @@ function openModal(index = -1) {
     ["entry-date", "entry-person", "entry-type", "entry-content", "entry-deadline"].forEach(id => {
       root.querySelector("#" + id).value = "";
     });
+    
+    renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+    renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+    renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+    renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+
     root.querySelector("#entry-save").onclick = () => saveEntry();
   }
 }
