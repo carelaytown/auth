@@ -212,6 +212,31 @@
         localStorage.setItem(key, JSON.stringify(list));
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -243,8 +268,8 @@
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
@@ -417,6 +442,31 @@
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -429,8 +479,8 @@
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 window.sortBy = function(key) {
   if (sortConfig.key === key) {
@@ -472,6 +522,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -484,8 +559,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 };
 
@@ -529,11 +604,11 @@ window.sortBy = function(key) {
         const personVal = root.querySelector("#entry-person").value.trim();
         saveToList("toolcheck-persons", personVal);
         renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-        renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+        renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
         const typeVal = root.querySelector("#entry-type").value.trim();
         saveToList("toolcheck-types", typeVal);
         renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
-        renderHistory("toolcheck-types", "type-history", "type-suggestions");
+        renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
         
         const item = {
           date: root.querySelector("#entry-date").value,
@@ -579,6 +654,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -591,8 +691,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
       }
 
@@ -633,6 +733,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -645,8 +770,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
       };
       root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
@@ -690,6 +815,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -702,8 +852,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
           saveSheets();
           newSheetModal.style.display = "none";
@@ -748,6 +898,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -760,8 +935,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
           saveSheets();
         });
@@ -821,6 +996,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -833,8 +1033,8 @@ window.sortBy = function(key) {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
 const personSelect = document.getElementById("filter-person");
@@ -880,6 +1080,31 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -892,8 +1117,8 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 });
 document.getElementById("filter-type").addEventListener("change", (e) => {
@@ -931,6 +1156,31 @@ document.getElementById("filter-type").addEventListener("change", (e) => {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -943,8 +1193,8 @@ document.getElementById("filter-type").addEventListener("change", (e) => {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 });
 document.getElementById("filter-status").addEventListener("change", (e) => {
@@ -982,6 +1232,31 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -994,8 +1269,8 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 });
     window.sortBy = function(key) {
@@ -1038,6 +1313,31 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -1050,8 +1350,8 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
 
       renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
       renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-      renderHistory("toolcheck-types", "type-history", "type-suggestions");
-      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
 
 };
 })();
