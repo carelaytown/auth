@@ -420,7 +420,7 @@ window.sortBy = function(key) {
       // --- type履歴機能 ---
       const typeInput = document.getElementById("entry-type");
       const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
+      const filterTypeSelect = document.getElementById("filter-type");
 
       function getSavedTypes() {
         return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
@@ -447,12 +447,12 @@ window.sortBy = function(key) {
 
       function renderFilterTypes() {
         const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
+        filterTypeSelect.innerHTML = '<option value="">すべて</option>';
         types.forEach(t => {
           const opt = document.createElement("option");
           opt.value = t;
           opt.textContent = t;
-          filterType.appendChild(opt);
+          filterTypeSelect.appendChild(opt);
         });
       }
 
