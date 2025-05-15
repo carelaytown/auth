@@ -174,50 +174,6 @@
 
 <script>
     (() => {
-      const typeInput = document.getElementById("entry-type");
-      const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
-
-      function getSavedTypes() {
-        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
-      }
-
-      function saveType(type) {
-        if (!type) return;
-        const types = getSavedTypes();
-        if (!types.includes(type)) {
-          types.push(type);
-          localStorage.setItem("toolcheck-types", JSON.stringify(types));
-        }
-      }
-
-      function renderTypeSuggestions() {
-        const types = getSavedTypes();
-        typeDatalist.innerHTML = "";
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          typeDatalist.appendChild(opt);
-        });
-      }
-
-      function renderFilterTypes() {
-        const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          filterType.appendChild(opt);
-        });
-        filterType.value = filterType.value || "";
-      }
-
-      window.addEventListener("load", () => {
-        renderTypeSuggestions();
-        renderFilterTypes();
-      });
-
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
       const tableBody = root.querySelector("#cs-table tbody");
@@ -459,6 +415,49 @@ window.sortBy = function(key) {
         a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
         a.click();
       };
+
+      
+      // 項目履歴管理
+      const typeInput = document.getElementById("entry-type");
+      const typeDatalist = document.getElementById("type-suggestions");
+      const filterType = document.getElementById("filter-type");
+
+      function getSavedTypes() {
+        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
+      }
+
+      function saveType(type) {
+        if (!type) return;
+        const types = getSavedTypes();
+        if (!types.includes(type)) {
+          types.push(type);
+          localStorage.setItem("toolcheck-types", JSON.stringify(types));
+        }
+      }
+
+      function renderTypeSuggestions() {
+        const types = getSavedTypes();
+        typeDatalist.innerHTML = "";
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          typeDatalist.appendChild(opt);
+        });
+      }
+
+      function renderFilterTypes() {
+        const types = getSavedTypes();
+        filterType.innerHTML = '<option value="">すべて</option>';
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          filterType.appendChild(opt);
+        });
+      }
+
+      renderTypeSuggestions();
+      renderFilterTypes();
 
       loadSheets();
       renderSheetOptions();
