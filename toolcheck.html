@@ -417,6 +417,12 @@ data.forEach((item, i) => {
 
 function openModal(index = -1) {
   modal.style.display = "flex";
+  
+  renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+  renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+  renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+  renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+
   if (index >= 0) {
     const item = sheets[currentSheet].data[index];
     root.querySelector("#entry-date").value = item.date;
