@@ -475,8 +475,8 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
   renderTable();
 });
-document.getElementById("filter-type").addEventListener("change", (e) => {
-  filterType = e.target.value;
+filterTypeSelect.addEventListener("change", (e) => {
+  filterType = filterTypeSelect.value;
   renderTable();
 });
 document.getElementById("filter-status").addEventListener("change", (e) => {
