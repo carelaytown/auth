@@ -204,255 +204,1168 @@
     </div>
   </div>
 
-
 <script>
-(() => {
-// --- 共通関数定義 ---
-function getSavedList(key) {
-  return JSON.parse(localStorage.getItem(key) || "[]");
-}
-function saveToList(key, value) {
-  if (!value) return;
-  const list = getSavedList(key);
-  if (!list.includes(value)) {
-    list.push(value);
-    localStorage.setItem(key, JSON.stringify(list));
-  }
-}
-function removeFromList(key, value) {
-  const list = getSavedList(key).filter(v => v !== value);
-  localStorage.setItem(key, JSON.stringify(list));
-}
-function renderSuggestions(key, datalistElem) {
-  const list = getSavedList(key);
-  datalistElem.innerHTML = "";
-  list.forEach(v => {
-    const opt = document.createElement("option");
-    opt.value = v;
-    datalistElem.appendChild(opt);
-  });
-}
-function renderHistory(key, containerId, suggestionId, inputId) {
-  const container = document.getElementById(containerId);
-  const list = getSavedList(key);
-  container.innerHTML = "";
-  list.forEach(val => {
-    const span = document.createElement("span");
-    span.textContent = val;
-    if (inputId) {
-      span.onclick = () => {
-        const input = document.getElementById(inputId);
-        if (input) input.value = val;
+    (() => {
+      // --- 履歴管理共通関数 ---
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+      const root = document.getElementById("toolcheck-app");
+      const modal = root.querySelector("#entry-modal");
+      const tableBody = root.querySelector("#cs-table tbody");
+      const selector = root.querySelector("#sheet-selector");
+      const titleElem = root.querySelector("#sheet-title");
+      const newSheetModal = root.querySelector("#new-sheet-modal");
+      const newSheetNameInput = root.querySelector("#new-sheet-name");
+      const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
+      const newSheetCreateButton = root.querySelector("#new-sheet-create");
+
+      const confirmModal = root.querySelector("#confirm-modal");
+      const confirmMessage = root.querySelector("#confirm-message");
+      const confirmCancel = root.querySelector("#confirm-cancel");
+      const confirmOk = root.querySelector("#confirm-ok");
+      let confirmCallback = null;
+
+      confirmCancel.onclick = () => {
+        confirmModal.style.display = "none";
+        confirmCallback = null;
       };
+      confirmOk.onclick = () => {
+        confirmModal.style.display = "none";
+        if (typeof confirmCallback === "function") confirmCallback();
+      };
+      function showConfirm(msg, callback) {
+        confirmMessage.textContent = msg;
+        confirmCallback = callback;
+        confirmModal.style.display = "flex";
+      }
+
+      let sheets = {};
+      let currentSheet = null;
+
+      let filterPerson = "";
+      let filterType = "";
+      let filterStatus = "";
+      let sortConfig = { key: null, asc: true };
+
+
+      function saveSheets() {
+        localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
+      }
+      function loadSheets() {
+        sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
+      }
+      function renderSheetOptions() {
+        selector.innerHTML = "";
+        Object.keys(sheets).forEach(name => {
+          const opt = document.createElement("option");
+          opt.value = name;
+          opt.textContent = name;
+          selector.appendChild(opt);
+        });
+        if (currentSheet && !sheets[currentSheet]) currentSheet = null;
+        if (!currentSheet && Object.keys(sheets).length > 0) {
+          currentSheet = Object.keys(sheets)[0];
+        }
+        if (currentSheet) selector.value = currentSheet;
+      }
+      function renderTable() {
+        let data = (sheets[currentSheet]?.data || []).filter(item => {
+          return (!filterPerson || item.person === filterPerson) &&
+                 (!filterType || item.type === filterType) &&
+                 (!filterStatus || item.status === filterStatus);
+        });
+        if (sortConfig.key) {
+          data.sort((a, b) => {
+            const valA = a[sortConfig.key] || "";
+            const valB = b[sortConfig.key] || "";
+            return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+          });
+        }
+        const title = sheets[currentSheet]?.title || "新しいチェック表";
+        titleElem.textContent = title;
+        tableBody.innerHTML = "";
+// 担当者フィルターを更新
+        const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+        const personSelect = document.getElementById("filter-person");
+        personSelect.innerHTML = '<option value="">すべて</option>';
+        personSet.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          personSelect.appendChild(opt);
+        });
+        personSelect.value = filterPerson;
+        // 項目フィルターも更新
+        const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
+        const typeSelect = document.getElementById("filter-type");
+        typeSelect.innerHTML = '<option value="">すべて</option>';
+        typeSet.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+        typeSelect.value = filterType;
+// ソート記号の更新
+        const headers = document.querySelectorAll("th[onclick]");
+        headers.forEach(th => {
+          const key = th.getAttribute("onclick").match(/'(\w+)'/)[1];
+          const base = th.dataset.label || th.textContent.replace(/[▲▼⇅]+$/, '');
+          if (sortConfig.key === key) {
+            th.textContent = base + (sortConfig.asc ? " ▲" : " ▼");
+          } else {
+            th.textContent = base + " ⇅";
+          }
+        });
+
+        data.forEach((item, i) => {
+          const tr = document.createElement("tr");
+          tr.className = "cs-status-" + item.status;
+          [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach(function(val, idx) {
+  const td = document.createElement("td");
+  td.textContent = val;
+  if (idx === 4 && val) {
+    const today = new Date();
+    const deadline = new Date(val);
+    const diff = (deadline - today) / (1000 * 60 * 60 * 24);
+    if (diff >= 0 && diff <= 3) {
+      td.style.color = "red";
+      td.style.fontWeight = "bold";
     }
-    const btn = document.createElement("button");
-    btn.textContent = "×";
-    btn.onclick = (e) => {
-      e.stopPropagation();
-      removeFromList(key, val);
-      renderHistory(key, containerId, suggestionId, inputId);
-      renderSuggestions(key, document.getElementById(suggestionId));
-    };
-    span.appendChild(btn);
-    container.appendChild(span);
-  });
-}
-
-// --- 初期化 ---
-const root = document.getElementById("toolcheck-app");
-const modal = root.querySelector("#entry-modal");
-const tableBody = root.querySelector("#cs-table tbody");
-const selector = root.querySelector("#sheet-selector");
-const titleElem = root.querySelector("#sheet-title");
-const newSheetModal = root.querySelector("#new-sheet-modal");
-const newSheetNameInput = root.querySelector("#new-sheet-name");
-const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
-const newSheetCreateButton = root.querySelector("#new-sheet-create");
-
-const confirmModal = root.querySelector("#confirm-modal");
-const confirmMessage = root.querySelector("#confirm-message");
-const confirmCancel = root.querySelector("#confirm-cancel");
-const confirmOk = root.querySelector("#confirm-ok");
-let confirmCallback = null;
-
-let sheets = {};
-let currentSheet = null;
-let filterPerson = "";
-let filterType = "";
-let filterStatus = "";
-let sortConfig = { key: null, asc: true };
-
-confirmCancel.onclick = () => {
-  confirmModal.style.display = "none";
-  confirmCallback = null;
-};
-confirmOk.onclick = () => {
-  confirmModal.style.display = "none";
-  if (typeof confirmCallback === "function") confirmCallback();
-};
-function showConfirm(msg, callback) {
-  confirmMessage.textContent = msg;
-  confirmCallback = callback;
-  confirmModal.style.display = "flex";
-}
-
-function saveSheets() {
-  localStorage.setItem("toolcheck-sheets", JSON.stringify(sheets));
-}
-function loadSheets() {
-  sheets = JSON.parse(localStorage.getItem("toolcheck-sheets") || "{}");
-}
-function renderSheetOptions() {
-  selector.innerHTML = "";
-  Object.keys(sheets).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    selector.appendChild(opt);
-  });
-  if (!currentSheet && Object.keys(sheets).length > 0) {
-    currentSheet = Object.keys(sheets)[0];
   }
-  if (currentSheet) selector.value = currentSheet;
-}
-function renderTable() {
-  const data = (sheets[currentSheet]?.data || []).filter(item => {
-    return (!filterPerson || item.person === filterPerson) &&
-           (!filterType || item.type === filterType) &&
-           (!filterStatus || item.status === filterStatus);
-  });
-  if (sortConfig.key) {
-    data.sort((a, b) => {
-      const valA = a[sortConfig.key] || "";
-      const valB = b[sortConfig.key] || "";
-      return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
-    });
-  }
-  titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
-  tableBody.innerHTML = "";
+  tr.appendChild(td);
+});
+          const td = document.createElement("td");
+          const del = document.createElement("button");
+          del.className = "cs-btn";
+          del.textContent = "削除";
+          del.onclick = () => {
+            showConfirm("この行を削除しますか？", () => {
+              sheets[currentSheet].data.splice(i, 1);
+              saveSheets(); 
+      
+      
+      
 
-  data.forEach((item, i) => {
-    const tr = document.createElement("tr");
-    tr.className = "cs-status-" + item.status;
-    [item.date, item.person, item.type, item.content, item.deadline, item.status].forEach((val, idx) => {
-      const td = document.createElement("td");
-      td.textContent = val;
-      tr.appendChild(td);
-    });
-    const td = document.createElement("td");
-    const edit = document.createElement("button");
-    edit.className = "cs-btn";
-    edit.textContent = "編集";
-    edit.onclick = () => openModal(i);
-    const del = document.createElement("button");
-    del.className = "cs-btn";
-    del.textContent = "削除";
-    del.onclick = () => {
-      showConfirm("この行を削除しますか？", () => {
-        sheets[currentSheet].data.splice(i, 1);
-        saveSheets();
-        renderTable();
-      });
-    };
-    td.appendChild(edit);
-    td.appendChild(del);
-    tr.appendChild(td);
-    tableBody.appendChild(tr);
-  });
-}
+      renderTable();
+      
 
-function openModal(index = -1) {
-  modal.style.display = "flex";
-  if (index >= 0) {
-    const item = sheets[currentSheet].data[index];
-    root.querySelector("#entry-date").value = item.date;
-    root.querySelector("#entry-person").value = item.person;
-    root.querySelector("#entry-type").value = item.type;
-    root.querySelector("#entry-content").value = item.content;
-    root.querySelector("#entry-deadline").value = item.deadline;
-    root.querySelector("#entry-status").value = item.status;
-    root.querySelector("#entry-save").onclick = () => saveEntry(index);
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
   } else {
-    ["entry-date", "entry-person", "entry-type", "entry-content", "entry-deadline"].forEach(id => {
-      root.querySelector("#" + id).value = "";
-    });
-    root.querySelector("#entry-save").onclick = () => saveEntry();
+    sortConfig.key = key;
+    sortConfig.asc = true;
   }
-}
-function closeModal() {
-  modal.style.display = "none";
-}
-function saveEntry(index = -1) {
-  const item = {
-    date: root.querySelector("#entry-date").value,
-    person: root.querySelector("#entry-person").value,
-    type: root.querySelector("#entry-type").value,
-    content: root.querySelector("#entry-content").value,
-    deadline: root.querySelector("#entry-deadline").value,
-    status: root.querySelector("#entry-status").value
-  };
-  saveToList("toolcheck-persons", item.person);
-  saveToList("toolcheck-types", item.type);
-  if (!sheets[currentSheet]) return;
-  if (index >= 0) sheets[currentSheet].data[index] = item;
-  else sheets[currentSheet].data.push(item);
-  saveSheets();
-  closeModal();
   renderTable();
-}
+      
 
-// --- イベント登録 ---
-root.querySelector("#add-entry").onclick = () => openModal();
-root.querySelector("#entry-cancel").onclick = closeModal;
-root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
-newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
-newSheetCreateButton.onclick = () => {
-  const name = newSheetNameInput.value.trim();
-  if (name && !sheets[name]) {
-    sheets[name] = { title: name, data: [] };
-    currentSheet = name;
-    renderSheetOptions();
-    renderTable();
-    saveSheets();
-    newSheetModal.style.display = "none";
-  }
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
 };
-selector.onchange = () => {
-  currentSheet = selector.value;
+
+
+
+            });
+          };
+          const edit = document.createElement("button");
+          edit.className = "cs-btn";
+          edit.textContent = "編集";
+          edit.onclick = () => openModal(i);
+          td.appendChild(edit);
+          td.appendChild(del);
+          tr.appendChild(td);
+          tableBody.appendChild(tr);
+        });
+      }
+
+      function openModal(index = -1) {
+        modal.style.display = "flex";
+        if (index >= 0) {
+          const item = sheets[currentSheet].data[index];
+          root.querySelector("#entry-date").value = item.date;
+          root.querySelector("#entry-person").value = item.person;
+          root.querySelector("#entry-type").value = item.type;
+          root.querySelector("#entry-content").value = item.content;
+          root.querySelector("#entry-deadline").value = item.deadline;
+          root.querySelector("#entry-status").value = item.status;
+          root.querySelector("#entry-save").onclick = () => saveEntry(index);
+        } else {
+          ["entry-date", "entry-person", "entry-content", "entry-deadline"].forEach(id => {
+            root.querySelector("#" + id).value = "";
+          });
+          root.querySelector("#entry-save").onclick = () => saveEntry();
+        }
+      }
+      function closeModal() {
+        modal.style.display = "none";
+      }
+      function saveEntry(index = -1) {
+        const personVal = root.querySelector("#entry-person").value.trim();
+        saveToList("toolcheck-persons", personVal);
+        renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+        renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+        const typeVal = root.querySelector("#entry-type").value.trim();
+        saveToList("toolcheck-types", typeVal);
+        renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+        renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+        
+        const item = {
+          date: root.querySelector("#entry-date").value,
+          person: root.querySelector("#entry-person").value,
+          type: root.querySelector("#entry-type").value,
+          content: root.querySelector("#entry-content").value,
+          deadline: root.querySelector("#entry-deadline").value,
+          status: root.querySelector("#entry-status").value
+        };
+        if (!sheets[currentSheet]) return;
+        if (index >= 0) sheets[currentSheet].data[index] = item;
+        else sheets[currentSheet].data.push(item);
+        saveSheets(); closeModal(); renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+      }
+
+      root.querySelector("#add-entry").onclick = () => openModal();
+      root.querySelector("#entry-cancel").onclick = closeModal;
+      selector.onchange = () => {
+        currentSheet = selector.value;
+        renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+      };
+      root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
+      newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
+      newSheetCreateButton.onclick = () => {
+        const name = newSheetNameInput.value.trim();
+        if (name && !sheets[name]) {
+          sheets[name] = { title: name, data: [] };
+          currentSheet = name;
+          renderSheetOptions();
+          renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+          saveSheets();
+          newSheetModal.style.display = "none";
+        }
+      };
+      root.querySelector("#sheet-delete").onclick = () => {
+        if (!currentSheet) return;
+        showConfirm("このシートを削除しますか？", () => {
+          delete sheets[currentSheet];
+          currentSheet = null;
+          renderSheetOptions();
+          renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+          saveSheets();
+        });
+      };
+      titleElem.onblur = () => {
+        if (currentSheet && sheets[currentSheet]) {
+          sheets[currentSheet].title = titleElem.textContent.trim();
+          saveSheets();
+        }
+      };
+      root.querySelector("#export-csv").onclick = () => {
+        if (!currentSheet || !sheets[currentSheet]) return;
+        const rows = sheets[currentSheet].data;
+        const csv = ["日付,担当者,項目,内容,締切,状態"];
+        rows.forEach(r => {
+          csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
+        });
+        const blob = new Blob([csv.join("\n")], { type: "text/csv" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
+        a.click();
+      };
+
+      loadSheets();
+      renderSheetOptions();
+      renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
+const personSelect = document.getElementById("filter-person");
+personSelect.innerHTML = '<option value="">すべて</option>';
+personSet.forEach(p => {
+  const opt = document.createElement("option");
+  opt.value = p;
+  opt.textContent = p;
+  personSelect.appendChild(opt);
+});
+document.getElementById("filter-person").addEventListener("change", (e) => {
+  filterPerson = e.target.value;
   renderTable();
-};
-root.querySelector("#sheet-delete").onclick = () => {
-  if (!currentSheet) return;
-  showConfirm("このシートを削除しますか？", () => {
-    delete sheets[currentSheet];
-    currentSheet = null;
-    renderSheetOptions();
-    renderTable();
-    saveSheets();
-  });
-};
-titleElem.onblur = () => {
-  if (currentSheet && sheets[currentSheet]) {
-    sheets[currentSheet].title = titleElem.textContent.trim();
-    saveSheets();
-  }
-};
-root.querySelector("#export-csv").onclick = () => {
-  if (!currentSheet || !sheets[currentSheet]) return;
-  const rows = sheets[currentSheet].data;
-  const csv = ["日付,担当者,項目,内容,締切,状態"];
-  rows.forEach(r => {
-    csv.push([r.date, r.person, r.type, r.content, r.deadline, r.status].map(f => `"${(f||"").replace(/"/g,'""')}"`).join(","));
-  });
-  const blob = new Blob([csv.join("\n")], { type: "text/csv" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = (sheets[currentSheet].title || "checksheet") + ".csv";
-  a.click();
-};
+      
 
-loadSheets();
-renderSheetOptions();
-renderTable();
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+});
+document.getElementById("filter-type").addEventListener("change", (e) => {
+  filterType = e.target.value;
+  renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+});
+document.getElementById("filter-status").addEventListener("change", (e) => {
+  filterStatus = e.target.value;
+  renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+});
+    window.sortBy = function(key) {
+  if (sortConfig.key === key) {
+    sortConfig.asc = !sortConfig.asc;
+  } else {
+    sortConfig.key = key;
+    sortConfig.asc = true;
+  }
+  renderTable();
+      
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
+
+};
 })();
-</script>
+  </script>
