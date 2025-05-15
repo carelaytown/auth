@@ -149,8 +149,6 @@
         <label>担当者<input type="text" id="entry-person"></label>
         <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
 <datalist id="type-suggestions"></datalist>
-            <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
-          </select>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
         <label>締切<input type="date" id="entry-deadline"></label>
@@ -317,56 +315,6 @@
       
 
       renderTable();
-
-      const typeInput = document.getElementById("entry-type");
-      const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
-
-      function getSavedTypes() {
-        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
-      }
-      function saveType(type) {
-        if (!type) return;
-        const types = getSavedTypes();
-        if (!types.includes(type)) {
-          types.push(type);
-          localStorage.setItem("toolcheck-types", JSON.stringify(types));
-        }
-      }
-      function renderTypeSuggestions() {
-        const types = getSavedTypes();
-        typeDatalist.innerHTML = "";
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          typeDatalist.appendChild(opt);
-        });
-      }
-      function renderFilterTypes() {
-        const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          filterType.appendChild(opt);
-        });
-      }
-
-      document.getElementById("entry-save").addEventListener("click", () => {
-        const type = typeInput.value.trim();
-        if (type) {
-          saveType(type);
-          renderTypeSuggestions();
-          renderFilterTypes();
-        }
-      });
-
-      window.addEventListener("load", () => {
-        renderTypeSuggestions();
-        renderFilterTypes();
-      });
-
 window.sortBy = function(key) {
   if (sortConfig.key === key) {
     sortConfig.asc = !sortConfig.asc;
@@ -414,6 +362,10 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
+        const type = root.querySelector("#entry-type").value.trim();
+        if (type) saveType(type);
+        renderTypeSuggestions();
+        renderFilterTypes();
         const item = {
           date: root.querySelector("#entry-date").value,
           person: root.querySelector("#entry-person").value,
@@ -510,6 +462,47 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
+
+      const typeInput = document.getElementById("entry-type");
+      const typeDatalist = document.getElementById("type-suggestions");
+      const filterType = document.getElementById("filter-type");
+
+      function getSavedTypes() {
+        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
+      }
+      function saveType(type) {
+        if (!type) return;
+        const types = getSavedTypes();
+        if (!types.includes(type)) {
+          types.push(type);
+          localStorage.setItem("toolcheck-types", JSON.stringify(types));
+        }
+      }
+      function renderTypeSuggestions() {
+        const types = getSavedTypes();
+        typeDatalist.innerHTML = "";
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          typeDatalist.appendChild(opt);
+        });
+      }
+      function renderFilterTypes() {
+        const types = getSavedTypes();
+        filterType.innerHTML = '<option value="">すべて</option>';
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          filterType.appendChild(opt);
+        });
+      }
+
+      window.addEventListener("load", () => {
+        renderTypeSuggestions();
+        renderFilterTypes();
+      });
+
 })();
   </script>
 </body>
