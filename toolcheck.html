@@ -317,6 +317,56 @@
       
 
       renderTable();
+
+      const typeInput = document.getElementById("entry-type");
+      const typeDatalist = document.getElementById("type-suggestions");
+      const filterType = document.getElementById("filter-type");
+
+      function getSavedTypes() {
+        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
+      }
+      function saveType(type) {
+        if (!type) return;
+        const types = getSavedTypes();
+        if (!types.includes(type)) {
+          types.push(type);
+          localStorage.setItem("toolcheck-types", JSON.stringify(types));
+        }
+      }
+      function renderTypeSuggestions() {
+        const types = getSavedTypes();
+        typeDatalist.innerHTML = "";
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          typeDatalist.appendChild(opt);
+        });
+      }
+      function renderFilterTypes() {
+        const types = getSavedTypes();
+        filterType.innerHTML = '<option value="">すべて</option>';
+        types.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          filterType.appendChild(opt);
+        });
+      }
+
+      document.getElementById("entry-save").addEventListener("click", () => {
+        const type = typeInput.value.trim();
+        if (type) {
+          saveType(type);
+          renderTypeSuggestions();
+          renderFilterTypes();
+        }
+      });
+
+      window.addEventListener("load", () => {
+        renderTypeSuggestions();
+        renderFilterTypes();
+      });
+
 window.sortBy = function(key) {
   if (sortConfig.key === key) {
     sortConfig.asc = !sortConfig.asc;
@@ -460,56 +510,6 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
   }
   renderTable();
 };
-
-      const typeInput = document.getElementById("entry-type");
-      const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
-
-      function getSavedTypes() {
-        return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
-      }
-      function saveType(type) {
-        if (!type) return;
-        const types = getSavedTypes();
-        if (!types.includes(type)) {
-          types.push(type);
-          localStorage.setItem("toolcheck-types", JSON.stringify(types));
-        }
-      }
-      function renderTypeSuggestions() {
-        const types = getSavedTypes();
-        typeDatalist.innerHTML = "";
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          typeDatalist.appendChild(opt);
-        });
-      }
-      function renderFilterTypes() {
-        const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
-        types.forEach(t => {
-          const opt = document.createElement("option");
-          opt.value = t;
-          opt.textContent = t;
-          filterType.appendChild(opt);
-        });
-      }
-
-      document.getElementById("entry-save").addEventListener("click", () => {
-        const type = typeInput.value.trim();
-        if (type) {
-          saveType(type);
-          renderTypeSuggestions();
-          renderFilterTypes();
-        }
-      });
-
-      window.addEventListener("load", () => {
-        renderTypeSuggestions();
-        renderFilterTypes();
-      });
-
 })();
   </script>
 </body>
