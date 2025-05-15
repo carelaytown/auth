@@ -368,8 +368,7 @@ window.sortBy = function(key) {
         renderSuggestions('toolcheck-types', typeDatalist);
         renderSuggestions('toolcheck-persons', personDatalist);
 
-        const typeVal = root.querySelector('#entry-type')?.value?.trim();
-        if (typeVal) saveType(typeVal);
+                if (typeVal) saveType(typeVal);
         renderTypeSuggestions();
         renderFilterTypes();
         const item = {
