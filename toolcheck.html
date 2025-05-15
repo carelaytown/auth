@@ -111,14 +111,7 @@
   担当者：
   <select id="filter-person"><option value="">すべて</option></select>
   項目：
-  <select id="filter-type">
-    <option value="">すべて</option>
-    <option value="提出">提出</option>
-    <option value="回収">回収</option>
-    <option value="報告">報告</option>
-    <option value="伝言">伝言</option>
-    <option value="その他">その他</option>
-  </select>
+  <select id="filter-type"><option value="">すべて</option></select>
   状態：
   <select id="filter-status">
     <option value="">すべて</option>
@@ -141,10 +134,8 @@
       <div class="modal-content">
         <label>日付<input type="date" id="entry-date"></label>
         <label>担当者<input type="text" id="entry-person"></label>
-        <label>項目
-          <select id="entry-type">
-            <option>提出</option><option>回収</option><option>報告</option><option>伝言</option><option>その他</option>
-          </select>
+        <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
+<datalist id="type-suggestions"></datalist>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
         <label>締切<input type="date" id="entry-deadline"></label>
@@ -269,6 +260,17 @@
           personSelect.appendChild(opt);
         });
         personSelect.value = filterPerson;
+        // 項目フィルターも更新
+        const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
+        const typeSelect = document.getElementById("filter-type");
+        typeSelect.innerHTML = '<option value="">すべて</option>';
+        typeSet.forEach(t => {
+          const opt = document.createElement("option");
+          opt.value = t;
+          opt.textContent = t;
+          typeSelect.appendChild(opt);
+        });
+        typeSelect.value = filterType;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
@@ -358,6 +360,22 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
+        const typeVal = root.querySelector("#entry-type").value.trim();
+        if (typeVal) {
+          let types = JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
+          if (!types.includes(typeVal)) {
+            types.push(typeVal);
+            localStorage.setItem("toolcheck-types", JSON.stringify(types));
+          }
+        }
+        const dl = document.getElementById("type-suggestions");
+        const known = new Set(JSON.parse(localStorage.getItem("toolcheck-types") || "[]"));
+        dl.innerHTML = "";
+        known.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          dl.appendChild(opt);
+        });
         const item = {
           date: root.querySelector("#entry-date").value,
           person: root.querySelector("#entry-person").value,
