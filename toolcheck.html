@@ -517,6 +517,34 @@ window.sortBy = function(key) {
 
       renderPersonSuggestions();
 
+      const personInput = document.getElementById("entry-person");
+      const personDatalist = document.getElementById("person-suggestions");
+
+      function getSavedPersons() {
+        return JSON.parse(localStorage.getItem("toolcheck-persons") || "[]");
+      }
+
+      function savePerson(person) {
+        if (!person) return;
+        const persons = getSavedPersons();
+        if (!persons.includes(person)) {
+          persons.push(person);
+          localStorage.setItem("toolcheck-persons", JSON.stringify(persons));
+        }
+      }
+
+      function renderPersonSuggestions() {
+        const persons = getSavedPersons();
+        personDatalist.innerHTML = "";
+        persons.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          personDatalist.appendChild(opt);
+        });
+      }
+
+      renderPersonSuggestions();
+
       renderFilterTypes();
 
       loadSheets();
