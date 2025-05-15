@@ -187,7 +187,7 @@
 
   <script>
     (() => {
-      // --- 項目入力の履歴管理 ---
+      // --- 項目履歴管理 ---
       const typeInput = document.getElementById("entry-type");
       const typeDatalist = document.getElementById("type-suggestions");
       const filterType = document.getElementById("filter-type");
@@ -409,7 +409,7 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
-        const typeVal = root.querySelector("#entry-type").value.trim();
+        const typeVal = root.querySelector('#entry-type').value.trim();
         if (typeVal) saveType(typeVal);
         renderTypeSuggestions();
         renderFilterTypes();
