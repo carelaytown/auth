@@ -133,8 +133,7 @@
     <div class="modal" id="entry-modal">
       <div class="modal-content">
         <label>日付<input type="date" id="entry-date"></label>
-        <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
-<datalist id="person-suggestions"></datalist>
+        <label>担当者<input type="text" id="entry-person"></label>
         <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
           <datalist id="type-suggestions"></datalist>
         </label>
@@ -261,17 +260,6 @@
           personSelect.appendChild(opt);
         });
         personSelect.value = filterPerson;
-        // 項目フィルター更新
-        const typeSet = new Set((sheets[currentSheet]?.data || []).map(d => d.type).filter(Boolean));
-        const typeSelect = document.getElementById('filter-type');
-        typeSelect.innerHTML = '<option value="">すべて</option>';
-        typeSet.forEach(t => {
-          const opt = document.createElement('option');
-          opt.value = t;
-          opt.textContent = t;
-          typeSelect.appendChild(opt);
-        });
-        typeSelect.value = filterType;
 // ソート記号の更新
         const headers = document.querySelectorAll("th[onclick]");
         headers.forEach(th => {
@@ -362,13 +350,7 @@ window.sortBy = function(key) {
       }
       function saveEntry(index = -1) {
         const typeVal = root.querySelector('#entry-type')?.value?.trim();
-        const personVal = root.querySelector('#entry-person')?.value?.trim();
-        if (typeVal) saveToList('toolcheck-types', typeVal);
-        if (personVal) saveToList('toolcheck-persons', personVal);
-        renderSuggestions('toolcheck-types', typeDatalist);
-        renderSuggestions('toolcheck-persons', personDatalist);
-
-                if (typeVal) saveType(typeVal);
+        if (typeVal) saveType(typeVal);
         renderTypeSuggestions();
         renderFilterTypes();
         const item = {
@@ -438,7 +420,7 @@ window.sortBy = function(key) {
       // --- type履歴機能 ---
       const typeInput = document.getElementById("entry-type");
       const typeDatalist = document.getElementById("type-suggestions");
-      const filterType = document.getElementById("filter-type");
+      const filterTypeSelect = document.getElementById("filter-type");
 
       function getSavedTypes() {
         return JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
@@ -465,57 +447,17 @@ window.sortBy = function(key) {
 
       function renderFilterTypes() {
         const types = getSavedTypes();
-        filterType.innerHTML = '<option value="">すべて</option>';
+        filterTypeSelect.innerHTML = '<option value="">すべて</option>';
         types.forEach(t => {
           const opt = document.createElement("option");
           opt.value = t;
           opt.textContent = t;
-          filterType.appendChild(opt);
+          filterTypeSelect.appendChild(opt);
         });
       }
 
       renderTypeSuggestions();
       renderFilterTypes();
-
-      
-      // === 履歴機能（項目＋担当者） ===
-      const typeInput = document.getElementById("entry-type");
-      const typeDatalist = document.getElementById("type-suggestions");
-      const personInput = document.getElementById("entry-person");
-      const personDatalist = document.getElementById("person-suggestions");
-      const filterTypeSelect = document.getElementById("filter-type");
-
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
-
-      function saveToList(key, value) {
-        if (!value) return;
-        const list = getSavedList(key);
-        if (!list.includes(value)) {
-          list.push(value);
-          localStorage.setItem(key, JSON.stringify(list));
-        }
-      }
-
-      function renderSuggestions(key, datalistElem) {
-        const list = getSavedList(key);
-        datalistElem.innerHTML = "";
-        list.forEach(val => {
-          const opt = document.createElement("option");
-          opt.value = val;
-          datalistElem.appendChild(opt);
-        });
-      }
-
-      function removeFromList(key, value) {
-        const list = getSavedList(key);
-        const updated = list.filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(updated));
-      }
-
-      renderSuggestions("toolcheck-types", typeDatalist);
-      renderSuggestions("toolcheck-persons", personDatalist);
 
       loadSheets();
       renderSheetOptions();
@@ -533,8 +475,8 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
   renderTable();
 });
-document.getElementById("filter-type").addEventListener("change", (e) => {
-  filterType = e.target.value;
+filterTypeSelect.addEventListener("change", (e) => {
+  filterType = filterTypeSelect.value;
   renderTable();
 });
 document.getElementById("filter-status").addEventListener("change", (e) => {
