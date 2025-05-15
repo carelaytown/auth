@@ -92,7 +92,22 @@
       padding: 4px 8px;
       font-size: 12px;
     }
-  </style>
+  #toolcheck-app .history-list span {
+  display: inline-block;
+  background: #eee;
+  margin: 2px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+#toolcheck-app .history-list span button {
+  margin-left: 4px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: red;
+}
+</style>
 
 <div id="toolcheck-app">
     <div class="header-bar">
@@ -133,8 +148,12 @@
     <div class="modal" id="entry-modal">
       <div class="modal-content">
         <label>日付<input type="date" id="entry-date"></label>
-        <label>担当者<input type="text" id="entry-person"></label>
+        <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
+<datalist id="person-suggestions"></datalist>
+<div id="person-history" class="history-list"></div>
         <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
+<datalist id="type-suggestions"></datalist>
+<div id="type-history" class="history-list"></div>
 <datalist id="type-suggestions"></datalist>
         </label>
         <label>内容<textarea id="entry-content"></textarea></label>
@@ -313,6 +332,58 @@
       
 
       renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 window.sortBy = function(key) {
   if (sortConfig.key === key) {
     sortConfig.asc = !sortConfig.asc;
@@ -321,6 +392,58 @@ window.sortBy = function(key) {
     sortConfig.asc = true;
   }
   renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 };
 
 
@@ -360,6 +483,14 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
+        const personVal = root.querySelector("#entry-person").value.trim();
+        saveToList("toolcheck-persons", personVal);
+        renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+        renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+        const typeVal = root.querySelector("#entry-type").value.trim();
+        saveToList("toolcheck-types", typeVal);
+        renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+        renderHistory("toolcheck-types", "type-history", "type-suggestions");
         const typeVal = root.querySelector("#entry-type").value.trim();
         if (typeVal) {
           let types = JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
@@ -388,6 +519,58 @@ window.sortBy = function(key) {
         if (index >= 0) sheets[currentSheet].data[index] = item;
         else sheets[currentSheet].data.push(item);
         saveSheets(); closeModal(); renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
       }
 
       root.querySelector("#add-entry").onclick = () => openModal();
@@ -395,6 +578,58 @@ window.sortBy = function(key) {
       selector.onchange = () => {
         currentSheet = selector.value;
         renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
       };
       root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
       newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
@@ -405,6 +640,58 @@ window.sortBy = function(key) {
           currentSheet = name;
           renderSheetOptions();
           renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
           saveSheets();
           newSheetModal.style.display = "none";
         }
@@ -416,6 +703,58 @@ window.sortBy = function(key) {
           currentSheet = null;
           renderSheetOptions();
           renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
           saveSheets();
         });
       };
@@ -442,6 +781,58 @@ window.sortBy = function(key) {
       loadSheets();
       renderSheetOptions();
       renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 const personSet = new Set((sheets[currentSheet]?.data || []).map(d => d.person).filter(Boolean));
 const personSelect = document.getElementById("filter-person");
 personSelect.innerHTML = '<option value="">すべて</option>';
@@ -454,14 +845,170 @@ personSet.forEach(p => {
 document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
   renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 });
 document.getElementById("filter-type").addEventListener("change", (e) => {
   filterType = e.target.value;
   renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 });
 document.getElementById("filter-status").addEventListener("change", (e) => {
   filterStatus = e.target.value;
   renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 });
     window.sortBy = function(key) {
   if (sortConfig.key === key) {
@@ -471,6 +1018,58 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
     sortConfig.asc = true;
   }
   renderTable();
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
 };
 })();
   </script>
