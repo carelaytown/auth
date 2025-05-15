@@ -237,6 +237,31 @@
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -441,6 +466,31 @@
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -478,6 +528,31 @@ window.sortBy = function(key) {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
@@ -627,6 +702,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -663,6 +763,31 @@ window.sortBy = function(key) {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
@@ -762,6 +887,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -802,6 +952,31 @@ window.sortBy = function(key) {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
@@ -917,6 +1092,31 @@ window.sortBy = function(key) {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -958,6 +1158,31 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
@@ -1051,6 +1276,31 @@ document.getElementById("filter-type").addEventListener("change", (e) => {
         });
       }
 
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
       function renderSuggestions(key, datalistElem) {
         const list = getSavedList(key);
         datalistElem.innerHTML = "";
@@ -1084,6 +1334,31 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
@@ -1152,6 +1427,31 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
       
 
       ;
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      
+      function renderHistory(key, containerId, suggestionId, inputId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          span.onclick = () => {
+            const input = document.getElementById(inputId);
+            if (input) input.value = val;
+          };
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = (e) => {
+            e.stopPropagation();
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId, inputId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
           span.appendChild(btn);
           container.appendChild(span);
         });
