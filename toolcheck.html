@@ -403,34 +403,7 @@ data.forEach((item, i) => {
         saveSheets();
         renderTable();
 
-document.getElementById("filter-person").addEventListener("change", (e) => {
-  filterPerson = e.target.value;
-  renderTable();
 });
-document.getElementById("filter-type").addEventListener("change", (e) => {
-  filterType = e.target.value;
-  renderTable();
-});
-document.getElementById("filter-status").addEventListener("change", (e) => {
-  filterStatus = e.target.value;
-  renderTable();
-});
-
-
-document.getElementById("filter-person").addEventListener("change", (e) => {
-  filterPerson = e.target.value;
-  renderTable();
-});
-document.getElementById("filter-type").addEventListener("change", (e) => {
-  filterType = e.target.value;
-  renderTable();
-});
-document.getElementById("filter-status").addEventListener("change", (e) => {
-  filterStatus = e.target.value;
-  renderTable();
-});
-
-      });
     };
     td.appendChild(edit);
     td.appendChild(del);
@@ -478,18 +451,7 @@ function saveEntry(index = -1) {
     deadline: root.querySelector("#entry-deadline").value,
     status: root.querySelector("#entry-status").value
   };
-  saveToList("toolcheck-persons", item.person);
-  saveToList("toolcheck-types", item.type);
-  if (!sheets[currentSheet]) return;
-
-  saveToList("toolcheck-persons", item.person);
-  renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
-  renderHistory("toolcheck-persons", "person-history", "person-suggestions", "entry-person");
-
-  saveToList("toolcheck-types", item.type);
-  renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
-  renderHistory("toolcheck-types", "type-history", "type-suggestions", "entry-type");
-
+  
   if (index >= 0) sheets[currentSheet].data[index] = item;
   else sheets[currentSheet].data.push(item);
   saveSheets();
@@ -498,6 +460,20 @@ function saveEntry(index = -1) {
 }
 
 // --- イベント登録 ---
+
+document.getElementById("filter-person").addEventListener("change", (e) => {
+  filterPerson = e.target.value;
+  renderTable();
+});
+document.getElementById("filter-type").addEventListener("change", (e) => {
+  filterType = e.target.value;
+  renderTable();
+});
+document.getElementById("filter-status").addEventListener("change", (e) => {
+  filterStatus = e.target.value;
+  renderTable();
+});
+
 root.querySelector("#add-entry").onclick = () => openModal();
 root.querySelector("#entry-cancel").onclick = closeModal;
 root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
