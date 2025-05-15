@@ -145,7 +145,7 @@
     <div class="header-bar">
       
 <div class="sheet-combo-wrapper">
-  <input id="sheet-combo" list="sheet-options" placeholder="チェック表を選択または編集">
+  <input id="sheet-combo" list="sheet-options" placeholder="チェック表名を入力・選択">
   <datalist id="sheet-options"></datalist>
 </div>
 <div class="sheet-controls">
@@ -503,31 +503,43 @@ function renderSheetOptions() {
     opt.value = name;
     datalist.appendChild(opt);
   });
+
   if (!currentSheet && Object.keys(sheets).length > 0) {
     currentSheet = Object.keys(sheets)[0];
   }
   if (currentSheet) combo.value = currentSheet;
 }
+
 combo.addEventListener("change", () => {
-  const name = combo.value;
-  if (sheets[name]) {
-    currentSheet = name;
+  const val = combo.value;
+  if (sheets[val]) {
+    currentSheet = val;
     renderTable();
   }
 });
+
 combo.addEventListener("blur", () => {
-  if (currentSheet && sheets[currentSheet]) {
-    const newName = combo.value.trim();
-    if (newName && newName !== currentSheet && !sheets[newName]) {
-      sheets[newName] = sheets[currentSheet];
-      delete sheets[currentSheet];
-      currentSheet = newName;
-      saveSheets();
-      renderSheetOptions();
-      renderTable();
-    }
+  const newName = combo.value.trim();
+  if (currentSheet && newName && newName !== currentSheet && !sheets[newName]) {
+    sheets[newName] = sheets[currentSheet];
+    delete sheets[currentSheet];
+    currentSheet = newName;
+    saveSheets();
+    renderSheetOptions();
+    renderTable();
   }
 });
+
+document.getElementById("sheet-new").onclick = () => {
+  const name = combo.value.trim();
+  if (name && !sheets[name]) {
+    sheets[name] = { title: name, data: [] };
+    currentSheet = name;
+    saveSheets();
+    renderSheetOptions();
+    renderTable();
+  }
+};
 
 
 document.getElementById("filter-person").addEventListener("change", (e) => {
