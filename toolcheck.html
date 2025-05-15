@@ -133,7 +133,8 @@
     <div class="modal" id="entry-modal">
       <div class="modal-content">
         <label>日付<input type="date" id="entry-date"></label>
-        <label>担当者<input type="text" id="entry-person"></label>
+        <label>担当者<input type="text" id="entry-person" list="person-suggestions"></label>
+<datalist id="person-suggestions"></datalist>
         <label>項目<input type="text" id="entry-type" list="type-suggestions"></label>
           <datalist id="type-suggestions"></datalist>
         </label>
@@ -349,9 +350,40 @@ window.sortBy = function(key) {
         modal.style.display = "none";
       }
       function saveEntry(index = -1) {
+        const personVal = root.querySelector('#entry-person')?.value?.trim();
+        if (personVal) savePerson(personVal);
+        renderPersonSuggestions();
         const typeVal = root.querySelector('#entry-type')?.value?.trim();
         if (typeVal) saveType(typeVal);
         renderTypeSuggestions();
+      const personInput = document.getElementById("entry-person");
+      const personDatalist = document.getElementById("person-suggestions");
+
+      function getSavedPersons() {
+        return JSON.parse(localStorage.getItem("toolcheck-persons") || "[]");
+      }
+
+      function savePerson(person) {
+        if (!person) return;
+        const persons = getSavedPersons();
+        if (!persons.includes(person)) {
+          persons.push(person);
+          localStorage.setItem("toolcheck-persons", JSON.stringify(persons));
+        }
+      }
+
+      function renderPersonSuggestions() {
+        const persons = getSavedPersons();
+        personDatalist.innerHTML = "";
+        persons.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          personDatalist.appendChild(opt);
+        });
+      }
+
+      renderPersonSuggestions();
+
         renderFilterTypes();
         const item = {
           date: root.querySelector("#entry-date").value,
@@ -457,6 +489,34 @@ window.sortBy = function(key) {
       }
 
       renderTypeSuggestions();
+      const personInput = document.getElementById("entry-person");
+      const personDatalist = document.getElementById("person-suggestions");
+
+      function getSavedPersons() {
+        return JSON.parse(localStorage.getItem("toolcheck-persons") || "[]");
+      }
+
+      function savePerson(person) {
+        if (!person) return;
+        const persons = getSavedPersons();
+        if (!persons.includes(person)) {
+          persons.push(person);
+          localStorage.setItem("toolcheck-persons", JSON.stringify(persons));
+        }
+      }
+
+      function renderPersonSuggestions() {
+        const persons = getSavedPersons();
+        personDatalist.innerHTML = "";
+        persons.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          personDatalist.appendChild(opt);
+        });
+      }
+
+      renderPersonSuggestions();
+
       renderFilterTypes();
 
       loadSheets();
