@@ -187,7 +187,6 @@
 
   <script>
     (() => {
-      // --- 項目履歴管理 ---
       const typeInput = document.getElementById("entry-type");
       const typeDatalist = document.getElementById("type-suggestions");
       const filterType = document.getElementById("filter-type");
@@ -384,7 +383,6 @@ window.sortBy = function(key) {
           tableBody.appendChild(tr);
         });
         renderFilterTypes();
-        });
       }
 
       function openModal(index = -1) {
