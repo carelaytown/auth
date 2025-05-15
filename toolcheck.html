@@ -193,6 +193,59 @@
 
 <script>
     (() => {
+      // --- 履歴管理共通関数 ---
+      function getSavedList(key) {
+        return JSON.parse(localStorage.getItem(key) || "[]");
+      }
+
+      function saveToList(key, value) {
+        if (!value) return;
+        const list = getSavedList(key);
+        if (!list.includes(value)) {
+          list.push(value);
+          localStorage.setItem(key, JSON.stringify(list));
+        }
+      }
+
+      function removeFromList(key, value) {
+        const list = getSavedList(key).filter(v => v !== value);
+        localStorage.setItem(key, JSON.stringify(list));
+      }
+
+      function renderSuggestions(key, datalistElem) {
+        const list = getSavedList(key);
+        datalistElem.innerHTML = "";
+        list.forEach(v => {
+          const opt = document.createElement("option");
+          opt.value = v;
+          datalistElem.appendChild(opt);
+        });
+      }
+
+      function renderHistory(key, containerId, suggestionId) {
+        const container = document.getElementById(containerId);
+        const list = getSavedList(key);
+        container.innerHTML = "";
+        list.forEach(val => {
+          const span = document.createElement("span");
+          span.textContent = val;
+          const btn = document.createElement("button");
+          btn.textContent = "×";
+          btn.onclick = () => {
+            removeFromList(key, val);
+            renderHistory(key, containerId, suggestionId);
+            renderSuggestions(key, document.getElementById(suggestionId));
+          };
+          span.appendChild(btn);
+          container.appendChild(span);
+        });
+      }
+
+      renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
+      renderSuggestions("toolcheck-persons", document.getElementById("person-suggestions"));
+      renderHistory("toolcheck-types", "type-history", "type-suggestions");
+      renderHistory("toolcheck-persons", "person-history", "person-suggestions");
+
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
       const tableBody = root.querySelector("#cs-table tbody");
@@ -332,9 +385,7 @@
       
 
       renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -345,10 +396,7 @@
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -392,9 +440,7 @@ window.sortBy = function(key) {
     sortConfig.asc = true;
   }
   renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -405,10 +451,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -491,22 +534,7 @@ window.sortBy = function(key) {
         saveToList("toolcheck-types", typeVal);
         renderSuggestions("toolcheck-types", document.getElementById("type-suggestions"));
         renderHistory("toolcheck-types", "type-history", "type-suggestions");
-        const typeVal = root.querySelector("#entry-type").value.trim();
-        if (typeVal) {
-          let types = JSON.parse(localStorage.getItem("toolcheck-types") || "[]");
-          if (!types.includes(typeVal)) {
-            types.push(typeVal);
-            localStorage.setItem("toolcheck-types", JSON.stringify(types));
-          }
-        }
-        const dl = document.getElementById("type-suggestions");
-        const known = new Set(JSON.parse(localStorage.getItem("toolcheck-types") || "[]"));
-        dl.innerHTML = "";
-        known.forEach(v => {
-          const opt = document.createElement("option");
-          opt.value = v;
-          dl.appendChild(opt);
-        });
+        
         const item = {
           date: root.querySelector("#entry-date").value,
           person: root.querySelector("#entry-person").value,
@@ -519,9 +547,7 @@ window.sortBy = function(key) {
         if (index >= 0) sheets[currentSheet].data[index] = item;
         else sheets[currentSheet].data.push(item);
         saveSheets(); closeModal(); renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -532,10 +558,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -578,9 +601,7 @@ window.sortBy = function(key) {
       selector.onchange = () => {
         currentSheet = selector.value;
         renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -591,10 +612,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -640,9 +658,7 @@ window.sortBy = function(key) {
           currentSheet = name;
           renderSheetOptions();
           renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -653,10 +669,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -703,9 +716,7 @@ window.sortBy = function(key) {
           currentSheet = null;
           renderSheetOptions();
           renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -716,10 +727,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -781,9 +789,7 @@ window.sortBy = function(key) {
       loadSheets();
       renderSheetOptions();
       renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -794,10 +800,7 @@ window.sortBy = function(key) {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -845,9 +848,7 @@ personSet.forEach(p => {
 document.getElementById("filter-person").addEventListener("change", (e) => {
   filterPerson = e.target.value;
   renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -858,10 +859,7 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -901,9 +899,7 @@ document.getElementById("filter-person").addEventListener("change", (e) => {
 document.getElementById("filter-type").addEventListener("change", (e) => {
   filterType = e.target.value;
   renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -914,10 +910,7 @@ document.getElementById("filter-type").addEventListener("change", (e) => {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -957,9 +950,7 @@ document.getElementById("filter-type").addEventListener("change", (e) => {
 document.getElementById("filter-status").addEventListener("change", (e) => {
   filterStatus = e.target.value;
   renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -970,10 +961,7 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
@@ -1018,9 +1006,7 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
     sortConfig.asc = true;
   }
   renderTable();
-      function getSavedList(key) {
-        return JSON.parse(localStorage.getItem(key) || "[]");
-      }
+      
 
       function saveToList(key, value) {
         if (!value) return;
@@ -1031,10 +1017,7 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
         }
       }
 
-      function removeFromList(key, value) {
-        const list = getSavedList(key).filter(v => v !== value);
-        localStorage.setItem(key, JSON.stringify(list));
-      }
+      
 
       function renderHistory(key, containerId, suggestionId) {
         const container = document.getElementById(containerId);
