@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <title>ToolCheck</title>
-  <style>
+<style>
     #toolcheck-app * { box-sizing: border-box; }
     #toolcheck-app {
       font-family: sans-serif;
@@ -98,9 +93,8 @@
       font-size: 12px;
     }
   </style>
-</head>
-<body>
-  <div id="toolcheck-app">
+
+<div id="toolcheck-app">
     <div class="header-bar">
       <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
       <div class="sheet-controls">
@@ -187,7 +181,7 @@
     </div>
   </div>
 
-  <script>
+<script>
     (() => {
       const root = document.getElementById("toolcheck-app");
       const modal = root.querySelector("#entry-modal");
@@ -462,5 +456,3 @@ document.getElementById("filter-status").addEventListener("change", (e) => {
 };
 })();
   </script>
-</body>
-</html>
