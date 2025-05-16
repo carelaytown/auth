@@ -238,8 +238,7 @@ body {
 
       function updateDisplay() {
         formulaEl.textContent = calcFormula || "式";
-        resultEl.textContent = calcResult ||
-          "0";
+        resultEl.textContent = isNaN(calcResult) ? calcResult : Number(calcResult).toLocaleString();
       }
 
       
@@ -466,8 +465,7 @@ window.appendCalc = val => {
 
       function updateDisplay() {
         formulaEl.textContent = calcFormula || "式";
-        resultEl.textContent = calcResult ||
-          "0";
+        resultEl.textContent = isNaN(calcResult) ? calcResult : Number(calcResult).toLocaleString();
       }
 
       
