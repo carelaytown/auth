@@ -1,11 +1,5 @@
-<!DOCTYPE html>
-<html lang="ja">
-
-<head>
-  <meta charset="UTF-8" />
-  <title>CARELAYタウン電卓（完全修正版）</title>
-  <style>
-    body {
+<style>
+body {
       font-family: Arial, sans-serif;
       font-size: 16px;
       margin: 0;
@@ -150,11 +144,14 @@
       display: inline-block;
       margin-right: 20px;
     }
-  </style>
-</head>
+.button-grid button.pressed {
+    transform: scale(0.95);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+</style>
 
-<body>
-  <div id="toolcalc-app">
+<div id="toolcalc-app">
+<div id="toolcalc-app">
     <div class="left-col">
       <div class="panel calc-panel" id="calcPanel">
         <div class="display-area">
@@ -450,12 +447,232 @@ window.appendCalc = val => {
       });
     })();
   </script>
-</body>
+</div>
 
-</html>
-<style>
-  .button-grid button.pressed {
-    transform: scale(0.95);
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+<script>
+(() => {
+(() => {
+      let calcFormula = "";
+      let calcResult = "";
+      let prevFormula = "";
+      let prevResult = "";
+
+      const formulaEl = document.getElementById("formula");
+      const resultEl = document.getElementById("result");
+      const historyListEl = document.getElementById("history-list");
+      const calcPanel = document.getElementById("calcPanel");
+
+      let historyData = JSON.parse(localStorage.getItem("calc_history") || "[]");
+
+      function updateDisplay() {
+        formulaEl.textContent = calcFormula || "式";
+        resultEl.textContent = calcResult ||
+          "0";
+      }
+
+      
+window.appendCalc = val => {
+  if (calcResult !== "" && calcFormula === calcResult) {
+    calcFormula = "";  // 直前が答えだったら式をクリア
   }
-</style>
+  calcFormula += val;
+  updateDisplay();
+};
+
+      window.clearCalc = () => {
+        calcFormula = "";
+        calcResult = "";
+        updateDisplay();
+      };
+      window.restorePrevious = () => {
+        calcFormula = prevFormula;
+        calcResult = prevResult;
+        updateDisplay();
+      };
+      window.computeCalc = () => {
+        try {
+          prevFormula = calcFormula;
+          prevResult = calcResult;
+          //  eval() is dangerous, consider using a safer math expression parser
+          calcResult = eval(calcFormula);
+        } catch {
+          calcResult = "Error";
+        }
+        updateDisplay();
+      };
+      window.applyTax = rate => {
+        if (calcResult !== "" && !isNaN(calcResult)) {
+          calcResult = Math.round(calcResult * rate * 100) / 100;
+          updateDisplay();
+        } else {
+          calcFormula += "*" + rate;
+          updateDisplay();
+        }
+      };
+      window.removeTax = () => {
+        calcFormula = calcFormula.replace(/\*1\.(10|08)/, "");
+        computeCalc();
+      };
+      window.saveHistory = () => {
+        if (!calcFormula) return;
+        const entry = {
+          formula: calcFormula,
+          result: calcResult,
+          memo: ""
+        };
+        historyData.unshift(entry);
+        historyData = historyData.slice(0, 5);
+        localStorage.setItem("calc_history", JSON.stringify(historyData));
+        renderHistory();
+      };
+
+
+      function renderHistory() {
+        historyListEl.innerHTML = "";
+        for (let i = 0; i < 5; i++) {
+          const item = historyData[i];
+          const div = document.createElement("div");
+          div.className = "history-item";
+          if (item) {
+            div.innerHTML = `
+          <div class="exp"><strong>${item.formula} = ${item.result}</strong></div>
+          <textarea>${item.memo ||
+              ""}</textarea>
+          <button onclick="appendFromHistory(${i})">読込</button>
+          <button onclick="deleteHistory(${i})">削除</button>
+        `;
+            div.querySelector("textarea").addEventListener("change", function () {
+              item.memo = this.value;
+              localStorage.setItem("calc_history", JSON.stringify(historyData));
+            });
+          } else {
+            div.innerHTML = `<div class="exp">空欄</div><textarea></textarea>`;
+          }
+          historyListEl.appendChild(div);
+        }
+      }
+
+      window.appendFromHistory = i => {
+        if (historyData[i]) {
+          calcFormula += historyData[i].result.toString();
+          updateDisplay();
+        }
+      };
+
+      window.deleteHistory = i => {
+        historyData.splice(i, 1);
+        localStorage.setItem("calc_history", JSON.stringify(historyData));
+        renderHistory();
+      };
+
+      function restoreDesign() {
+        const calcBg = localStorage.getItem("calcBgColor");
+        const screenBg = localStorage.getItem("screenBgColor");
+        const bgImg = localStorage.getItem("bgImageData");
+        if (calcBg) {
+          calcPanel.style.backgroundColor = calcBg;
+          document.getElementById("calcBgColor").value = calcBg;
+        }
+        if (screenBg) {
+          document.getElementById('toolcalc-app').style.backgroundColor = screenBg;  // 修正箇所：bodyに設定
+          document.getElementById("screenBgColor").value = screenBg;
+        }
+        if (bgImg) {
+          const img = new Image();
+          img.onload = () => {
+            document.getElementById('toolcalc-app').style.backgroundImage = `url('${bgImg}')`;  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
+          };
+          img.src = bgImg;
+        }
+      }
+
+
+      document.getElementById("calcBgColor").addEventListener("change", function () {
+        calcPanel.style.backgroundColor = this.value;
+        localStorage.setItem("calcBgColor", this.value);
+      });
+      document.getElementById("screenBgColor").addEventListener("change", function () {
+        document.getElementById('toolcalc-app').style.backgroundColor = this.value;  // 修正箇所：bodyに設定
+        localStorage.setItem("screenBgColor", this.value);
+      });
+      document.getElementById("bgFile").addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = e => {
+            document.getElementById('toolcalc-app').style.backgroundImage = "url('" + e.target.result + "')";  // 修正箇所：bodyに設定
+            document.getElementById('toolcalc-app').style.backgroundSize = "cover";  // 修正箇所：bodyに設定
+            localStorage.setItem("bgImageData", e.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+      window.removeBgImage = () => {
+        document.getElementById('toolcalc-app').style.backgroundImage = "";  // 修正箇所：bodyに設定
+        localStorage.removeItem("bgImageData");
+      };
+      window.resetDesign = () => {
+        localStorage.removeItem("calcBgColor");
+        localStorage.removeItem("screenBgColor");
+        localStorage.removeItem("bgImageData");
+        document.getElementById("calcBgColor").value = "#f5f5f5";
+        document.getElementById("screenBgColor").value = "#ffffff";
+        removeBgImage();
+        calcPanel.style.backgroundColor = "#f5f5f5";
+        document.getElementById('toolcalc-app').style.backgroundColor = "#ffffff";  // 修正箇所：bodyに設定
+      };
+
+      
+      function animateKeyButton(key) {
+        const btn = Array.from(document.querySelectorAll(".button-grid button"))
+          .find(b => b.textContent === key || b.textContent === translateKey(key));
+        if (btn) {
+          btn.classList.add("pressed");
+          setTimeout(() => btn.classList.remove("pressed"), 100);
+        }
+      }
+
+      function translateKey(key) {
+        return key === "Enter" ? "=" :
+               key === "c" ? "AC" :
+               key === "s" ? "保存" :
+               key === "*" ? "×" :
+               key === "/" ? "÷" :
+               key === "+" ? "＋" :
+               key === "-" ? "−" : key;
+      }
+
+      document.addEventListener("keydown", e => {
+        animateKeyButton(e.key);
+
+        const key = e.key;
+        if ("0123456789.+-*/()".includes(key)) appendCalc(key);
+        else if (key === "Enter") computeCalc();
+        else if (key === "Backspace") {
+          calcFormula = calcFormula.slice(0, -1);
+          updateDisplay();
+        } else if (key === "c") clearCalc();
+        else if (key === "s") {
+          e.preventDefault();
+          saveHistory();
+        }
+      });
+      updateDisplay();
+      renderHistory();
+      restoreDesign();
+// マウスクリック時のボタン押下アニメーション
+      document.querySelectorAll(".button-grid button").forEach(button => {
+        button.addEventListener("mousedown", () => {
+          button.classList.add("pressed");
+        });
+        button.addEventListener("mouseup", () => {
+          button.classList.remove("pressed");
+        });
+        button.addEventListener("mouseleave", () => {
+          button.classList.remove("pressed");
+        });
+      });
+    })();
+})();
+</script>
