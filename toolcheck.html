@@ -120,13 +120,32 @@
       width: 250px;
     }
 
+
+#toolcheck-app .sheet-combo-wrapper {
+  position: relative;
+  width: 250px;
+}
+#toolcheck-app .sheet-combo-wrapper input {
+  width: 100%;
+  padding: 6px 30px 6px 10px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  appearance: none;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23333'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+}
+
 </style>
 
 <div id="toolcheck-app">
     <div class="header-bar">
-      <div id="sheet-title" class="sheet-title" contenteditable="true">新しいチェック表</div>
+      <div class="sheet-combo-wrapper"><input id="sheet-combo" list="sheet-options" placeholder="チェック表名を入力・選択"><datalist id="sheet-options"></datalist></div>
       <div class="sheet-controls">
-        <select id="sheet-selector" class="sheet-selector"></select>
+        
         <button id="sheet-new">＋新規</button>
         <button id="sheet-delete">🗑削除</button>
         <button id="add-entry">予定の追加</button>
@@ -262,7 +281,8 @@ function renderHistory(key, containerId, suggestionId, inputId) {
 const root = document.getElementById("toolcheck-app");
 const modal = root.querySelector("#entry-modal");
 const tableBody = root.querySelector("#cs-table tbody");
-const selector = root.querySelector("#sheet-selector");
+const combo = document.getElementById("sheet-combo");
+const datalist = document.getElementById("sheet-options");
 const titleElem = root.querySelector("#sheet-title");
 const newSheetModal = root.querySelector("#new-sheet-modal");
 const newSheetNameInput = root.querySelector("#new-sheet-name");
@@ -331,17 +351,17 @@ function updateFilterOptions() {
 
 
 function renderSheetOptions() {
-  selector.innerHTML = "";
+  datalist.innerHTML = "";
   Object.keys(sheets).forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
     opt.textContent = name;
-    selector.appendChild(opt);
+    datalist.appendChild(opt);
   });
   if (!currentSheet && Object.keys(sheets).length > 0) {
     currentSheet = Object.keys(sheets)[0];
   }
-  if (currentSheet) selector.value = currentSheet;
+  if (currentSheet) combo.value = currentSheet;
 }
 function renderTable() {
   const data = (sheets[currentSheet]?.data || []).filter(item => {
@@ -356,7 +376,7 @@ function renderTable() {
       return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
   }
-  titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
+  combo.value = sheets[currentSheet]?.title || "新しいチェック表";
   tableBody.innerHTML = "";
 
   
@@ -495,10 +515,24 @@ newSheetCreateButton.onclick = () => {
     newSheetModal.style.display = "none";
   }
 };
-selector.onchange = () => {
-  currentSheet = selector.value;
-  renderTable();
-};
+combo.addEventListener("change", () => {
+  const name = combo.value;
+  if (sheets[name]) {
+    currentSheet = name;
+    renderTable();
+  }
+});
+combo.addEventListener("blur", () => {
+  const newName = combo.value.trim();
+  if (currentSheet && sheets[currentSheet] && newName && !sheets[newName]) {
+    sheets[newName] = sheets[currentSheet];
+    delete sheets[currentSheet];
+    currentSheet = newName;
+    saveSheets();
+    renderSheetOptions();
+    renderTable();
+  }
+});
 root.querySelector("#sheet-delete").onclick = () => {
   if (!currentSheet) return;
   showConfirm("このシートを削除しますか？", () => {
