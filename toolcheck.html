@@ -123,7 +123,7 @@
 
 #toolcheck-app .sheet-combo-wrapper {
   position: relative;
-  width: 400px;
+  width: 250px;
 }
 #toolcheck-app .sheet-combo-wrapper input {
   width: 100%;
@@ -352,6 +352,12 @@ function updateFilterOptions() {
 function renderSheetOptions() {
   datalist.innerHTML = "";
   Object.values(sheets).forEach(sheet => {
+    if (!sheet.title) return;
+    const opt = document.createElement("option");
+    opt.value = sheet.title;
+    datalist.appendChild(opt);
+  });
+  Object.values(sheets).forEach(sheet => {
     const opt = document.createElement("option");
     opt.value = sheet.title;
     datalist.appendChild(opt);
@@ -529,6 +535,17 @@ combo.addEventListener("change", () => {
 combo.addEventListener("blur", () => {
   const newTitle = combo.value.trim();
   const oldKey = currentSheet;
+  if (!newTitle || !sheets[oldKey]) return;
+
+  const isDuplicate = Object.entries(sheets).some(([key, s]) => s.title === newTitle && key !== oldKey);
+  if (isDuplicate) return;
+
+  sheets[oldKey].title = newTitle;
+
+  saveSheets();
+  renderSheetOptions();
+  renderTable();
+});
   if (!newTitle || !sheets[oldKey]) return;
 
   const isDuplicate = Object.values(sheets).some(s => s.title === newTitle && s !== sheets[oldKey]);
