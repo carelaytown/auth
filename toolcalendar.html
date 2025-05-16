@@ -197,13 +197,17 @@
   };
 
   const deleteEvent = (deleteAll = false) => {
-  if (editingIndex === null) return;
   const data = getData();
-  const event = data[originalDateRef][editingIndex];
+
+  // originalDateのイベント群を取得
+  const events = data[originalDateRef] || [];
+  const event = editingIndex !== null ? events[editingIndex] : null;
+
+  if (!event) return;
+
   if (selectedDate === originalDateRef && deleteAll) {
-    // 起点そのものを完全削除
-    data[originalDateRef].splice(editingIndex, 1);
-    if (data[originalDateRef].length === 0) delete data[originalDateRef];
+    events.splice(editingIndex, 1);
+    if (events.length === 0) delete data[originalDateRef];
   } else if (event.repeat !== 'none') {
     if (deleteAll) {
       event.repeatUntil = selectedDate;
@@ -212,9 +216,10 @@
       if (!event.exceptions.includes(selectedDate)) event.exceptions.push(selectedDate);
     }
   } else {
-    data[originalDateRef].splice(editingIndex, 1);
-    if (data[originalDateRef].length === 0) delete data[originalDateRef];
+    events.splice(editingIndex, 1);
+    if (events.length === 0) delete data[originalDateRef];
   }
+
   setData(data);
   closeModal();
   updateDisplay();
