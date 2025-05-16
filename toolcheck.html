@@ -376,7 +376,7 @@ function renderTable() {
       return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
   }
-  titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
+  combo.value = sheets[currentSheet]?.title || "新しいチェック表";
   tableBody.innerHTML = "";
 
   
