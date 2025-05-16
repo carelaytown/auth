@@ -237,14 +237,11 @@
       const base = new Date(d);
       data[d].forEach((e, i) => {
         if (d === dateStr) {
-          result.push({ ...e, index: i, originalDate: d });
-        } else if (e.repeat && base <= target) {
-          const match =
-            (e.repeat === 'weekly' && base.getDay() === target.getDay()) ||
-            (e.repeat === 'monthly' && base.getDate() === target.getDate());
-          const blocked = (e.repeatUntil && dateStr > e.repeatUntil) || (e.exceptions || []).includes(dateStr);
-          if (match && !blocked) {
-            result.push({ ...e, index: i, originalDate: d });
+  const isException = (e.exceptions || []).includes(dateStr);
+  if (!isException) {
+    result.push({ ...e, index: i, originalDate: d });
+  }
+}
           }
         }
       });
