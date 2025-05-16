@@ -535,12 +535,24 @@ combo.addEventListener("change", () => {
 combo.addEventListener("blur", () => {
   const newTitle = combo.value.trim();
   const oldKey = currentSheet;
+
   if (!newTitle || !sheets[oldKey]) return;
 
-  const isDuplicate = Object.entries(sheets).some(([key, s]) => s.title === newTitle && key !== oldKey);
+  // 既存 title と重複チェック（自分以外）
+  const isDuplicate = Object.entries(sheets).some(([key, s]) => {
+    return s.title === newTitle && key !== oldKey;
+  });
   if (isDuplicate) return;
 
+  // title 更新
   sheets[oldKey].title = newTitle;
+
+  // key 変更（必要な場合）
+  if (oldKey !== newTitle) {
+    sheets[newTitle] = sheets[oldKey];
+    delete sheets[oldKey];
+    currentSheet = newTitle;
+  }
 
   saveSheets();
   renderSheetOptions();
