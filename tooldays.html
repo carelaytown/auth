@@ -255,18 +255,8 @@
         const diff = now - birth;
         const days = Math.floor(diff / 86400000);
 
-        let remaining = diff % 86400000;
-        const years = now.getFullYear() - birth.getFullYear();
-        let months = now.getMonth() - birth.getMonth();
-        if (months < 0) {
-          months += 12;
-        }
-        const weeks = Math.floor((days % 365) / 7);
-        const remDays = (days % 365) % 7;
-
-
         birthResultDiv.textContent =
-          `満年齢：${age}歳\n数え年：${countAge}歳\n誕生日の曜日：${weekday}曜日\n生まれてから：\n- 日数：${days}日\n- 年/月/週/日：${years}年 ${months}か月 ${weeks}週 ${remDays}日`;
+          `満年齢：${age}歳\n数え年：${countAge}歳\n誕生日の曜日：${weekday}曜日\n生まれてから：${days}日`;
       });
       // 日数計算
       const baseDateInput = document.getElementById("baseDate");
@@ -327,24 +317,10 @@
 
         let totalDays = Math.floor((resultDate - base) / (24 * 60 * 60 * 1000));
         if (includeToday) totalDays++;
-        const y = resultDate.getFullYear();
-        const m = resultDate.getMonth() + 1;
-        const d = resultDate.getDate();
-        const w = ["日", "月", "火", "水", "木", "金", "土"][resultDate.getDay()];
-
-        const years = resultDate.getFullYear() - base.getFullYear();
-        let months = resultDate.getMonth() - base.getMonth();
-        if (months < 0) {
-          months += 12;
-        }
-        const weeks = Math.floor((totalDays % 365) / 7);
-        const daysW = (totalDays % 365) % 7;
-
 
         afterResultDiv.textContent =
-          `加算後の日付：${y}年${m}月${d}日（${w}曜日）\n` +
-          `日数：${totalDays} 日\n週数：${weeks} 週 + ${daysW} 日\n月数：${months} ヶ月\n` +
-          `年数：${years} 年`;
+          `加算後の日付：${resultDate.getFullYear()}年${resultDate.getMonth() + 1}月${resultDate.getDate()}日（${["日", "月", "火", "水", "木", "金", "土"][resultDate.getDay()]}曜日）\n` +
+          `日数：${totalDays} 日`;
       });
     })();
   </script>
