@@ -505,15 +505,20 @@ root.querySelector("#entry-cancel").onclick = closeModal;
 root.querySelector("#sheet-new").onclick = () => newSheetModal.style.display = "flex";
 newSheetCancelButton.onclick = () => newSheetModal.style.display = "none";
 newSheetCreateButton.onclick = () => {
-  const name = newSheetNameInput.value.trim();
-  if (name && !sheets[name]) {
-    sheets[name] = { title: name, data: [] };
-    currentSheet = name;
-    renderSheetOptions();
-    renderTable();
-    saveSheets();
-    newSheetModal.style.display = "none";
-  }
+  const title = newSheetNameInput.value.trim();
+  if (!title) return;
+
+  const exists = Object.values(sheets).some(s => s.title === title);
+  if (exists) return;
+
+  const id = Date.now().toString();
+  sheets[id] = { title: title, data: [] };
+  currentSheet = id;
+  saveSheets();
+  renderSheetOptions();
+  combo.value = title;
+  renderTable();
+  newSheetModal.style.display = "none";
 };
 combo.addEventListener("change", () => {
   const title = combo.value.trim();
