@@ -283,7 +283,6 @@ const modal = root.querySelector("#entry-modal");
 const tableBody = root.querySelector("#cs-table tbody");
 const combo = document.getElementById("sheet-combo");
 const datalist = document.getElementById("sheet-options");
-const titleElem = root.querySelector("#sheet-title");
 const newSheetModal = root.querySelector("#new-sheet-modal");
 const newSheetNameInput = root.querySelector("#new-sheet-name");
 const newSheetCancelButton = root.querySelector("#new-sheet-cancel");
@@ -543,12 +542,7 @@ root.querySelector("#sheet-delete").onclick = () => {
     saveSheets();
   });
 };
-titleElem.onblur = () => {
-  if (currentSheet && sheets[currentSheet]) {
-    sheets[currentSheet].title = titleElem.textContent.trim();
-    saveSheets();
-  }
-};
+
 root.querySelector("#export-csv").onclick = () => {
   if (!currentSheet || !sheets[currentSheet]) return;
   const rows = sheets[currentSheet].data;
