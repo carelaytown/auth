@@ -117,14 +117,23 @@
   transform: translate(-50%, -50%);
   background: white;
   border: 1px solid #ccc;
-  padding: 24px;
-  width: 440px;
+  padding: 28px;
+  width: 480px;
+  min-height: 400px;
+  border-radius: 12px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.25);
   border-radius: 10px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 #toolcalendar-app .modal input, #toolcalendar-app .modal textarea, #toolcalendar-app .modal select {
   width: 100%;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
+  padding: 10px;
+  font-size: 16px;
+}
+#toolcalendar-app .modal textarea {
+  height: 100px;
+  resize: vertical;
 }
 #toolcalendar-app .modal-overlay {
   display: none;
@@ -173,26 +182,43 @@
     originalDateRef = null;
   };
 
-  const saveEvent = () => {
-    const time = document.getElementById('eventTime').value;
-    const title = document.getElementById('eventTitle').value;
-    const desc = document.getElementById('eventDesc').value;
-    const repeat = document.getElementById('eventRepeat').value;
-    if (!title) return;
-    const data = getData();
-    if (!data[originalDateRef]) data[originalDateRef] = [];
-    const base = data[originalDateRef][editingIndex] || {};
-    const newEvent = {
-      time, title, desc, repeat,
-      exceptions: base.exceptions || [],
-      repeatUntil: base.repeatUntil || null
-    };
-    if (editingIndex !== null) {
-      data[originalDateRef][editingIndex] = newEvent;
-    } else {
-      data[originalDateRef].push(newEvent);
+  
+const saveEvent = () => {
+  const time = document.getElementById('eventTime').value;
+  const title = document.getElementById('eventTitle').value;
+  const desc = document.getElementById('eventDesc').value;
+  const repeat = document.getElementById('eventRepeat').value;
+  if (!title) return;
+  const data = getData();
+
+  const repeatCount = 12;
+  const startDate = new Date(selectedDate);
+
+  if (repeat !== "none") {
+    for (let i = 0; i < repeatCount; i++) {
+      const date = new Date(startDate);
+      if (repeat === "weekly") {
+        date.setDate(date.getDate() + 7 * i);
+      } else if (repeat === "monthly") {
+        date.setMonth(date.getMonth() + i);
+      }
+      const key = formatDate(date);
+      if (!data[key]) data[key] = [];
+      data[key].push({ time, title, desc, repeat: "none" });
     }
-    setData(data);
+  } else {
+    if (!data[selectedDate]) data[selectedDate] = [];
+    const base = data[selectedDate][editingIndex] || {};
+    const newEvent = { time, title, desc, repeat, exceptions: base.exceptions || [], repeatUntil: base.repeatUntil || null };
+    if (editingIndex !== null) {
+      data[selectedDate][editingIndex] = newEvent;
+    } else {
+      data[selectedDate].push(newEvent);
+    }
+  }
+
+  setData(data);
+
     closeModal();
     updateDisplay();
   };
