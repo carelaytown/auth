@@ -205,13 +205,17 @@
   if (!event && !(selectedDate === originalDateRef && deleteAll)) return;
 
   if (selectedDate === originalDateRef && deleteAll) {
-    // eventがnullでも同一内容のイベントを強制削除
+    // 「以降すべて削除」で起点を強制削除
     data[originalDateRef] = events.filter(e =>
       !(e.time === (event?.time || "") &&
         e.title === (event?.title || "") &&
         e.desc === (event?.desc || ""))
     );
     if (data[originalDateRef].length === 0) delete data[originalDateRef];
+  } else if (selectedDate === originalDateRef && !deleteAll) {
+    // 「この日だけ削除」で起点を完全削除
+    events.splice(editingIndex, 1);
+    if (events.length === 0) delete data[originalDateRef];
   } else if (event.repeat !== 'none') {
     if (deleteAll) {
       event.repeatUntil = selectedDate;
