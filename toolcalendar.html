@@ -199,15 +199,19 @@
   const deleteEvent = (deleteAll = false) => {
   const data = getData();
 
-  // originalDateのイベント群を取得
   const events = data[originalDateRef] || [];
   const event = editingIndex !== null ? events[editingIndex] : null;
 
-  if (!event) return;
+  if (!event && !(selectedDate === originalDateRef && deleteAll)) return;
 
   if (selectedDate === originalDateRef && deleteAll) {
-    events.splice(editingIndex, 1);
-    if (events.length === 0) delete data[originalDateRef];
+    // eventがnullでも同一内容のイベントを強制削除
+    data[originalDateRef] = events.filter(e =>
+      !(e.time === (event?.time || "") &&
+        e.title === (event?.title || "") &&
+        e.desc === (event?.desc || ""))
+    );
+    if (data[originalDateRef].length === 0) delete data[originalDateRef];
   } else if (event.repeat !== 'none') {
     if (deleteAll) {
       event.repeatUntil = selectedDate;
