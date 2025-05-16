@@ -123,7 +123,7 @@
 
 #toolcheck-app .sheet-combo-wrapper {
   position: relative;
-  width: 250px;
+  width: 400px;
 }
 #toolcheck-app .sheet-combo-wrapper input {
   width: 100%;
@@ -357,17 +357,7 @@ function renderSheetOptions() {
     opt.value = sheet.title;
     datalist.appendChild(opt);
   });
-  Object.values(sheets).forEach(sheet => {
-    const opt = document.createElement("option");
-    opt.value = sheet.title;
-    datalist.appendChild(opt);
-  });
-  Object.keys(sheets).forEach(name => {
-    const opt = document.createElement("option");
-    opt.value = name;
-    opt.textContent = name;
-    datalist.appendChild(opt);
-  });
+
   if (!currentSheet && Object.keys(sheets).length > 0) {
     currentSheet = Object.keys(sheets)[0];
   }
@@ -386,7 +376,7 @@ function renderTable() {
       return sortConfig.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
     });
   }
-  combo.value = sheets[currentSheet]?.title || "新しいチェック表";
+  titleElem.textContent = sheets[currentSheet]?.title || "新しいチェック表";
   tableBody.innerHTML = "";
 
   
@@ -526,41 +516,23 @@ newSheetCreateButton.onclick = () => {
   }
 };
 combo.addEventListener("change", () => {
-  const name = combo.value;
-  if (sheets[name]) {
-    currentSheet = name;
+  const title = combo.value.trim();
+  const found = Object.entries(sheets).find(([key, val]) => val.title === title);
+  if (found) {
+    currentSheet = found[0];
     renderTable();
   }
 });
+
 combo.addEventListener("blur", () => {
   const newTitle = combo.value.trim();
   const oldKey = currentSheet;
 
   if (!newTitle || !sheets[oldKey]) return;
 
-  // 既存 title と重複チェック（自分以外）
   const isDuplicate = Object.entries(sheets).some(([key, s]) => {
     return s.title === newTitle && key !== oldKey;
   });
-  if (isDuplicate) return;
-
-  // title 更新
-  sheets[oldKey].title = newTitle;
-
-  // key 変更（必要な場合）
-  if (oldKey !== newTitle) {
-    sheets[newTitle] = sheets[oldKey];
-    delete sheets[oldKey];
-    currentSheet = newTitle;
-  }
-
-  saveSheets();
-  renderSheetOptions();
-  renderTable();
-});
-  if (!newTitle || !sheets[oldKey]) return;
-
-  const isDuplicate = Object.values(sheets).some(s => s.title === newTitle && s !== sheets[oldKey]);
   if (isDuplicate) return;
 
   sheets[oldKey].title = newTitle;
@@ -585,7 +557,6 @@ root.querySelector("#sheet-delete").onclick = () => {
     saveSheets();
   });
 };
-
 root.querySelector("#export-csv").onclick = () => {
   if (!currentSheet || !sheets[currentSheet]) return;
   const rows = sheets[currentSheet].data;
