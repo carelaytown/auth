@@ -515,6 +515,10 @@ newSheetCreateButton.onclick = () => {
   sheets[id] = { title: title, data: [] };
   currentSheet = id;
   saveSheets();
+
+  renderSheetOptions();
+  combo.value = "";
+  combo.value = title;
   renderSheetOptions();
   combo.value = title;
   renderTable();
