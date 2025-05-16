@@ -516,8 +516,9 @@ newSheetCreateButton.onclick = () => {
 };
 combo.addEventListener("change", () => {
   const name = combo.value;
-  if (sheets[name]) {
-    currentSheet = name;
+  const found = Object.entries(sheets).find(([_, v]) => v.title === name);
+  if (found) {
+    currentSheet = found[0];
     renderTable();
   }
 });
