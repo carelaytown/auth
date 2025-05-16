@@ -1,83 +1,83 @@
 <style>
 #tooldays-app {
-      font-family: "Segoe UI", sans-serif;
-      background: #e1ecf7;
-      padding: 10px 20px 20px;
-      border-radius: 16px;
-      max-width: 1000px;
-      margin: auto;
-    }
+    font-family: "Segoe UI", sans-serif;
+    background: #e1ecf7;
+    padding: 10px 20px 20px;
+    border-radius: 16px;
+    max-width: 1000px;
+    margin: auto;
+  }
 
-    #tooldays-app .tool-columns,
+  #tooldays-app .tool-columns,
+  #tooldays-app .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+
+  #tooldays-app .tool-column,
+  #tooldays-app .panel {
+    flex: 1;
+    min-width: 300px;
+    background: white;
+    border-radius: 12px;
+    padding: 10px 20px 20px;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  #tooldays-app h2 {
+    border-left: 6px solid #4a90e2;
+    padding-left: 10px;
+    margin-bottom: 5px;
+  }
+
+  #tooldays-app label {
+    display: flex;
+    align-items: center;
+    margin: 5px 0;
+    white-space: nowrap;
+  }
+
+  #tooldays-app input,
+  #tooldays-app select {
+    padding: 4px;
+    margin-left: 6px;
+    width: auto;
+  }
+
+  #tooldays-app .inline-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+  }
+
+  #tooldays-app .inline-form input[type="number"] {
+    width: 80px;
+  }
+
+  #tooldays-app .result {
+    background: #dde7f2;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 6px;
+    white-space: pre-line;
+    font-weight: bold;
+    font-size: 1.1em;
+  }
+
+  @media (max-width: 768px) {
     #tooldays-app .row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
+      flex-direction: column;
     }
+  }
 
-    #tooldays-app .tool-column,
-    #tooldays-app .panel {
-      flex: 1;
-      min-width: 300px;
-      background: white;
-      border-radius: 12px;
-      padding: 10px 20px 20px;
-      margin-bottom: 5px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-    }
-
-    #tooldays-app h2 {
-      border-left: 6px solid #4a90e2;
-      padding-left: 10px;
-      margin-bottom: 5px;
-    }
-
-    #tooldays-app label {
-      display: flex;
-      align-items: center;
-      margin: 5px 0;
-      white-space: nowrap;
-    }
-
-    #tooldays-app input,
-    #tooldays-app select {
-      padding: 4px;
-      margin-left: 6px;
-      width: auto;
-    }
-
-    #tooldays-app .inline-form {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      align-items: center;
-    }
-
-    #tooldays-app .inline-form input[type="number"] {
-      width: 80px;
-    }
-
-    #tooldays-app .result {
-      background: #dde7f2;
-      padding: 10px;
-      margin-top: 10px;
-      border-radius: 6px;
-      white-space: pre-line;
-      font-weight: bold;
-      font-size: 1.1em;
-    }
-
-    @media (max-width: 768px) {
-      #tooldays-app .row {
-        flex-direction: column;
-      }
-    }
-
-    .error {
-      color: red;
-      font-size: 0.8em;
-      margin-left: 10px;
-    }
+  .error {
+    color: red;
+    font-size: 0.8em;
+    margin-left: 10px;
+  }
 </style>
 
 <div id="tooldays-app">
@@ -260,9 +260,6 @@
       const useTodayCheckbox = document.getElementById("useToday");
       const includeTodayCheckbox = document.getElementById("includeToday");
       const daysInput = document.getElementById("days");
-      const weeksInput = document.getElementById("weeks");
-      const monthsInput = document.getElementById("months");
-      const yearsInput = document.getElementById("years");
       const calcBtn = document.getElementById("calcBtn");
       const afterResultDiv = document.getElementById("afterResult");
       const baseDateError = document.getElementById("baseDateError");
@@ -300,24 +297,23 @@
         baseDateError.textContent = ""; // エラーメッセージをクリア
 
         const addDays = parseInt(daysInput.value) || 0;
-        const addWeeks = (parseInt(weeksInput.value) || 0) * 7;
-        const addMonths = parseInt(monthsInput.value) || 0;
-        const addYears = parseInt(yearsInput.value) ||
-          0;
         const includeToday = includeTodayCheckbox.checked;
 
         let resultDate = new Date(base);
-        resultDate.setDate(base.getDate() + addDays + addWeeks);
-        resultDate.setMonth(base.getMonth() + addMonths);
-        resultDate.setFullYear(base.getFullYear() + addYears);
-
+        resultDate.setDate(base.getDate() + addDays);
 
         let totalDays = Math.floor((resultDate - base) / (24 * 60 * 60 * 1000));
         if (includeToday) totalDays++;
 
+        const y = resultDate.getFullYear();
+        const m = resultDate.getMonth() + 1;
+        const d = resultDate.getDate();
+        const w = ["日", "月", "火", "水", "木", "金", "土"][resultDate.getDay()];
+
         afterResultDiv.textContent =
-          `加算後の日付：${resultDate.getFullYear()}年${resultDate.getMonth() + 1}月${resultDate.getDate()}日（${["日", "月", "火", "水", "木", "金", "土"][resultDate.getDay()]}曜日）\n` +
+          `加算後の日付：${y}年${m}月${d}日（${w}曜日）\n` +
           `日数：${totalDays} 日`;
       });
     })();
   </script>
+</div>
