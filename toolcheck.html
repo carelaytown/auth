@@ -351,6 +351,11 @@ function updateFilterOptions() {
 
 function renderSheetOptions() {
   datalist.innerHTML = "";
+  Object.values(sheets).forEach(sheet => {
+    const opt = document.createElement("option");
+    opt.value = sheet.title;
+    datalist.appendChild(opt);
+  });
   Object.keys(sheets).forEach(name => {
     const opt = document.createElement("option");
     opt.value = name;
@@ -360,7 +365,7 @@ function renderSheetOptions() {
   if (!currentSheet && Object.keys(sheets).length > 0) {
     currentSheet = Object.keys(sheets)[0];
   }
-  if (currentSheet) combo.value = currentSheet;
+  if (currentSheet) combo.value = sheets[currentSheet]?.title || "新しいチェック表";
 }
 function renderTable() {
   const data = (sheets[currentSheet]?.data || []).filter(item => {
@@ -516,22 +521,30 @@ newSheetCreateButton.onclick = () => {
 };
 combo.addEventListener("change", () => {
   const name = combo.value;
-  const found = Object.entries(sheets).find(([_, v]) => v.title === name);
-  if (found) {
-    currentSheet = found[0];
+  if (sheets[name]) {
+    currentSheet = name;
     renderTable();
   }
 });
 combo.addEventListener("blur", () => {
-  const newName = combo.value.trim();
-  if (currentSheet && sheets[currentSheet] && newName && !sheets[newName]) {
-    sheets[newName] = sheets[currentSheet];
-    delete sheets[currentSheet];
-    currentSheet = newName;
-    saveSheets();
-    renderSheetOptions();
-    renderTable();
+  const newTitle = combo.value.trim();
+  const oldKey = currentSheet;
+  if (!newTitle || !sheets[oldKey]) return;
+
+  const isDuplicate = Object.values(sheets).some(s => s.title === newTitle && s !== sheets[oldKey]);
+  if (isDuplicate) return;
+
+  sheets[oldKey].title = newTitle;
+
+  if (oldKey !== newTitle) {
+    sheets[newTitle] = sheets[oldKey];
+    delete sheets[oldKey];
+    currentSheet = newTitle;
   }
+
+  saveSheets();
+  renderSheetOptions();
+  renderTable();
 });
 root.querySelector("#sheet-delete").onclick = () => {
   if (!currentSheet) return;
