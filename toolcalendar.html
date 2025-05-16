@@ -26,12 +26,11 @@
     <label>繰り返し:</label>
     <select id="eventRepeat">
       <option value="none">繰り返しなし</option>
-      <option value="weekly">毎週</option>
-      <option value="monthly">毎月</option>
+      <option value="weekly">毎週（12回＝約3ヶ月）</option>
+      <option value="monthly">毎月（12回＝1年）</option>
     </select>
     <button id="saveEventBtn">保存</button>
-    <button id="deleteOneBtn">この日だけ削除</button>
-    <button id="deleteAllBtn">以降すべて削除</button>
+    <button id="deleteBtn">削除</button>
     <button id="cancelBtn">キャンセル</button>
   </div>
 </div>
@@ -118,8 +117,10 @@
   transform: translate(-50%, -50%);
   background: white;
   border: 1px solid #ccc;
-  padding: 15px;
-  width: 300px;
+  padding: 24px;
+  width: 440px;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 #toolcalendar-app .modal input, #toolcalendar-app .modal textarea, #toolcalendar-app .modal select {
   width: 100%;
@@ -355,8 +356,7 @@
     updateDisplay();
   };
   document.getElementById('saveEventBtn').onclick = saveEvent;
-  document.getElementById('deleteOneBtn').onclick = () => deleteEvent(false);
-  document.getElementById('deleteAllBtn').onclick = () => deleteEvent(true);
+  document.getElementById('deleteBtn').onclick = () => deleteEvent(false);
   document.getElementById('cancelBtn').onclick = closeModal;
 
   updateDisplay();
