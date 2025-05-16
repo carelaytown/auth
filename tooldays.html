@@ -300,12 +300,11 @@
         const includeToday = includeTodayCheckbox.checked;
 
         let resultDate = new Date(base);
-        resultDate.setDate(base.getDate() + addDays);
+        resultDate.setDate(base.getDate() + addDays - (includeToday ? 1 : 0)); // 日付調整
 
         let totalDays = Math.floor((resultDate - base) / (24 * 60 * 60 * 1000));
         if (includeToday) {
           totalDays++;
-          resultDate.setDate(resultDate.getDate() + 1); // 加算後の日付を1日進める
         }
 
         const y = resultDate.getFullYear();
