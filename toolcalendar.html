@@ -197,32 +197,28 @@
   };
 
   const deleteEvent = (deleteAll = false) => {
-    if (editingIndex === null) return;
-    const data = getData();
-    const event = data[originalDateRef][editingIndex];
-    if (selectedDate === originalDateRef) {
-  // 起点そのものを完全削除
-  data[originalDateRef].splice(editingIndex, 1);
-  if (data[originalDateRef].length === 0) delete data[originalDateRef];
-} else if (event.repeat !== 'none') {
-  if (deleteAll) {
-    event.repeatUntil = selectedDate;
-  } else {
-    event.exceptions = event.exceptions || [];
-    if (!event.exceptions.includes(selectedDate)) event.exceptions.push(selectedDate);
-  }
-} else {
-  data[originalDateRef].splice(editingIndex, 1);
-  if (data[originalDateRef].length === 0) delete data[originalDateRef];
-}
+  if (editingIndex === null) return;
+  const data = getData();
+  const event = data[originalDateRef][editingIndex];
+  if (selectedDate === originalDateRef && deleteAll) {
+    // 起点そのものを完全削除
+    data[originalDateRef].splice(editingIndex, 1);
+    if (data[originalDateRef].length === 0) delete data[originalDateRef];
+  } else if (event.repeat !== 'none') {
+    if (deleteAll) {
+      event.repeatUntil = selectedDate;
     } else {
-      data[originalDateRef].splice(editingIndex, 1);
-      if (data[originalDateRef].length === 0) delete data[originalDateRef];
+      event.exceptions = event.exceptions || [];
+      if (!event.exceptions.includes(selectedDate)) event.exceptions.push(selectedDate);
     }
-    setData(data);
-    closeModal();
-    updateDisplay();
-  };
+  } else {
+    data[originalDateRef].splice(editingIndex, 1);
+    if (data[originalDateRef].length === 0) delete data[originalDateRef];
+  }
+  setData(data);
+  closeModal();
+  updateDisplay();
+};
 
   const getEventsForDate = (dateStr) => {
     const data = getData();
