@@ -1,13 +1,19 @@
+
+<!-- CARELAY Googleドライブビューア ステップ④完全版 -->
 <div id="officegdrive-app">
   <h1 class="text-xl font-bold mb-4">Googleドライブビューア</h1>
+
   <div id="file-ops" class="flex flex-wrap gap-2 mb-4">
     <button onclick="navUp.click()" class="btn">⬆ 上のフォルダへ</button>
     <button onclick="renameFile()" class="btn">📝 名前変更</button>
     <button onclick="deleteFile()" class="btn">❌ 削除</button>
     <button onclick="createFolder()" class="btn">📁 フォルダ作成</button>
+    <select id="move-target" class="btn"></select>
     <button onclick="moveFile()" class="btn">🔀 移動</button>
   </div>
-  <div style="margin-bottom: 12px;"></div>
+
+  <div id="path-display" class="mb-2 text-sm text-gray-700"></div>
+
   <div id="drive-list" class="drive-box">読み込み中...</div>
 </div>
 
@@ -18,10 +24,6 @@
     max-width: 800px;
     margin: auto;
   }
-  #officegdrive-app h1 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
-  }
   .drive-box {
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -31,22 +33,20 @@
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   }
   .drive-item {
+    display: flex;
+    align-items: center;
     padding: 5px;
     margin: 4px 0;
     border-bottom: 1px solid #ddd;
     cursor: pointer;
   }
-  .drive-item.folder::before {
-    content: "📁 ";
+  .drive-item span {
+    flex: 1;
+    margin-left: 6px;
   }
-  .drive-item.file::before {
-    content: "📄 ";
-  }
-  .drive-item.selected {
-    background-color: #e0f3ff;
-    border-left: 4px solid #2196f3;
-  }
-
+  .drive-item.folder::before { content: "📁 "; }
+  .drive-item.file::before { content: "📄 "; }
+  .drive-item.selected { background-color: #e0f3ff; border-left: 4px solid #2196f3; }
   .btn {
     background-color: #e7f1ff;
     border: 1px solid #2196f3;
@@ -56,82 +56,98 @@
     cursor: pointer;
     transition: background-color 0.2s ease;
   }
-  .btn:hover {
-    background-color: #d0e7ff;
-  }
+  .btn:hover { background-color: #d0e7ff; }
+  select.btn { padding-right: 30px; }
 </style>
 
 <script>
 (() => {
-  const app = document.getElementById("officegdrive-app");
   const driveList = document.getElementById("drive-list");
+  const moveTarget = document.getElementById("move-target");
+  const pathDisplay = document.getElementById("path-display");
   const navUp = document.createElement("button");
   navUp.style.display = "none";
-  navUp.onclick = () => {
-    if (folderHistory.length > 1) {
-      folderHistory.pop(); // 現在のフォルダを除く
-      currentFolder = folderHistory[folderHistory.length - 1];
-      updateDisplay();
-    }
-  };
   document.body.appendChild(navUp);
+
+  let currentFolder = null;
+  let folderStack = [];
+  let selectedIds = new Set();
+  let folderMap = {}; // { name: id }
 
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
-  let currentFolder = null;
-  let folderHistory = [];
-  let selectedFileId = null;
-  let selectedItem = null;
+
+  const renderPath = () => {
+    pathDisplay.textContent = "現在のフォルダID: " + currentFolder;
+  };
+
+  const updateMoveTargetList = () => {
+    moveTarget.innerHTML = "";
+    Object.entries(folderMap).forEach(([name, id]) => {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = name + " (" + id.substring(0, 8) + ")";
+      moveTarget.appendChild(opt);
+    });
+  };
 
   const updateDisplay = () => {
-    fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
+    fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType)&pageSize=100`, {
       headers: { Authorization: "Bearer " + googleToken }
     })
     .then(res => res.json())
     .then(data => {
       driveList.innerHTML = "";
+      selectedIds.clear();
       if (!data.files || data.files.length === 0) {
         driveList.textContent = "ファイルがありません。";
         return;
       }
+
       data.files.forEach(file => {
         const div = document.createElement("div");
-        div.textContent = file.name;
         div.className = "drive-item " + (file.mimeType === "application/vnd.google-apps.folder" ? "folder" : "file");
 
-        div.onclick = (e) => {
-          if (selectedItem) selectedItem.classList.remove("selected");
-          selectedFileId = file.id;
-          selectedItem = div;
-          selectedItem.classList.add("selected");
-
-          // フォルダはダブルクリックで開く
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.onchange = (e) => {
+          if (checkbox.checked) selectedIds.add(file.id);
+          else selectedIds.delete(file.id);
         };
 
-        div.ondblclick = () => {
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        nameSpan.onclick = () => {
           if (file.mimeType === "application/vnd.google-apps.folder") {
-            folderHistory.push(file.id);
             currentFolder = file.id;
+            folderStack.push(file.id);
             updateDisplay();
           } else {
-            window.open(`https://drive.google.com/file/d/${file.id}/view`, "_blank");
+            window.open("https://drive.google.com/file/d/" + file.id + "/view", "_blank");
           }
         };
 
+        div.appendChild(checkbox);
+        div.appendChild(nameSpan);
         driveList.appendChild(div);
+
+        // フォルダ一覧収集用
+        if (file.mimeType === "application/vnd.google-apps.folder") {
+          folderMap[file.name] = file.id;
+        }
       });
-    })
-    .catch(err => {
-      driveList.textContent = "読み込みに失敗しました。連携状態やスコープを確認してください。";
-      console.error(err);
+
+      updateMoveTargetList();
+      renderPath();
     });
   };
 
   window.renameFile = () => {
-    if (!selectedFileId) return alert("ファイルを選択してください。");
-    const newName = prompt("新しい名前を入力してください：");
+    if (selectedIds.size !== 1) return alert("名前変更は1件のみ選択してください。");
+    const fileId = [...selectedIds][0];
+    const newName = prompt("新しい名前を入力：");
     if (!newName) return;
-    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId, {
+    fetch("https://www.googleapis.com/drive/v3/files/" + fileId, {
       method: "PATCH",
       headers: {
         Authorization: "Bearer " + googleToken,
@@ -142,19 +158,19 @@
   };
 
   window.deleteFile = () => {
-    if (!selectedFileId) return alert("ファイルを選択してください。");
-    if (!confirm("本当に削除しますか？")) return;
-    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId, {
-      method: "DELETE",
-      headers: {
-        Authorization: "Bearer " + googleToken
-      }
-    }).then(() => updateDisplay());
+    if (selectedIds.size === 0) return alert("削除対象を選択してください。");
+    if (!confirm("選択した " + selectedIds.size + " 件を削除しますか？")) return;
+    selectedIds.forEach(id => {
+      fetch("https://www.googleapis.com/drive/v3/files/" + id, {
+        method: "DELETE",
+        headers: { Authorization: "Bearer " + googleToken }
+      }).then(() => updateDisplay());
+    });
   };
 
   window.createFolder = () => {
-    const folderName = prompt("フォルダ名を入力してください：");
-    if (!folderName) return;
+    const name = prompt("新しいフォルダ名：");
+    if (!name) return;
     fetch("https://www.googleapis.com/drive/v3/files", {
       method: "POST",
       headers: {
@@ -162,7 +178,7 @@
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        name: folderName,
+        name: name,
         mimeType: "application/vnd.google-apps.folder",
         parents: [currentFolder]
       })
@@ -170,15 +186,22 @@
   };
 
   window.moveFile = () => {
-    if (!selectedFileId) return alert("ファイルを選択してください。");
-    const newParentId = prompt("移動先のフォルダIDを入力してください：");
-    if (!newParentId) return;
-    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId + "?addParents=" + newParentId + "&removeParents=" + currentFolder, {
-      method: "PATCH",
-      headers: {
-        Authorization: "Bearer " + googleToken
-      }
-    }).then(() => updateDisplay());
+    if (selectedIds.size === 0) return alert("移動対象を選択してください。");
+    const newParent = moveTarget.value;
+    selectedIds.forEach(id => {
+      fetch("https://www.googleapis.com/drive/v3/files/" + id + "?addParents=" + newParent + "&removeParents=" + currentFolder, {
+        method: "PATCH",
+        headers: { Authorization: "Bearer " + googleToken }
+      }).then(() => updateDisplay());
+    });
+  };
+
+  navUp.onclick = () => {
+    if (folderStack.length > 1) {
+      folderStack.pop();
+      currentFolder = folderStack[folderStack.length - 1];
+      updateDisplay();
+    }
   };
 
   if (googleToken) {
@@ -188,7 +211,7 @@
     .then(res => res.json())
     .then(data => {
       currentFolder = data.rootFolderId || 'root';
-      folderHistory = [currentFolder];
+      folderStack = [currentFolder];
       updateDisplay();
     })
     .catch(err => {
