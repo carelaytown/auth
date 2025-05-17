@@ -187,6 +187,10 @@
       googleToken = localStorage.getItem(tokenKey) || "";
 
       function fetchGoogleAccountEmail() {
+  if (!googleToken) {
+    showModal("Google連携が切れています。再連携してください", "reconnect");
+    return;
+  }
         if (!googleToken) return;
         fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
           headers: { Authorization: "Bearer " + googleToken }
@@ -276,7 +280,13 @@
       modal.style.display = "none";
       const target = modalTarget.trim().toLowerCase();
       if (modalAction === "add") {
-        const { data, error } = await supabase.from("applications").select("org_name, status").eq("email", target);
+        const { data, error 
+  if (modalState === "reconnect") {
+    hideModal();
+    handleGoogleAuth();
+    return;
+  }
+} = await supabase.from("applications").select("org_name, status").eq("email", target);
         if (!error && data.length > 0 && data[0].status === "approved") {
           localStorage.setItem("carelayUser", target);
           localStorage.setItem("carelayApproved", "ok");
@@ -319,8 +329,8 @@
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
   scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-  prompt: "consent",
-  prompt: "consent",
+  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
+  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
   callback: res => {
     if (res && res.access_token) {
       googleToken = res.access_token;
