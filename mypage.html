@@ -318,7 +318,7 @@
       }
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
-  scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
+  scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",
   callback: res => {
     if (res && res.access_token) {
       googleToken = res.access_token;
