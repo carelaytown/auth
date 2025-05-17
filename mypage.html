@@ -287,29 +287,13 @@
     }
 
     function handleGoogleAuth() {
-  if (googleToken) {
-    localStorage.removeItem("carelayGoogleToken");
-    googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-    googleBtn.textContent = "🔗 Googleで連携";
-    googleToken = "";
-    return;
-  }
-
-  const tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: clientId,
-    scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
-    callback: (tokenResponse) => {
-      if (tokenResponse && tokenResponse.access_token) {
-        googleToken = tokenResponse.access_token;
-        localStorage.setItem("carelayGoogleToken", googleToken);
-        googleStatus.textContent = "Google連携が完了しています。";
-        googleBtn.textContent = "🔓 連携解除";
+      if (googleToken) {
+        localStorage.removeItem("carelayGoogleToken");
+        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
+        googleBtn.textContent = "🔗 Googleで連携";
+        googleToken = "";
+        return;
       }
-    }
-  });
-
-  tokenClient.requestAccessToken();
-}
       google.accounts.oauth2.requestAccessToken({
         client_id: clientId,
         scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
