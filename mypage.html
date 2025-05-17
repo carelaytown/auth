@@ -198,7 +198,7 @@
             emailTag.style.fontSize = "13px";
             emailTag.style.color = "#555";
             emailTag.textContent = "連携中: " + user.email;
-            googleStatus.appendChild(emailTag);
+            googleStatus.textContent += "（" + user.email + "）";
           }
         });
       }
