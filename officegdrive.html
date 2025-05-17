@@ -1,7 +1,12 @@
 <div id="officegdrive-app">
   <h1>Googleドライブビューア（📂）</h1>
-  <div id="scope-info" style="font-size:13px; color:#555; margin-bottom:8px;"></div>
   <button id="nav-up">⬆ 上のフォルダへ</button>
+  <div id="file-ops" style="margin: 10px 0;">
+    <button onclick="renameFile()">📝 名前変更</button>
+    <button onclick="deleteFile()">❌ 削除</button>
+    <button onclick="createFolder()">📁 フォルダ作成</button>
+    <button onclick="moveFile()">🔀 移動</button>
+  </div>
   <div id="drive-list">読み込み中...</div>
 </div>
 
@@ -19,7 +24,7 @@
   #drive-list {
     border: 1px solid #ccc;
     padding: 10px;
-    height: 400px;
+    
     overflow-y: auto;
     background: #f9f9f9;
   }
