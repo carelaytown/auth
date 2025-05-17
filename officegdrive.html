@@ -1,7 +1,8 @@
 <div id="officegdrive-app">
-  <h1>Googleドライブビューア（📂）</h1>
-    <div id="file-ops" style="margin: 10px 0;">
-      <button onclick="renameFile()">📝 名前変更</button>
+  <h1>Googleドライブビューア</h1>
+  <div id="file-ops" style="margin: 10px 0;">
+    <button id="nav-up" onclick="navigateUp()">⬆ 上のフォルダへ</button>
+    <button onclick="renameFile()">📝 名前変更</button>
     <button onclick="deleteFile()">❌ 削除</button>
     <button onclick="createFolder()">📁 フォルダ作成</button>
     <button onclick="moveFile()">🔀 移動</button>
@@ -10,6 +11,23 @@
 </div>
 
 <style>
+  #file-ops button {
+    margin: 4px;
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    background-color: #f0f0f0;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  #file-ops button:hover {
+    background-color: #e0e0e0;
+  }
+  .drive-item.selected {
+    background-color: #d0e7ff;
+  }
+
   #officegdrive-app {
     font-family: sans-serif;
     padding: 20px;
@@ -58,6 +76,7 @@
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = null;
+  let selectedFile = null;
   let parentMap = {};
 
   // スコープの表示
@@ -134,14 +153,4 @@
     });
   }
 })();
-</script>
-
-<script>
-  let selectedFile = null;
-  function selectFile(elem) {
-    document.querySelectorAll('.file-item').forEach(el => el.classList.remove('selected'));
-    elem.classList.add('selected');
-    selectedFile = elem.textContent.trim();
-    console.log("Selected file:", selectedFile);
-  }
 </script>
