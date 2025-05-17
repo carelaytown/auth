@@ -7,7 +7,7 @@
     <button onclick="createFolder()" class="btn">📁 フォルダ作成</button>
     <button onclick="moveFile()" class="btn">🔀 移動</button>
   </div>
-  <div style="margin-bottom: 10px;"></div>
+  <div style="margin-bottom: 12px;"></div>
   <div id="drive-list" class="drive-box">読み込み中...</div>
 </div>
 
@@ -42,10 +42,14 @@
   .drive-item.file::before {
     content: "📄 ";
   }
+  .drive-item.selected {
+    background-color: #e0f3ff;
+    border-left: 4px solid #2196f3;
+  }
 
   .btn {
-    background-color: #f8f9fa;
-    border: 1px solid #ccc;
+    background-color: #e7f1ff;
+    border: 1px solid #2196f3;
     border-radius: 6px;
     padding: 6px 12px;
     font-size: 14px;
@@ -53,7 +57,7 @@
     transition: background-color 0.2s ease;
   }
   .btn:hover {
-    background-color: #e2e6ea;
+    background-color: #d0e7ff;
   }
 </style>
 
@@ -64,8 +68,9 @@
   const navUp = document.createElement("button");
   navUp.style.display = "none";
   navUp.onclick = () => {
-    if (parentMap[currentFolder]) {
-      currentFolder = parentMap[currentFolder];
+    if (folderHistory.length > 1) {
+      folderHistory.pop(); // 現在のフォルダを除く
+      currentFolder = folderHistory[folderHistory.length - 1];
       updateDisplay();
     }
   };
@@ -74,8 +79,9 @@
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = null;
-  let parentMap = {};
+  let folderHistory = [];
   let selectedFileId = null;
+  let selectedItem = null;
 
   const updateDisplay = () => {
     fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
@@ -92,16 +98,26 @@
         const div = document.createElement("div");
         div.textContent = file.name;
         div.className = "drive-item " + (file.mimeType === "application/vnd.google-apps.folder" ? "folder" : "file");
-        div.onclick = () => {
+
+        div.onclick = (e) => {
+          if (selectedItem) selectedItem.classList.remove("selected");
           selectedFileId = file.id;
+          selectedItem = div;
+          selectedItem.classList.add("selected");
+
+          // フォルダはダブルクリックで開く
+        };
+
+        div.ondblclick = () => {
           if (file.mimeType === "application/vnd.google-apps.folder") {
-            parentMap[file.id] = currentFolder;
+            folderHistory.push(file.id);
             currentFolder = file.id;
             updateDisplay();
           } else {
             window.open(`https://drive.google.com/file/d/${file.id}/view`, "_blank");
           }
         };
+
         driveList.appendChild(div);
       });
     })
@@ -172,6 +188,7 @@
     .then(res => res.json())
     .then(data => {
       currentFolder = data.rootFolderId || 'root';
+      folderHistory = [currentFolder];
       updateDisplay();
     })
     .catch(err => {
