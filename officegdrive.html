@@ -53,7 +53,7 @@
 
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
-  let currentFolder = "root";
+  let currentFolder = null;
   let parentMap = {};
 
   // スコープの表示
@@ -115,6 +115,19 @@
     }
   };
 
-  if (googleToken) updateDisplay();
+  if (googleToken) {
+    fetch("https://www.googleapis.com/drive/v3/about?fields=rootFolderId", {
+      headers: { Authorization: "Bearer " + googleToken }
+    })
+    .then(res => res.json())
+    .then(data => {
+      currentFolder = data.rootFolderId;
+      updateDisplay();
+    })
+    .catch(err => {
+      driveList.textContent = "ルートフォルダの取得に失敗しました。";
+      console.error(err);
+    });
+  }
 })();
 </script>
