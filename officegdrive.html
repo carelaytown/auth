@@ -1,13 +1,13 @@
 <div id="officegdrive-app">
   <h1 class="text-xl font-bold mb-4">Googleドライブビューア</h1>
   <div id="file-ops" class="flex flex-wrap gap-2 mb-4">
-    <button onclick="navUp.click()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">⬆ 上のフォルダへ</button>
-    <button onclick="renameFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">📝 名前変更</button>
-    <button onclick="deleteFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">❌ 削除</button>
-    <button onclick="createFolder()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">📁 フォルダ作成</button>
-    <button onclick="moveFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">🔀 移動</button>
+    <button onclick="navUp.click()" class="btn">⬆ 上のフォルダへ</button>
+    <button onclick="renameFile()" class="btn">📝 名前変更</button>
+    <button onclick="deleteFile()" class="btn btn-danger">❌ 削除</button>
+    <button onclick="createFolder()" class="btn">📁 フォルダ作成</button>
+    <button onclick="moveFile()" class="btn">🔀 移動</button>
   </div>
-  <div id="drive-list" class="rounded shadow bg-white min-h-[300px] p-3">読み込み中...</div>
+  <div id="drive-list" class="drive-box">読み込み中...</div>
 </div>
 
 <style>
@@ -21,10 +21,13 @@
     font-size: 1.5em;
     margin-bottom: 10px;
   }
-  #drive-list {
+  .drive-box {
     border: 1px solid #ccc;
-    overflow-y: auto;
-    background: #f9f9f9;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 300px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   }
   .drive-item {
     padding: 5px;
@@ -37,6 +40,27 @@
   }
   .drive-item.file::before {
     content: "📄 ";
+  }
+
+  .btn {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .btn:hover {
+    background-color: #f0f0f0;
+  }
+  .btn-danger {
+    color: white;
+    background-color: #dc3545;
+    border-color: #dc3545;
+  }
+  .btn-danger:hover {
+    background-color: #c82333;
   }
 </style>
 
