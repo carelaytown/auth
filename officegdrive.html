@@ -1,0 +1,93 @@
+<div id="officegdrive-app">
+  <h1>Googleドライブビューア（📂）</h1>
+  <button id="nav-up">⬆ 上のフォルダへ</button>
+  <div id="drive-list">読み込み中...</div>
+</div>
+
+<style>
+  #officegdrive-app {
+    font-family: sans-serif;
+    padding: 20px;
+    max-width: 800px;
+    margin: auto;
+  }
+  #officegdrive-app h1 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
+  #drive-list {
+    border: 1px solid #ccc;
+    padding: 10px;
+    height: 400px;
+    overflow-y: auto;
+    background: #f9f9f9;
+  }
+  .drive-item {
+    padding: 5px;
+    margin: 4px 0;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+  }
+  .drive-item.folder::before {
+    content: "📁 ";
+  }
+  .drive-item.file::before {
+    content: "📄 ";
+  }
+  #nav-up {
+    margin-bottom: 10px;
+  }
+</style>
+
+<script>
+(() => {
+  const app = document.getElementById("officegdrive-app");
+  const driveList = document.getElementById("drive-list");
+  const navUp = document.getElementById("nav-up");
+  let googleToken = localStorage.getItem("carelayGoogleToken_" + (localStorage.getItem("carelayUser") || ""));
+  let currentFolder = "root";
+  let parentMap = {};
+
+  const updateDisplay = () => {
+    fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
+      headers: { Authorization: "Bearer " + googleToken }
+    })
+    .then(res => res.json())
+    .then(data => {
+      driveList.innerHTML = "";
+      if (!data.files || data.files.length === 0) {
+        driveList.textContent = "ファイルがありません。";
+        return;
+      }
+      data.files.forEach(file => {
+        const div = document.createElement("div");
+        div.textContent = file.name;
+        div.className = "drive-item " + (file.mimeType === "application/vnd.google-apps.folder" ? "folder" : "file");
+        div.onclick = () => {
+          if (file.mimeType === "application/vnd.google-apps.folder") {
+            parentMap[file.id] = currentFolder;
+            currentFolder = file.id;
+            updateDisplay();
+          } else {
+            window.open(`https://drive.google.com/file/d/${file.id}/view`, "_blank");
+          }
+        };
+        driveList.appendChild(div);
+      });
+    })
+    .catch(err => {
+      driveList.textContent = "読み込みに失敗しました。連携状態を確認してください。";
+      console.error(err);
+    });
+  };
+
+  navUp.onclick = () => {
+    if (parentMap[currentFolder]) {
+      currentFolder = parentMap[currentFolder];
+      updateDisplay();
+    }
+  };
+
+  updateDisplay(); // 初期表示
+})();
+</script>
