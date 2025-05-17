@@ -198,7 +198,7 @@
             emailTag.style.fontSize = "13px";
             emailTag.style.color = "#555";
             emailTag.textContent = "連携中: " + user.email;
-            googleStatus.textContent += "（" + user.email + "）";
+            googleStatus.textContent = "Google連携が完了しています（" + user.email + "）";
           }
         });
       }
@@ -335,8 +335,9 @@ tokenClient.requestAccessToken();
     fetchCurrentOrg();
     renderAccountList();
     if (googleToken) {
-      googleStatus.textContent = "Google連携が完了しています。";
-      googleBtn.textContent = "🔓 連携解除";
+    fetchGoogleAccountEmail();
+    googleStatus.textContent = "Google連携が完了しています。";
+    googleBtn.textContent = "🔓 連携解除";
     }
 
     // イベント登録
