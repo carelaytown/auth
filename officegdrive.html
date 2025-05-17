@@ -3,10 +3,11 @@
   <div id="file-ops" class="flex flex-wrap gap-2 mb-4">
     <button onclick="navUp.click()" class="btn">⬆ 上のフォルダへ</button>
     <button onclick="renameFile()" class="btn">📝 名前変更</button>
-    <button onclick="deleteFile()" class="btn btn-danger">❌ 削除</button>
+    <button onclick="deleteFile()" class="btn">❌ 削除</button>
     <button onclick="createFolder()" class="btn">📁 フォルダ作成</button>
     <button onclick="moveFile()" class="btn">🔀 移動</button>
   </div>
+  <div style="margin-bottom: 10px;"></div>
   <div id="drive-list" class="drive-box">読み込み中...</div>
 </div>
 
@@ -43,7 +44,7 @@
   }
 
   .btn {
-    background-color: #ffffff;
+    background-color: #f8f9fa;
     border: 1px solid #ccc;
     border-radius: 6px;
     padding: 6px 12px;
@@ -52,15 +53,7 @@
     transition: background-color 0.2s ease;
   }
   .btn:hover {
-    background-color: #f0f0f0;
-  }
-  .btn-danger {
-    color: white;
-    background-color: #dc3545;
-    border-color: #dc3545;
-  }
-  .btn-danger:hover {
-    background-color: #c82333;
+    background-color: #e2e6ea;
   }
 </style>
 
@@ -82,6 +75,7 @@
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = null;
   let parentMap = {};
+  let selectedFileId = null;
 
   const updateDisplay = () => {
     fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
@@ -99,6 +93,7 @@
         div.textContent = file.name;
         div.className = "drive-item " + (file.mimeType === "application/vnd.google-apps.folder" ? "folder" : "file");
         div.onclick = () => {
+          selectedFileId = file.id;
           if (file.mimeType === "application/vnd.google-apps.folder") {
             parentMap[file.id] = currentFolder;
             currentFolder = file.id;
@@ -114,6 +109,60 @@
       driveList.textContent = "読み込みに失敗しました。連携状態やスコープを確認してください。";
       console.error(err);
     });
+  };
+
+  window.renameFile = () => {
+    if (!selectedFileId) return alert("ファイルを選択してください。");
+    const newName = prompt("新しい名前を入力してください：");
+    if (!newName) return;
+    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId, {
+      method: "PATCH",
+      headers: {
+        Authorization: "Bearer " + googleToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name: newName })
+    }).then(() => updateDisplay());
+  };
+
+  window.deleteFile = () => {
+    if (!selectedFileId) return alert("ファイルを選択してください。");
+    if (!confirm("本当に削除しますか？")) return;
+    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId, {
+      method: "DELETE",
+      headers: {
+        Authorization: "Bearer " + googleToken
+      }
+    }).then(() => updateDisplay());
+  };
+
+  window.createFolder = () => {
+    const folderName = prompt("フォルダ名を入力してください：");
+    if (!folderName) return;
+    fetch("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + googleToken,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        name: folderName,
+        mimeType: "application/vnd.google-apps.folder",
+        parents: [currentFolder]
+      })
+    }).then(() => updateDisplay());
+  };
+
+  window.moveFile = () => {
+    if (!selectedFileId) return alert("ファイルを選択してください。");
+    const newParentId = prompt("移動先のフォルダIDを入力してください：");
+    if (!newParentId) return;
+    fetch("https://www.googleapis.com/drive/v3/files/" + selectedFileId + "?addParents=" + newParentId + "&removeParents=" + currentFolder, {
+      method: "PATCH",
+      headers: {
+        Authorization: "Bearer " + googleToken
+      }
+    }).then(() => updateDisplay());
   };
 
   if (googleToken) {
