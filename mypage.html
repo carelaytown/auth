@@ -311,10 +311,11 @@
     function handleGoogleAuth() {
       if (googleToken) {
         localStorage.removeItem(tokenKey);
-        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-        googleBtn.textContent = "🔗 Googleで連携";
-        googleToken = "";
-        return;
+googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
+googleBtn.textContent = "🔗 Googleで連携";
+googleToken = "";
+window.open("https://accounts.google.com/logout", "_blank");
+return;
       }
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
