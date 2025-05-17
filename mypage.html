@@ -182,7 +182,33 @@
   let googleToken = localStorage.getItem("carelayGoogleToken") || "";
   let modalAction = "", modalTarget = "";
 
-  function initMypage() {
+  let tokenClient = null;
+
+    function initMypage() {
+      const supabase = window.supabaseClient;
+      if (!supabase || !window.google || !google.accounts || !google.accounts.oauth2) return;
+
+      const orgOutput = document.getElementById("orgOutput");
+      const emailOutput = document.getElementById("emailOutput");
+      const accountList = document.getElementById("accountList");
+      const googleStatus = document.getElementById("googleStatus");
+      const googleBtn = document.getElementById("googleConnectBtn");
+
+      const modal = document.getElementById("mypage-modal");
+      const modalMessage = document.getElementById("modalMessage");
+
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
+        callback: (tokenResponse) => {
+          if (tokenResponse && tokenResponse.access_token) {
+            googleToken = tokenResponse.access_token;
+            localStorage.setItem("carelayGoogleToken", googleToken);
+            googleStatus.textContent = "Google連携が完了しています。";
+            googleBtn.textContent = "🔓 連携解除";
+          }
+        }
+      });
     const supabase = window.supabaseClient;
     if (!supabase) return;
 
@@ -294,21 +320,7 @@
         googleToken = "";
         return;
       }
-
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets",
-        callback: (tokenResponse) => {
-          if (tokenResponse && tokenResponse.access_token) {
-            googleToken = tokenResponse.access_token;
-            localStorage.setItem("carelayGoogleToken", googleToken);
-            googleStatus.textContent = "Google連携が完了しています。";
-            googleBtn.textContent = "🔓 連携解除";
-          }
-        }
-      });
-
-      tokenClient.requestAccessToken();
+      if (tokenClient) tokenClient.requestAccessToken();
     }
       google.accounts.oauth2.requestAccessToken({
         client_id: clientId,
