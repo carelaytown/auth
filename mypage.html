@@ -311,15 +311,15 @@
     function handleGoogleAuth() {
       if (googleToken) {
         localStorage.removeItem(tokenKey);
-googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-googleBtn.textContent = "🔗 Googleで連携";
-googleToken = "";
-window.open("https://accounts.google.com/logout", "_blank");
-return;
+        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
+        googleBtn.textContent = "🔗 Googleで連携";
+        googleToken = "";
+        return;
       }
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
-  scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.email",
+  scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
+  prompt: "consent",
   callback: res => {
     if (res && res.access_token) {
       googleToken = res.access_token;
