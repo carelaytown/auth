@@ -1,16 +1,33 @@
 <div id="officegdrive-app">
-  <h1>Googleドライブビューア（📂）</h1>
-  <button id="nav-up">⬆ 上のフォルダへ</button>
-  <div id="file-ops" style="margin: 10px 0;">
-    <button onclick="renameFile()">📝 名前変更</button>
-    <button onclick="deleteFile()">❌ 削除</button>
-    <button onclick="createFolder()">📁 フォルダ作成</button>
-    <button onclick="moveFile()">🔀 移動</button>
+  <h1>Googleドライブビューア</h1>
+  <div id="scope-info" style="font-size:13px; color:#555; margin-bottom:8px;"></div>
+  
+  <div id="file-ops" style="margin-bottom: 12px;">
+    <button id="nav-up" onclick="navigateUp()">⬆ 上のフォルダへ</button>
   </div>
+
   <div id="drive-list">読み込み中...</div>
 </div>
 
 <style>
+  #file-ops button {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 12px;
+    margin-right: 8px;
+    box-shadow: 1px 1px 3px rgba(0,0,0,0.1);
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s ease;
+  }
+  #file-ops button:hover {
+    background-color: #e0e0e0;
+  }
+  .drive-item.selected {
+    background-color: #d0e7ff;
+  }
+
   #officegdrive-app {
     font-family: sans-serif;
     padding: 20px;
@@ -24,7 +41,7 @@
   #drive-list {
     border: 1px solid #ccc;
     padding: 10px;
-    
+    height: 400px;
     overflow-y: auto;
     background: #f9f9f9;
   }
@@ -59,6 +76,7 @@
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = null;
+  let selectedFile = null;
   let parentMap = {};
 
   // スコープの表示
