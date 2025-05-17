@@ -334,9 +334,7 @@ tokenClient.requestAccessToken();
     // 初期表示
     fetchCurrentOrg();
     renderAccountList();
-    if (googleToken) {
-    fetchGoogleAccountEmail();
-    googleStatus.textContent = "Google連携が完了しています。";
+    if (googleToken) {googleStatus.textContent = "Google連携が完了しています。";
     googleBtn.textContent = "🔓 連携解除";
     }
 
