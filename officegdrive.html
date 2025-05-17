@@ -1,5 +1,6 @@
 <div id="officegdrive-app">
   <h1>Googleドライブビューア（📂）</h1>
+  <div id="scope-info" style="font-size:13px; color:#555; margin-bottom:8px;"></div>
   <button id="nav-up">⬆ 上のフォルダへ</button>
   <div id="drive-list">読み込み中...</div>
 </div>
@@ -43,13 +44,36 @@
 // ✅ このアプリを使うには、Google連携時に以下のスコープが必要です：
 // https://www.googleapis.com/auth/drive
 // https://www.googleapis.com/auth/userinfo.email
+
 (() => {
   const app = document.getElementById("officegdrive-app");
   const driveList = document.getElementById("drive-list");
   const navUp = document.getElementById("nav-up");
-  let googleToken = localStorage.getItem("carelayGoogleToken_" + (localStorage.getItem("carelayUser") || ""));
+  const scopeInfo = document.getElementById("scope-info");
+
+  const userKey = localStorage.getItem("carelayUser") || "";
+  const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = "root";
   let parentMap = {};
+
+  // スコープの表示
+  if (googleToken) {
+    fetch("https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" + googleToken)
+      .then(res => res.json())
+      .then(data => {
+        if (data.scope) {
+          scopeInfo.textContent = "現在のトークンスコープ: " + data.scope;
+        } else {
+          scopeInfo.textContent = "スコープ情報を取得できませんでした。";
+        }
+      })
+      .catch(err => {
+        scopeInfo.textContent = "トークンスコープの取得に失敗しました。";
+        console.error(err);
+      });
+  } else {
+    scopeInfo.textContent = "Google連携されていません。";
+  }
 
   const updateDisplay = () => {
     fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
@@ -79,7 +103,7 @@
       });
     })
     .catch(err => {
-      driveList.textContent = "読み込みに失敗しました。連携状態を確認してください。";
+      driveList.textContent = "読み込みに失敗しました。連携状態やスコープを確認してください。";
       console.error(err);
     });
   };
@@ -91,6 +115,6 @@
     }
   };
 
-  updateDisplay(); // 初期表示
+  if (googleToken) updateDisplay();
 })();
 </script>
