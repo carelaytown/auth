@@ -1,9 +1,7 @@
 <div id="officegdrive-app">
-  <h1>Googleドライブビューア</h1>
-  
-  <div id="file-ops" style="margin: 10px 0;">
-  <button id="nav-up" class="btn" onclick="navigateUp()">⬆ 上のフォルダへ</button>
-    <button onclick="renameFile()">📝 名前変更</button>
+  <h1>Googleドライブビューア（📂）</h1>
+    <div id="file-ops" style="margin: 10px 0;">
+      <button onclick="renameFile()">📝 名前変更</button>
     <button onclick="deleteFile()">❌ 削除</button>
     <button onclick="createFolder()">📁 フォルダ作成</button>
     <button onclick="moveFile()">🔀 移動</button>
@@ -136,4 +134,14 @@
     });
   }
 })();
+</script>
+
+<script>
+  let selectedFile = null;
+  function selectFile(elem) {
+    document.querySelectorAll('.file-item').forEach(el => el.classList.remove('selected'));
+    elem.classList.add('selected');
+    selectedFile = elem.textContent.trim();
+    console.log("Selected file:", selectedFile);
+  }
 </script>
