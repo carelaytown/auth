@@ -276,16 +276,34 @@
       modal.style.display = "flex";
     }
 
-    async function modalOk() {
-      modal.style.display = "none";
-      const target = modalTarget.trim().toLowerCase();
-      if (modalAction === "add") {
-        const { data, error 
+    async 
+function modalOk() {
+  const target = modalTarget.trim().toLowerCase();
+  const value = modalInput.value.trim();
+
   if (modalState === "reconnect") {
     hideModal();
     handleGoogleAuth();
     return;
   }
+
+  if (modalState === "rename") {
+    if (!value) return;
+    renameFile(target, value);
+  }
+
+  if (modalState === "delete") {
+    deleteFile(target);
+  }
+
+  if (modalState === "create") {
+    if (!value) return;
+    createFolder(value);
+  }
+
+  hideModal();
+}
+
 } = await supabase.from("applications").select("org_name, status").eq("email", target);
         if (!error && data.length > 0 && data[0].status === "approved") {
           localStorage.setItem("carelayUser", target);
