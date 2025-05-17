@@ -318,7 +318,8 @@
       }
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
-  scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
+  scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+  prompt: "consent",
   prompt: "consent",
   callback: res => {
     if (res && res.access_token) {
