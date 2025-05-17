@@ -1,13 +1,13 @@
 <div id="officegdrive-app">
-  <h1>Googleドライブビューア（📂）</h1>
-  <button id="nav-up">⬆ 上のフォルダへ</button>
-  <div id="file-ops" style="margin: 10px 0;">
-    <button onclick="renameFile()">📝 名前変更</button>
-    <button onclick="deleteFile()">❌ 削除</button>
-    <button onclick="createFolder()">📁 フォルダ作成</button>
-    <button onclick="moveFile()">🔀 移動</button>
+  <h1 class="text-xl font-bold mb-4">Googleドライブビューア</h1>
+  <div id="file-ops" class="flex flex-wrap gap-2 mb-4">
+    <button onclick="navUp.click()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">⬆ 上のフォルダへ</button>
+    <button onclick="renameFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">📝 名前変更</button>
+    <button onclick="deleteFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">❌ 削除</button>
+    <button onclick="createFolder()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">📁 フォルダ作成</button>
+    <button onclick="moveFile()" class="rounded-md shadow px-4 py-2 bg-white hover:bg-gray-100 border text-sm font-medium">🔀 移動</button>
   </div>
-  <div id="drive-list">読み込み中...</div>
+  <div id="drive-list" class="rounded shadow bg-white min-h-[300px] p-3">読み込み中...</div>
 </div>
 
 <style>
@@ -23,8 +23,6 @@
   }
   #drive-list {
     border: 1px solid #ccc;
-    padding: 10px;
-    
     overflow-y: auto;
     background: #f9f9f9;
   }
@@ -40,45 +38,26 @@
   .drive-item.file::before {
     content: "📄 ";
   }
-  #nav-up {
-    margin-bottom: 10px;
-  }
 </style>
 
 <script>
-// ✅ このアプリを使うには、Google連携時に以下のスコープが必要です：
-// https://www.googleapis.com/auth/drive
-// https://www.googleapis.com/auth/userinfo.email
-
 (() => {
   const app = document.getElementById("officegdrive-app");
   const driveList = document.getElementById("drive-list");
-  const navUp = document.getElementById("nav-up");
-  const scopeInfo = document.getElementById("scope-info");
+  const navUp = document.createElement("button");
+  navUp.style.display = "none";
+  navUp.onclick = () => {
+    if (parentMap[currentFolder]) {
+      currentFolder = parentMap[currentFolder];
+      updateDisplay();
+    }
+  };
+  document.body.appendChild(navUp);
 
   const userKey = localStorage.getItem("carelayUser") || "";
   const googleToken = localStorage.getItem("carelayGoogleToken_" + userKey);
   let currentFolder = null;
   let parentMap = {};
-
-  // スコープの表示
-  if (googleToken) {
-    fetch("https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=" + googleToken)
-      .then(res => res.json())
-      .then(data => {
-        if (data.scope) {
-          scopeInfo.textContent = "現在のトークンスコープ: " + data.scope;
-        } else {
-          scopeInfo.textContent = "スコープ情報を取得できませんでした。";
-        }
-      })
-      .catch(err => {
-        scopeInfo.textContent = "トークンスコープの取得に失敗しました。";
-        console.error(err);
-      });
-  } else {
-    scopeInfo.textContent = "Google連携されていません。";
-  }
 
   const updateDisplay = () => {
     fetch(`https://www.googleapis.com/drive/v3/files?q='${currentFolder}'+in+parents+and+trashed=false&fields=files(id,name,mimeType,parents)&pageSize=100`, {
@@ -111,13 +90,6 @@
       driveList.textContent = "読み込みに失敗しました。連携状態やスコープを確認してください。";
       console.error(err);
     });
-  };
-
-  navUp.onclick = () => {
-    if (parentMap[currentFolder]) {
-      currentFolder = parentMap[currentFolder];
-      updateDisplay();
-    }
   };
 
   if (googleToken) {
