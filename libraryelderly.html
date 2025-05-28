@@ -1,4 +1,4 @@
-<!-- CARELAYタウン - 介護事業所検索（完全安定版） -->
+<!-- CARELAYタウン安定版：該当件数＋ページング横並び + 全件取得対応 -->
 
 <div id="libraryelderly-app">
   <h2 style="margin-bottom: 4px;">介護事業所検索（高齢者）</h2>
@@ -20,7 +20,10 @@
   </div>
 
   <div id="result-area">
-    <div id="result-count"></div>
+    <div id="result-header">
+      <span id="result-count"></span>
+      <span id="pagination"></span>
+    </div>
     <table id="result-table">
       <thead>
         <tr>
@@ -30,7 +33,6 @@
       </thead>
       <tbody></tbody>
     </table>
-    <div id="pagination"></div>
   </div>
 </div>
 
@@ -40,7 +42,6 @@
     padding: 16px;
     font-size: 14px;
   }
-
   #libraryelderly-app .filter-area {
     display: flex;
     flex-wrap: wrap;
@@ -48,7 +49,6 @@
     align-items: center;
     margin: 12px 0;
   }
-
   #libraryelderly-app select,
   #libraryelderly-app button {
     padding: 8px;
@@ -57,21 +57,25 @@
     font-size: 14px;
     min-width: 160px;
   }
-
   #libraryelderly-app button {
     background: #007bff;
     color: white;
     border: none;
     cursor: pointer;
   }
-
+  #libraryelderly-app #result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 12px 0;
+    font-size: 14px;
+  }
   #libraryelderly-app table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
-    margin-top: 16px;
+    margin-top: 0;
   }
-
   #libraryelderly-app th,
   #libraryelderly-app td {
     border: 1px solid #ccc;
@@ -79,26 +83,17 @@
     word-break: break-word;
     font-size: 13px;
   }
-
   #libraryelderly-app th {
     background: #f5f5f5;
   }
-
-  #libraryelderly-app #pagination {
-    margin-top: 12px;
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  #libraryelderly-app .page-btn {
-    padding: 6px 10px;
+  #libraryelderly-app #pagination button {
+    padding: 5px 10px;
+    margin-left: 4px;
     border: 1px solid #999;
     background: #fff;
     cursor: pointer;
   }
-
-  #libraryelderly-app .page-btn.active {
+  #libraryelderly-app #pagination button.active {
     background: #ccc;
   }
 </style>
@@ -132,7 +127,7 @@
 
     try {
       const { data, error } = await supabase.from(table).select("city,service_type").limit(10000);
-      if (error) return console.error("取得エラー:", error);
+      if (error || !data) return console.error("選択肢読み込み失敗", error);
 
       const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
       selCity.innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option>${c}</option>`).join('');
@@ -140,7 +135,7 @@
       const types = [...new Set(data.map(d => d.service_type).filter(Boolean))].sort();
       selType.innerHTML = '<option value="">サービスの種類を選択</option>' + types.map(s => `<option>${s}</option>`).join('');
     } catch (e) {
-      console.error("選択肢読み込み失敗", e);
+      console.error("都道府県変更エラー", e);
     }
   });
 
@@ -148,36 +143,36 @@
     const table = selPref.value;
     if (!table) return;
 
-    let query = supabase.from(table).select("*").limit(10000);
-    if (selCity.value) query = query.eq("city", selCity.value);
-    if (selType.value) query = query.eq("service_type", selType.value);
-
-    const { data, error } = await query;
-    if (error || !data) {
-      console.error("検索エラー:", error);
-      return;
+    let from = 0, to = 999, temp = [], chunk;
+    while (true) {
+      let query = supabase.from(table).select("*").range(from, to);
+      if (selCity.value) query = query.eq("city", selCity.value);
+      if (selType.value) query = query.eq("service_type", selType.value);
+      const { data, error } = await query;
+      if (error) {
+        console.error("データ取得エラー", error);
+        break;
+      }
+      chunk = data;
+      temp.push(...chunk);
+      if (chunk.length < 1000) break;
+      from += 1000;
+      to += 1000;
     }
 
-    currentData = data;
+    currentData = temp;
     currentPage = 1;
     renderTable();
   });
 
   function renderTable() {
     const start = (currentPage - 1) * pageSize;
-    const end = start + pageSize;
-    const slice = currentData.slice(start, end);
-
-    tbl.innerHTML = slice.map((r, i) => `
+    const pageItems = currentData.slice(start, start + pageSize);
+    tbl.innerHTML = pageItems.map((r, i) => `
       <tr>
-        <td>${start + i + 1}</td>
-        <td>${r.office_name || ""}</td>
-        <td>${r.service_type || ""}</td>
-        <td>${r.phone || ""}</td>
-        <td>${r.fax || ""}</td>
-        <td>${r.email || ""}</td>
-        <td>${r.address || ""}</td>
-        <td>${r.office_number || ""}</td>
+        <td>${start + i + 1}</td><td>${r.office_name || ""}</td><td>${r.service_type || ""}</td>
+        <td>${r.phone || ""}</td><td>${r.fax || ""}</td><td>${r.email || ""}</td>
+        <td>${r.address || ""}</td><td>${r.office_number || ""}</td>
         <td>${r.organization_name || ""}</td>
         <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
       </tr>`).join("");
@@ -188,11 +183,11 @@
 
   function renderPagination() {
     pagination.innerHTML = "";
-    const totalPages = Math.ceil(currentData.length / pageSize);
-    for (let i = 1; i <= totalPages; i++) {
+    const total = Math.ceil(currentData.length / pageSize);
+    for (let i = 1; i <= total; i++) {
       const btn = document.createElement("button");
-      btn.className = "page-btn" + (i === currentPage ? " active" : "");
       btn.textContent = i;
+      btn.className = i === currentPage ? "active" : "";
       btn.onclick = () => {
         currentPage = i;
         renderTable();
