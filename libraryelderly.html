@@ -1,128 +1,85 @@
-<!-- CARELAYタウン｜全国介護事業所検索アプリ -->
-<div id="libraryelderly-app" class="p-4 text-sm">
-  <div class="mb-4">
-    <label>都道府県：<select id="filter-prefecture" class="border p-1"></select></label>
-    <label class="ml-4">市区町村：<select id="filter-city" class="border p-1"></select></label>
-    <label class="ml-4">サービスの種類：<select id="filter-service" class="border p-1"></select></label>
+
+<div id="libraryelderly-app">
+  <h2>介護事業所検索（高齢者）</h2>
+  <div>
+    <label for="prefSelect">都道府県：</label>
+    <select id="prefSelect"><option value="">すべて</option></select>
+
+    <label for="citySelect">市区町村：</label>
+    <select id="citySelect"><option value="">すべて</option></select>
+
+    <label for="serviceSelect">サービス種別：</label>
+    <select id="serviceSelect"><option value="">すべて</option></select>
+
+    <button id="searchBtn">表示</button>
   </div>
-  <div id="table-container" class="overflow-x-auto border rounded">
-    <table class="min-w-full text-left">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-2 py-1">No</th>
-          <th class="px-2 py-1">事業所名</th>
-          <th class="px-2 py-1">サービスの種類</th>
-          <th class="px-2 py-1">電話番号</th>
-          <th class="px-2 py-1">FAX</th>
-          <th class="px-2 py-1">Email</th>
-          <th class="px-2 py-1">住所</th>
-          <th class="px-2 py-1">事業所番号</th>
-          <th class="px-2 py-1">法人名称</th>
-          <th class="px-2 py-1">ホームページ</th>
-        </tr>
-      </thead>
-      <tbody id="result-body"></tbody>
-    </table>
-  </div>
-  <div class="mt-4 flex justify-between">
-    <button id="prev-page" class="px-2 py-1 bg-gray-200 rounded">前へ</button>
-    <span id="page-info"></span>
-    <button id="next-page" class="px-2 py-1 bg-gray-200 rounded">次へ</button>
-  </div>
+
+  <table id="resultTable">
+    <thead>
+      <tr>
+        <th>#</th><th>事業所名</th><th>サービス</th><th>法人名</th><th>電話</th><th>市区町村</th><th>URL</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 </div>
 
-<!-- Supabase JS ライブラリ（UMD形式） -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js" onload="startApp()"></script>
-
 <script>
-function startApp() {
-  (() => {
-    const supabase = window.supabase.createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
+(() => {
+  const appId = "libraryelderly-app";
+  const supabase = window.supabase.createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
 
-    const limit = 100;
-    let page = 0;
-    let allData = [];
+  const prefSel = document.getElementById("prefSelect");
+  const citySel = document.getElementById("citySelect");
+  const servSel = document.getElementById("serviceSelect");
+  const searchBtn = document.getElementById("searchBtn");
+  const tbody = document.querySelector("#resultTable tbody");
 
-    const filters = {
-      prefecture: '',
-      city: '',
-      service_type: ''
-    };
+  async function initSelectors() {
+    const { data, error } = await supabase.from("facilities").select("prefecture, city, service_type").limit(10000);
+    if (error) { console.error(error); return; }
 
-    const $ = id => document.getElementById(id);
+    const prefs = new Set(), cities = new Set(), services = new Set();
+    data.forEach(d => {
+      if (d.prefecture) prefs.add(d.prefecture);
+      if (d.city) cities.add(d.city);
+      if (d.service_type) services.add(d.service_type);
+    });
 
-    async function fetchData() {
-      const { data, error } = await supabase.from('facilities').select('*');
-      if (error) return console.error(error);
-      allData = data;
-      populateFilters();
-      render();
-    }
+    [...prefs].sort().forEach(p => prefSel.innerHTML += `<option>${p}</option>`);
+    [...cities].sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
+    [...services].sort().forEach(s => servSel.innerHTML += `<option>${s}</option>`);
+  }
 
-    function populateFilters() {
-      const prefs = [...new Set(allData.map(x => x.prefecture))];
-      const services = [...new Set(allData.map(x => x.service_type))];
-      $('filter-prefecture').innerHTML = '<option value="">すべて</option>' + prefs.map(p => `<option>${p}</option>`).join('');
-      $('filter-service').innerHTML = '<option value="">すべて</option>' + services.map(s => `<option>${s}</option>`).join('');
-      $('filter-prefecture').onchange = e => {
-        filters.prefecture = e.target.value;
-        filters.city = '';
-        populateCities();
-        page = 0;
-        render();
-      };
-      $('filter-city').onchange = e => {
-        filters.city = e.target.value;
-        page = 0;
-        render();
-      };
-      $('filter-service').onchange = e => {
-        filters.service_type = e.target.value;
-        page = 0;
-        render();
-      };
-      populateCities();
-    }
+  async function searchFacilities() {
+    tbody.innerHTML = "";
+    let query = supabase.from("facilities").select("*").limit(500);
+    if (prefSel.value) query = query.eq("prefecture", prefSel.value);
+    if (citySel.value) query = query.eq("city", citySel.value);
+    if (servSel.value) query = query.eq("service_type", servSel.value);
 
-    function populateCities() {
-      const cities = [...new Set(allData.filter(x => !filters.prefecture || x.prefecture === filters.prefecture).map(x => x.city))];
-      $('filter-city').innerHTML = '<option value="">すべて</option>' + cities.map(c => `<option>${c}</option>`).join('');
-    }
+    const { data, error } = await query;
+    if (error) { console.error(error); return; }
 
-    function render() {
-      const filtered = allData.filter(x =>
-        (!filters.prefecture || x.prefecture === filters.prefecture) &&
-        (!filters.city || x.city === filters.city) &&
-        (!filters.service_type || x.service_type === filters.service_type)
-      );
-      const start = page * limit;
-      const pageData = filtered.slice(start, start + limit);
-      $('result-body').innerHTML = pageData.map((row, i) => `
-        <tr>
-          <td class="px-2 py-1">${start + i + 1}</td>
-          <td class="px-2 py-1">${row.office_name || ''}</td>
-          <td class="px-2 py-1">${row.service_type || ''}</td>
-          <td class="px-2 py-1">${row.phone || ''}</td>
-          <td class="px-2 py-1">${row.fax || ''}</td>
-          <td class="px-2 py-1">${row.email || ''}</td>
-          <td class="px-2 py-1">${row.address || ''}</td>
-          <td class="px-2 py-1">${row.office_number || ''}</td>
-          <td class="px-2 py-1">${row.organization_name || ''}</td>
-          <td class="px-2 py-1">${row.url ? `<a href="${row.url}" target="_blank" class="text-blue-600 underline">リンク</a>` : ''}</td>
-        </tr>
-      `).join('');
-      $('page-info').textContent = `ページ ${page + 1} / ${Math.ceil(filtered.length / limit)}`;
-      $('prev-page').disabled = page === 0;
-      $('next-page').disabled = start + limit >= filtered.length;
-    }
+    data.forEach((item, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${idx + 1}</td>
+        <td>${item.office_name || ""}</td>
+        <td>${item.service_type || ""}</td>
+        <td>${item.organization_name || ""}</td>
+        <td>${item.phone || ""}</td>
+        <td>${item.city || ""}</td>
+        <td>${item.url ? `<a href="${item.url}" target="_blank">リンク</a>` : ""}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-    $('prev-page').onclick = () => { if (page > 0) { page--; render(); } };
-    $('next-page').onclick = () => { page++; render(); };
-
-    fetchData();
-  })();
-}
+  searchBtn.addEventListener("click", searchFacilities);
+  window.addEventListener("DOMContentLoaded", initSelectors);
+})();
 </script>
