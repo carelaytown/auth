@@ -31,96 +31,98 @@
   </div>
 </div>
 
-<!-- Supabase JS ライブラリの読み込み -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
+<!-- Supabase JS ライブラリ（UMD形式） -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js" onload="startApp()"></script>
 
 <script>
-(() => {
-  const supabase = supabase.createClient(
-    'https://viihcgkjzzhkdiwdzdex.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-  );
-
-  const limit = 100;
-  let page = 0;
-  let allData = [];
-
-  const filters = {
-    prefecture: '',
-    city: '',
-    service_type: ''
-  };
-
-  const $ = id => document.getElementById(id);
-
-  async function fetchData() {
-    const { data, error } = await supabase.from('facilities').select('*');
-    if (error) return console.error(error);
-    allData = data;
-    populateFilters();
-    render();
-  }
-
-  function populateFilters() {
-    const prefs = [...new Set(allData.map(x => x.prefecture))];
-    const services = [...new Set(allData.map(x => x.service_type))];
-    $('filter-prefecture').innerHTML = '<option value="">すべて</option>' + prefs.map(p => `<option>${p}</option>`).join('');
-    $('filter-service').innerHTML = '<option value="">すべて</option>' + services.map(s => `<option>${s}</option>`).join('');
-    $('filter-prefecture').onchange = e => {
-      filters.prefecture = e.target.value;
-      filters.city = '';
-      populateCities();
-      page = 0;
-      render();
-    };
-    $('filter-city').onchange = e => {
-      filters.city = e.target.value;
-      page = 0;
-      render();
-    };
-    $('filter-service').onchange = e => {
-      filters.service_type = e.target.value;
-      page = 0;
-      render();
-    };
-    populateCities();
-  }
-
-  function populateCities() {
-    const cities = [...new Set(allData.filter(x => !filters.prefecture || x.prefecture === filters.prefecture).map(x => x.city))];
-    $('filter-city').innerHTML = '<option value="">すべて</option>' + cities.map(c => `<option>${c}</option>`).join('');
-  }
-
-  function render() {
-    const filtered = allData.filter(x =>
-      (!filters.prefecture || x.prefecture === filters.prefecture) &&
-      (!filters.city || x.city === filters.city) &&
-      (!filters.service_type || x.service_type === filters.service_type)
+function startApp() {
+  (() => {
+    const supabase = window.supabase.createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
     );
-    const start = page * limit;
-    const pageData = filtered.slice(start, start + limit);
-    $('result-body').innerHTML = pageData.map((row, i) => `
-      <tr>
-        <td class="px-2 py-1">${start + i + 1}</td>
-        <td class="px-2 py-1">${row.office_name || ''}</td>
-        <td class="px-2 py-1">${row.service_type || ''}</td>
-        <td class="px-2 py-1">${row.phone || ''}</td>
-        <td class="px-2 py-1">${row.fax || ''}</td>
-        <td class="px-2 py-1">${row.email || ''}</td>
-        <td class="px-2 py-1">${row.address || ''}</td>
-        <td class="px-2 py-1">${row.office_number || ''}</td>
-        <td class="px-2 py-1">${row.organization_name || ''}</td>
-        <td class="px-2 py-1">${row.url ? `<a href="${row.url}" target="_blank" class="text-blue-600 underline">リンク</a>` : ''}</td>
-      </tr>
-    `).join('');
-    $('page-info').textContent = `ページ ${page + 1} / ${Math.ceil(filtered.length / limit)}`;
-    $('prev-page').disabled = page === 0;
-    $('next-page').disabled = start + limit >= filtered.length;
-  }
 
-  $('prev-page').onclick = () => { if (page > 0) { page--; render(); } };
-  $('next-page').onclick = () => { page++; render(); };
+    const limit = 100;
+    let page = 0;
+    let allData = [];
 
-  fetchData();
-})();
+    const filters = {
+      prefecture: '',
+      city: '',
+      service_type: ''
+    };
+
+    const $ = id => document.getElementById(id);
+
+    async function fetchData() {
+      const { data, error } = await supabase.from('facilities').select('*');
+      if (error) return console.error(error);
+      allData = data;
+      populateFilters();
+      render();
+    }
+
+    function populateFilters() {
+      const prefs = [...new Set(allData.map(x => x.prefecture))];
+      const services = [...new Set(allData.map(x => x.service_type))];
+      $('filter-prefecture').innerHTML = '<option value="">すべて</option>' + prefs.map(p => `<option>${p}</option>`).join('');
+      $('filter-service').innerHTML = '<option value="">すべて</option>' + services.map(s => `<option>${s}</option>`).join('');
+      $('filter-prefecture').onchange = e => {
+        filters.prefecture = e.target.value;
+        filters.city = '';
+        populateCities();
+        page = 0;
+        render();
+      };
+      $('filter-city').onchange = e => {
+        filters.city = e.target.value;
+        page = 0;
+        render();
+      };
+      $('filter-service').onchange = e => {
+        filters.service_type = e.target.value;
+        page = 0;
+        render();
+      };
+      populateCities();
+    }
+
+    function populateCities() {
+      const cities = [...new Set(allData.filter(x => !filters.prefecture || x.prefecture === filters.prefecture).map(x => x.city))];
+      $('filter-city').innerHTML = '<option value="">すべて</option>' + cities.map(c => `<option>${c}</option>`).join('');
+    }
+
+    function render() {
+      const filtered = allData.filter(x =>
+        (!filters.prefecture || x.prefecture === filters.prefecture) &&
+        (!filters.city || x.city === filters.city) &&
+        (!filters.service_type || x.service_type === filters.service_type)
+      );
+      const start = page * limit;
+      const pageData = filtered.slice(start, start + limit);
+      $('result-body').innerHTML = pageData.map((row, i) => `
+        <tr>
+          <td class="px-2 py-1">${start + i + 1}</td>
+          <td class="px-2 py-1">${row.office_name || ''}</td>
+          <td class="px-2 py-1">${row.service_type || ''}</td>
+          <td class="px-2 py-1">${row.phone || ''}</td>
+          <td class="px-2 py-1">${row.fax || ''}</td>
+          <td class="px-2 py-1">${row.email || ''}</td>
+          <td class="px-2 py-1">${row.address || ''}</td>
+          <td class="px-2 py-1">${row.office_number || ''}</td>
+          <td class="px-2 py-1">${row.organization_name || ''}</td>
+          <td class="px-2 py-1">${row.url ? `<a href="${row.url}" target="_blank" class="text-blue-600 underline">リンク</a>` : ''}</td>
+        </tr>
+      `).join('');
+      $('page-info').textContent = `ページ ${page + 1} / ${Math.ceil(filtered.length / limit)}`;
+      $('prev-page').disabled = page === 0;
+      $('next-page').disabled = start + limit >= filtered.length;
+    }
+
+    $('prev-page').onclick = () => { if (page > 0) { page--; render(); } };
+    $('next-page').onclick = () => { page++; render(); };
+
+    fetchData();
+  })();
+}
 </script>
