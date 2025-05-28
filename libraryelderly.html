@@ -1,85 +1,129 @@
-
-<div id="libraryelderly-app">
-  <h2>介護事業所検索（高齢者）</h2>
-  <div>
-    <label for="prefSelect">都道府県：</label>
-    <select id="prefSelect"><option value="">すべて</option></select>
-
-    <label for="citySelect">市区町村：</label>
-    <select id="citySelect"><option value="">すべて</option></select>
-
-    <label for="serviceSelect">サービス種別：</label>
-    <select id="serviceSelect"><option value="">すべて</option></select>
-
-    <button id="searchBtn">表示</button>
+<!-- 完全修正版：libraryelderly-app-inner -->
+<div class="p-4 space-y-4">
+  <div class="grid grid-cols-3 gap-4">
+    <select id="prefectureFilter" class="border p-2 rounded"></select>
+    <select id="cityFilter" class="border p-2 rounded" disabled></select>
+    <select id="serviceFilter" class="border p-2 rounded"></select>
   </div>
-
-  <table id="resultTable">
-    <thead>
-      <tr>
-        <th>#</th><th>事業所名</th><th>サービス</th><th>法人名</th><th>電話</th><th>市区町村</th><th>URL</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="overflow-auto">
+    <table class="min-w-full bg-white border border-gray-200 mt-4">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="py-2 px-4 border">#</th>
+          <th class="py-2 px-4 border">事業所名</th>
+          <th class="py-2 px-4 border">サービス</th>
+          <th class="py-2 px-4 border">法人名</th>
+          <th class="py-2 px-4 border">電話</th>
+          <th class="py-2 px-4 border">FAX</th>
+          <th class="py-2 px-4 border">Email</th>
+          <th class="py-2 px-4 border">住所</th>
+          <th class="py-2 px-4 border">市区町村</th>
+          <th class="py-2 px-4 border">事業所番号</th>
+          <th class="py-2 px-4 border">URL</th>
+        </tr>
+      </thead>
+      <tbody id="facilityTableBody"></tbody>
+    </table>
+  </div>
+  <div class="flex justify-center items-center space-x-2 mt-4" id="pagination"></div>
 </div>
 
 <script>
-(() => {
-  const appId = "libraryelderly-app";
-  const supabase = window.supabase.createClient(
-    "https://viihcgkjzzhkdiwdzdex.supabase.co",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+let allFacilities = [];
+let filteredFacilities = [];
+let currentPage = 1;
+const perPage = 100;
+
+const prefectureFilter = document.getElementById('prefectureFilter');
+const cityFilter = document.getElementById('cityFilter');
+const serviceFilter = document.getElementById('serviceFilter');
+const tableBody = document.getElementById('facilityTableBody');
+const pagination = document.getElementById('pagination');
+
+async function fetchData() {
+  const res = await fetch("https://viihcgkjzzhkdiwdzdex.supabase.co/rest/v1/facilities?select=*", {
+    headers: {
+      apikey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    }
+  });
+  allFacilities = await res.json();
+  populateFilters();
+  applyFilters();
+}
+
+function populateFilters() {
+  const prefectures = [...new Set(allFacilities.map(f => f.prefecture).filter(Boolean))];
+  prefectureFilter.innerHTML = '<option value="">すべての都道府県</option>' +
+    prefectures.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  const services = [...new Set(allFacilities.map(f => f.service_type).filter(Boolean))];
+  serviceFilter.innerHTML = '<option value="">すべてのサービス</option>' +
+    services.map(s => `<option value="${s}">${s}</option>`).join('');
+
+  prefectureFilter.addEventListener("change", () => {
+    const selectedPref = prefectureFilter.value;
+    const cities = [...new Set(allFacilities.filter(f => f.prefecture === selectedPref).map(f => f.city).filter(Boolean))];
+    cityFilter.innerHTML = '<option value="">すべての市区町村</option>' +
+      cities.map(c => `<option value="${c}">${c}</option>`).join('');
+    cityFilter.disabled = !selectedPref;
+    applyFilters();
+  });
+
+  cityFilter.addEventListener("change", applyFilters);
+  serviceFilter.addEventListener("change", applyFilters);
+}
+
+function applyFilters() {
+  const selectedPref = prefectureFilter.value;
+  const selectedCity = cityFilter.value;
+  const selectedService = serviceFilter.value;
+
+  filteredFacilities = allFacilities.filter(f =>
+    (!selectedPref || f.prefecture === selectedPref) &&
+    (!selectedCity || f.city === selectedCity) &&
+    (!selectedService || f.service_type === selectedService)
   );
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
 
-  const prefSel = document.getElementById("prefSelect");
-  const citySel = document.getElementById("citySelect");
-  const servSel = document.getElementById("serviceSelect");
-  const searchBtn = document.getElementById("searchBtn");
-  const tbody = document.querySelector("#resultTable tbody");
+function renderTable() {
+  const start = (currentPage - 1) * perPage;
+  const paged = filteredFacilities.slice(start, start + perPage);
+  tableBody.innerHTML = paged.map((f, i) => `
+    <tr>
+      <td class="border px-2">${start + i + 1}</td>
+      <td class="border px-2">${f.office_name || ""}</td>
+      <td class="border px-2">${f.service_type || ""}</td>
+      <td class="border px-2">${f.organization_name || ""}</td>
+      <td class="border px-2">${f.phone || ""}</td>
+      <td class="border px-2">${f.fax || ""}</td>
+      <td class="border px-2">${f.email || ""}</td>
+      <td class="border px-2">${f.address || ""}</td>
+      <td class="border px-2">${f.city || ""}</td>
+      <td class="border px-2">${f.office_number || ""}</td>
+      <td class="border px-2"><a href="${f.url}" class="text-blue-500" target="_blank">${f.url || ""}</a></td>
+    </tr>
+  `).join('');
+}
 
-  async function initSelectors() {
-    const { data, error } = await supabase.from("facilities").select("prefecture, city, service_type").limit(10000);
-    if (error) { console.error(error); return; }
-
-    const prefs = new Set(), cities = new Set(), services = new Set();
-    data.forEach(d => {
-      if (d.prefecture) prefs.add(d.prefecture);
-      if (d.city) cities.add(d.city);
-      if (d.service_type) services.add(d.service_type);
+function renderPagination() {
+  const totalPages = Math.ceil(filteredFacilities.length / perPage);
+  pagination.innerHTML = '';
+  for (let i = 1; i <= totalPages; i++) {
+    const btn = document.createElement("button");
+    btn.textContent = i;
+    btn.className = "px-2 py-1 border rounded" + (i === currentPage ? " bg-blue-200" : "");
+    btn.addEventListener("click", () => {
+      currentPage = i;
+      renderTable();
+      renderPagination();
     });
-
-    [...prefs].sort().forEach(p => prefSel.innerHTML += `<option>${p}</option>`);
-    [...cities].sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
-    [...services].sort().forEach(s => servSel.innerHTML += `<option>${s}</option>`);
+    pagination.appendChild(btn);
   }
+}
 
-  async function searchFacilities() {
-    tbody.innerHTML = "";
-    let query = supabase.from("facilities").select("*").limit(500);
-    if (prefSel.value) query = query.eq("prefecture", prefSel.value);
-    if (citySel.value) query = query.eq("city", citySel.value);
-    if (servSel.value) query = query.eq("service_type", servSel.value);
-
-    const { data, error } = await query;
-    if (error) { console.error(error); return; }
-
-    data.forEach((item, idx) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td>${idx + 1}</td>
-        <td>${item.office_name || ""}</td>
-        <td>${item.service_type || ""}</td>
-        <td>${item.organization_name || ""}</td>
-        <td>${item.phone || ""}</td>
-        <td>${item.city || ""}</td>
-        <td>${item.url ? `<a href="${item.url}" target="_blank">リンク</a>` : ""}</td>
-      `;
-      tbody.appendChild(tr);
-    });
-  }
-
-  searchBtn.addEventListener("click", searchFacilities);
-  window.addEventListener("DOMContentLoaded", initSelectors);
-})();
+fetchData();
 </script>
