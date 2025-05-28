@@ -79,6 +79,10 @@
       if (d.service_type) services.add(d.service_type);
     });
 
+    console.log("都道府県一覧:", [...prefs]);
+    console.log("市区町村一覧:", [...cities]);
+    console.log("サービス種別一覧:", [...services]);
+
     [...prefs].sort().forEach(p => prefSel.innerHTML += `<option>${p}</option>`);
     [...cities].sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
     [...services].sort().forEach(s => servSel.innerHTML += `<option>${s}</option>`);
@@ -86,7 +90,14 @@
 
   async function searchFacilities() {
     tbody.innerHTML = "";
-    let query = supabase.from("facilities").select("*").limit(500);
+
+    console.log("検索条件:", {
+      prefecture: prefSel.value,
+      city: citySel.value,
+      service_type: servSel.value
+    });
+
+    let query = supabase.from("facilities").select("*").limit(10000);
     if (prefSel.value) query = query.eq("prefecture", prefSel.value);
     if (citySel.value) query = query.eq("city", citySel.value);
     if (servSel.value) query = query.eq("service_type", servSel.value);
