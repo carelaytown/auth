@@ -1,121 +1,111 @@
-<!-- CARELAYタウン対応 完全版（修正済） -->
+<!-- CARELAYタウン - 介護事業所検索（完全安定版） -->
 
-<!-- CSS -->
+<div id="libraryelderly-app">
+  <h2 style="margin-bottom: 4px;">介護事業所検索（高齢者）</h2>
+  <p style="font-size: 13px; color: #555;">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+
+  <div class="filter-area">
+    <select id="prefecture">
+      <option value="">都道府県を選択</option>
+      <option value="01_hokkaido">北海道</option>
+      <option value="02_aomori">青森県</option>
+    </select>
+    <select id="city">
+      <option value="">市区町村を選択</option>
+    </select>
+    <select id="service">
+      <option value="">サービスの種類を選択</option>
+    </select>
+    <button id="search-btn">表示</button>
+  </div>
+
+  <div id="result-area">
+    <div id="result-count"></div>
+    <table id="result-table">
+      <thead>
+        <tr>
+          <th>通し番号</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
+          <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="pagination"></div>
+  </div>
+</div>
+
 <style>
-  #filter-area {
+  #libraryelderly-app {
     background: white;
     padding: 16px;
-    border-radius: 12px;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+    font-size: 14px;
+  }
+
+  #libraryelderly-app .filter-area {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     align-items: center;
-    margin-bottom: 24px;
+    margin: 12px 0;
   }
 
-  select, button {
-    padding: 8px 12px;
-    font-size: 14px;
-    border-radius: 8px;
+  #libraryelderly-app select,
+  #libraryelderly-app button {
+    padding: 8px;
+    border-radius: 6px;
     border: 1px solid #ccc;
+    font-size: 14px;
     min-width: 160px;
   }
 
-  button {
-    background-color: #007bff;
+  #libraryelderly-app button {
+    background: #007bff;
     color: white;
     border: none;
     cursor: pointer;
   }
 
-  #result-area {
-    background: white;
-    padding: 16px;
-    border-radius: 8px;
-    overflow-x: auto;
-  }
-
-  table {
+  #libraryelderly-app table {
     width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    margin-top: 16px;
   }
 
-  th, td {
+  #libraryelderly-app th,
+  #libraryelderly-app td {
     border: 1px solid #ccc;
     padding: 6px 8px;
-    font-size: 13px;
     word-break: break-word;
+    font-size: 13px;
   }
 
-  th {
+  #libraryelderly-app th {
     background: #f5f5f5;
   }
 
-  #pagination {
+  #libraryelderly-app #pagination {
     margin-top: 12px;
     display: flex;
     justify-content: center;
     gap: 8px;
   }
 
-  .page-btn {
-    padding: 6px 12px;
-    border: 1px solid #aaa;
+  #libraryelderly-app .page-btn {
+    padding: 6px 10px;
+    border: 1px solid #999;
     background: #fff;
     cursor: pointer;
   }
+
+  #libraryelderly-app .page-btn.active {
+    background: #ccc;
+  }
 </style>
 
-<!-- タイトルと注釈 -->
-<div style="margin-bottom: 16px;">
-  <h2 style="margin-bottom: 4px;">介護事業所検索（高齢者）</h2>
-  <p style="font-size: 13px; color: #555;">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
-</div>
-
-<!-- フィルターと結果表示 -->
-<div id="filter-area">
-  <select id="prefecture">
-    <option value="">都道府県を選択</option>
-    <option value="01_hokkaido">北海道</option>
-    <option value="02_aomori">青森県</option>
-    <!-- ...追加可能 -->
-  </select>
-  <select id="city">
-    <option value="">市区町村を選択</option>
-  </select>
-  <select id="service">
-    <option value="">サービスの種類を選択</option>
-  </select>
-  <button id="search-btn">表示</button>
-</div>
-
-<div id="result-area">
-  <div id="result-count"></div>
-  <table id="result-table">
-    <thead>
-      <tr>
-        <th>通し番号</th>
-        <th>事業所名</th>
-        <th>サービスの種類</th>
-        <th>電話番号</th>
-        <th>FAX番号</th>
-        <th>Email</th>
-        <th>住所</th>
-        <th>事業所番号</th>
-        <th>法人名称</th>
-        <th>ホームページ</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <div id="pagination"></div>
-</div>
-
-<!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
+(() => {
   if (!window.supabase) {
     window.supabase = supabase.createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
@@ -123,36 +113,50 @@
     );
   }
 
+  const app = document.getElementById("libraryelderly-app");
+  const selPref = app.querySelector("#prefecture");
+  const selCity = app.querySelector("#city");
+  const selType = app.querySelector("#service");
+  const btnSearch = app.querySelector("#search-btn");
+  const tbl = app.querySelector("#result-table tbody");
+  const countEl = app.querySelector("#result-count");
+  const pagination = app.querySelector("#pagination");
+
   let currentData = [];
   let currentPage = 1;
   const pageSize = 100;
 
-  document.getElementById('prefecture').addEventListener('change', async e => {
-    const table = e.target.value;
+  selPref.addEventListener("change", async () => {
+    const table = selPref.value;
     if (!table) return;
 
-    const { data, error } = await supabase.from(table).select('city,service_type').limit(10000);
-    if (error) return console.error(error);
+    try {
+      const { data, error } = await supabase.from(table).select("city,service_type").limit(10000);
+      if (error) return console.error("取得エラー:", error);
 
-    const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
-    const services = [...new Set(data.map(d => d.service_type).filter(Boolean))].sort();
+      const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
+      selCity.innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option>${c}</option>`).join('');
 
-    document.getElementById('city').innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
-    document.getElementById('service').innerHTML = '<option value="">サービスの種類を選択</option>' + services.map(s => `<option value="${s}">${s}</option>`).join('');
+      const types = [...new Set(data.map(d => d.service_type).filter(Boolean))].sort();
+      selType.innerHTML = '<option value="">サービスの種類を選択</option>' + types.map(s => `<option>${s}</option>`).join('');
+    } catch (e) {
+      console.error("選択肢読み込み失敗", e);
+    }
   });
 
-  document.getElementById('search-btn').addEventListener('click', async () => {
-    const table = document.getElementById('prefecture').value;
-    const city = document.getElementById('city').value;
-    const service = document.getElementById('service').value;
+  btnSearch.addEventListener("click", async () => {
+    const table = selPref.value;
     if (!table) return;
 
-    let query = supabase.from(table).select('*').limit(10000);
-    if (city) query = query.eq('city', city);
-    if (service) query = query.eq('service_type', service);
+    let query = supabase.from(table).select("*").limit(10000);
+    if (selCity.value) query = query.eq("city", selCity.value);
+    if (selType.value) query = query.eq("service_type", selType.value);
 
     const { data, error } = await query;
-    if (error) return console.error(error);
+    if (error || !data) {
+      console.error("検索エラー:", error);
+      return;
+    }
 
     currentData = data;
     currentPage = 1;
@@ -160,45 +164,41 @@
   });
 
   function renderTable() {
-    const tbody = document.querySelector('#result-table tbody');
     const start = (currentPage - 1) * pageSize;
     const end = start + pageSize;
-    const pagedData = currentData.slice(start, end);
+    const slice = currentData.slice(start, end);
 
-    tbody.innerHTML = pagedData.map((row, i) => `
+    tbl.innerHTML = slice.map((r, i) => `
       <tr>
         <td>${start + i + 1}</td>
-        <td>${row.office_name || ''}</td>
-        <td>${row.service_type || ''}</td>
-        <td>${row.phone || ''}</td>
-        <td>${row.fax || ''}</td>
-        <td>${row.email || ''}</td>
-        <td>${row.address || ''}</td>
-        <td>${row.office_number || ''}</td>
-        <td>${row.organization_name || ''}</td>
-        <td>${row.url ? `<a href="${row.url}" target="_blank">リンク</a>` : ''}</td>
-      </tr>
-    `).join('');
+        <td>${r.office_name || ""}</td>
+        <td>${r.service_type || ""}</td>
+        <td>${r.phone || ""}</td>
+        <td>${r.fax || ""}</td>
+        <td>${r.email || ""}</td>
+        <td>${r.address || ""}</td>
+        <td>${r.office_number || ""}</td>
+        <td>${r.organization_name || ""}</td>
+        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
+      </tr>`).join("");
 
-    document.getElementById('result-count').textContent = `該当件数：${currentData.length}件`;
+    countEl.textContent = `該当件数：${currentData.length}件`;
     renderPagination();
   }
 
   function renderPagination() {
-    const container = document.getElementById('pagination');
+    pagination.innerHTML = "";
     const totalPages = Math.ceil(currentData.length / pageSize);
-    container.innerHTML = '';
-
     for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.className = 'page-btn';
+      const btn = document.createElement("button");
+      btn.className = "page-btn" + (i === currentPage ? " active" : "");
       btn.textContent = i;
-      if (i === currentPage) btn.style.background = '#ccc';
-      btn.addEventListener('click', () => {
+      btn.onclick = () => {
         currentPage = i;
         renderTable();
-      });
-      container.appendChild(btn);
+      };
+      pagination.appendChild(btn);
     }
   }
+})();
 </script>
