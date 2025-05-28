@@ -49,9 +49,9 @@
     <select id="serviceSelect"><option value="">サービスの種別</option></select>
     <button id="searchBtn">表示</button>
   </div>
-  <div id="result_count" class="mt-2 text-sm text-gray-600"></div>
+  <div id="result_count"></div>
   <div id="tableContainer"></div>
-  <div id="pagination" class="pagination mt-3"></div>
+  <div id="pagination" class="pagination"></div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
@@ -88,20 +88,35 @@
   const elCount = document.getElementById("result_count");
   const elPagination = document.getElementById("pagination");
 
+  async function loadAllUniqueValues(table, column) {
+    const allData = [];
+    let from = 0, to = 999;
+    while (true) {
+      const { data, error } = await supabase.from(table).select(column).range(from, to);
+      if (error) break;
+      if (!data || data.length === 0) break;
+      allData.push(...data);
+      if (data.length < 1000) break;
+      from += 1000;
+      to += 1000;
+    }
+    return [...new Set(allData.map(row => row[column]).filter(v => typeof v === "string" && v.trim() !== ""))].sort();
+  }
+
+  async function loadOptions(table) {
+    const citySet = await loadAllUniqueValues(table, "city");
+    const typeSet = await loadAllUniqueValues(table, "service_type");
+    elCity.innerHTML = '<option value="">市区町村</option>' + citySet.map(c => `<option>${c}</option>`).join('');
+    elType.innerHTML = '<option value="">サービスの種別</option>' + typeSet.map(t => `<option>${t}</option>`).join('');
+  }
+
   function renderTable(data) {
     const headers = ["No", "事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
     const keys = ["office_name", "service_type", "phone", "fax", "email", "address", "office_number", "organization_name", "url"];
-    let html = "<table><thead><tr><th>No</th>";
-    headers.slice(1).forEach(h => html += `<th>${h}</th>`);
-    html += "</tr></thead><tbody>";
+    let html = "<table><thead><tr><th>No</th>" + headers.slice(1).map(h => `<th>${h}</th>`).join('') + "</tr></thead><tbody>";
     const pageData = data.slice((currentPage - 1) * perPage, currentPage * perPage);
     pageData.forEach((row, i) => {
-      html += `<tr><td>${(currentPage - 1) * perPage + i + 1}</td>`;
-      keys.forEach(k => {
-        const val = row[k] || "";
-        html += `<td>${k === "url" && val ? `<a href='${val}' target='_blank'>リンク</a>` : val}</td>`;
-      });
-      html += "</tr>";
+      html += `<tr><td>${(currentPage - 1) * perPage + i + 1}</td>` + keys.map(k => `<td>${k === "url" && row[k] ? `<a href='${row[k]}' target='_blank'>リンク</a>` : (row[k] || "")}</td>`).join('') + "</tr>";
     });
     html += "</tbody></table>";
     elTable.innerHTML = html;
@@ -123,21 +138,6 @@
       next.textContent = "次へ";
       next.onclick = () => { currentPage++; renderTable(totalData); renderPagination(); };
       elPagination.appendChild(next);
-    }
-  }
-
-  async function loadOptions(table) {
-    try {
-      const [cityRes, typeRes] = await Promise.all([
-        supabase.from(table).select("city").not("city", "is", null).neq("city", "").limit(10000),
-        supabase.from(table).select("service_type").not("service_type", "is", null).neq("service_type", "").limit(10000)
-      ]);
-      const citySet = [...new Set((cityRes.data || []).map(r => r.city))].sort();
-      const typeSet = [...new Set((typeRes.data || []).map(r => r.service_type))].sort();
-      elCity.innerHTML = '<option value="">市区町村</option>' + citySet.map(c => `<option>${c}</option>`).join('');
-      elType.innerHTML = '<option value="">サービスの種別</option>' + typeSet.map(t => `<option>${t}</option>`).join('');
-    } catch (e) {
-      console.error("フィルター取得エラー", e);
     }
   }
 
