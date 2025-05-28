@@ -1,5 +1,5 @@
 
-<!-- 介護事業所検索アプリ：都道府県別テーブル切替対応 完全版 -->
+<!-- 介護事業所検索アプリ：Supabase UMD形式対応版（import不要） -->
 <div class="p-4 bg-white">
   <h1 class="text-2xl font-bold mb-2">介護事業所検索（高齢者）</h1>
   <p class="text-sm text-gray-600 mb-4">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
@@ -35,9 +35,12 @@
   <div id="pagination" class="flex justify-center items-center gap-2 mt-4"></div>
 </div>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient("https://viihcgkjzzhkdiwdzdex.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM");
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
+<script>
+const supabase = window.supabase.createClient(
+  "https://viihcgkjzzhkdiwdzdex.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+);
 
 const PREF_TABLE_MAP = {
   "北海道": "01_hokkaido", "青森県": "02_aomori", "岩手県": "03_iwate", "宮城県": "04_miyagi",
@@ -54,7 +57,7 @@ const PREF_TABLE_MAP = {
   "宮崎県": "45_miyazaki", "鹿児島県": "46_kagoshima", "沖縄県": "47_okinawa"
 };
 
-const perPage = 1000;
+const perPage = 100;
 let currentPage = 1;
 let currentTable = "";
 
@@ -79,8 +82,8 @@ elPref.addEventListener("change", async () => {
   elCity.innerHTML = "<option value=''>すべて</option>";
   elType.innerHTML = "<option value=''>すべて</option>";
   if (!table) return;
-  const { data: cities } = await supabase.from(table).select("city", { count: "exact", head: false }).not("city", "is", null).neq("city", "").order("city", { ascending: true }).limit(1000);
-  const { data: types } = await supabase.from(table).select("service_type", { count: "exact", head: false }).not("service_type", "is", null).neq("service_type", "").order("service_type", { ascending: true }).limit(1000);
+  const { data: cities } = await supabase.from(table).select("city").not("city", "is", null).neq("city", "").order("city", { ascending: true }).limit(1000);
+  const { data: types } = await supabase.from(table).select("service_type").not("service_type", "is", null).neq("service_type", "").order("service_type", { ascending: true }).limit(1000);
   for (const d of cities || []) {
     const o = document.createElement("option");
     o.value = d.city;
