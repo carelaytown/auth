@@ -1,21 +1,7 @@
-
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>介護事業所検索（高齢者）</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: sans-serif; padding: 1em; }
-    label, select, button { margin-right: 1em; margin-bottom: 0.5em; }
-    table { border-collapse: collapse; width: 100%; margin-top: 1em; }
-    th, td { border: 1px solid #ccc; padding: 4px 8px; text-align: left; }
-    tr:nth-child(even) { background: #f9f9f9; }
-  </style>
-</head>
-<body>
-  <div id="libraryelderly-app">
+<div id="libraryelderly-app">
     <h2>介護事業所検索（高齢者）</h2>
+    <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+
     <div>
       <label for="prefSelect">都道府県：</label>
       <select id="prefSelect"><option value="">すべて</option></select>
@@ -32,7 +18,8 @@
     <table id="resultTable">
       <thead>
         <tr>
-          <th>#</th><th>事業所名</th><th>サービス</th><th>法人名</th><th>電話</th><th>市区町村</th><th>URL</th>
+          <th>#</th><th>事業所名</th><th>サービス</th><th>電話番号</th><th>FAX</th><th>Email</th>
+          <th>住所</th><th>事業所番号</th><th>法人名</th><th>URL</th>
         </tr>
       </thead>
       <tbody></tbody>
@@ -41,7 +28,6 @@
 
   <script>
   (() => {
-    const appId = "libraryelderly-app";
     const supabase = window.supabase.createClient(
       "https://viihcgkjzzhkdiwdzdex.supabase.co",
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
@@ -85,9 +71,12 @@
           <td>${idx + 1}</td>
           <td>${item.office_name || ""}</td>
           <td>${item.service_type || ""}</td>
-          <td>${item.organization_name || ""}</td>
           <td>${item.phone || ""}</td>
-          <td>${item.city || ""}</td>
+          <td>${item.fax || ""}</td>
+          <td>${item.email || ""}</td>
+          <td>${item.address || ""}</td>
+          <td>${item.office_number || ""}</td>
+          <td>${item.organization_name || ""}</td>
           <td>${item.url ? `<a href="${item.url}" target="_blank">リンク</a>` : ""}</td>
         `;
         tbody.appendChild(tr);
@@ -98,5 +87,3 @@
     window.addEventListener("DOMContentLoaded", initSelectors);
   })();
   </script>
-</body>
-</html>
