@@ -21,6 +21,10 @@
   tr:nth-child(even) {
     background: #f9f9f9;
   }
+  .pagination {
+    margin-top: 1em;
+    text-align: center;
+  }
 </style>
 
 <div id="libraryelderly-app">
@@ -49,6 +53,12 @@
     </thead>
     <tbody></tbody>
   </table>
+
+  <div class="pagination">
+    <button id="prevPage">前へ</button>
+    <span id="pageInfo">ページ 1</span>
+    <button id="nextPage">次へ</button>
+  </div>
 </div>
 
 <script>
@@ -63,25 +73,22 @@
   const servSel = document.getElementById("serviceSelect");
   const searchBtn = document.getElementById("searchBtn");
   const tbody = document.querySelector("#resultTable tbody");
+  const prevBtn = document.getElementById("prevPage");
+  const nextBtn = document.getElementById("nextPage");
+  const pageInfo = document.getElementById("pageInfo");
+
+  let allData = [], filteredData = [], page = 0, limit = 100;
 
   async function initSelectors() {
-    const { data, error } = await supabase.from("facilities").select("prefecture, city, service_type").limit(10000);
-    if (error) {
-      console.error("initSelectors error:", error);
-      return;
-    }
-    console.log("initSelectors data:", data);
+    const { data, error } = await supabase.from("facilities").select("prefecture, city, service_type").limit(1000);
+    if (error) return console.error("フィルター抽出エラー:", error);
 
     const prefs = new Set(), cities = new Set(), services = new Set();
     data.forEach(d => {
-      if (d.prefecture) prefs.add(d.prefecture);
-      if (d.city) cities.add(d.city);
-      if (d.service_type) services.add(d.service_type);
+      if (d.prefecture && d.prefecture.trim()) prefs.add(d.prefecture.trim());
+      if (d.city && d.city.trim()) cities.add(d.city.trim());
+      if (d.service_type && d.service_type.trim()) services.add(d.service_type.trim());
     });
-
-    console.log("都道府県一覧:", [...prefs]);
-    console.log("市区町村一覧:", [...cities]);
-    console.log("サービス種別一覧:", [...services]);
 
     [...prefs].sort().forEach(p => prefSel.innerHTML += `<option>${p}</option>`);
     [...cities].sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
@@ -89,30 +96,31 @@
   }
 
   async function searchFacilities() {
-    tbody.innerHTML = "";
-
-    console.log("検索条件:", {
-      prefecture: prefSel.value,
-      city: citySel.value,
-      service_type: servSel.value
-    });
-
-    let query = supabase.from("facilities").select("*").limit(10000);
-    if (prefSel.value) query = query.eq("prefecture", prefSel.value);
-    if (citySel.value) query = query.eq("city", citySel.value);
-    if (servSel.value) query = query.eq("service_type", servSel.value);
-
+    page = 0;
+    let query = supabase.from("facilities").select("*").limit(1000);
     const { data, error } = await query;
-    if (error) {
-      console.error("searchFacilities error:", error);
-      return;
-    }
-    console.log("searchFacilities result:", data);
+    if (error) return console.error("取得エラー:", error);
+    allData = data;
+    applyFilters();
+  }
 
-    data.forEach((item, idx) => {
+  function applyFilters() {
+    filteredData = allData.filter(x =>
+      (!prefSel.value || x.prefecture === prefSel.value) &&
+      (!citySel.value || x.city === citySel.value) &&
+      (!servSel.value || x.service_type === servSel.value)
+    );
+    renderPage();
+  }
+
+  function renderPage() {
+    tbody.innerHTML = "";
+    const start = page * limit;
+    const paged = filteredData.slice(start, start + limit);
+    paged.forEach((item, idx) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${idx + 1}</td>
+        <td>${start + idx + 1}</td>
         <td>${item.office_name || ""}</td>
         <td>${item.service_type || ""}</td>
         <td>${item.phone || ""}</td>
@@ -125,9 +133,16 @@
       `;
       tbody.appendChild(tr);
     });
+
+    pageInfo.textContent = `ページ ${page + 1} / ${Math.ceil(filteredData.length / limit)}`;
+    prevBtn.disabled = page === 0;
+    nextBtn.disabled = start + limit >= filteredData.length;
   }
 
-  searchBtn.addEventListener("click", searchFacilities);
+  prevBtn.onclick = () => { if (page > 0) { page--; renderPage(); } };
+  nextBtn.onclick = () => { if ((page + 1) * limit < filteredData.length) { page++; renderPage(); } };
+  searchBtn.onclick = () => searchFacilities();
+
   window.addEventListener("DOMContentLoaded", initSelectors);
 })();
 </script>
