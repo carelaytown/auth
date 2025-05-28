@@ -1,4 +1,4 @@
-<!-- CARELAYタウン対応 完全版（HTMLタグ省略） -->
+<!-- CARELAYタウン対応 完全版（修正済） -->
 
 <!-- CSS -->
 <style>
@@ -68,13 +68,19 @@
   }
 </style>
 
+<!-- タイトルと注釈 -->
+<div style="margin-bottom: 16px;">
+  <h2 style="margin-bottom: 4px;">介護事業所検索（高齢者）</h2>
+  <p style="font-size: 13px; color: #555;">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+</div>
+
 <!-- フィルターと結果表示 -->
 <div id="filter-area">
   <select id="prefecture">
     <option value="">都道府県を選択</option>
     <option value="01_hokkaido">北海道</option>
     <option value="02_aomori">青森県</option>
-    <!-- ...他都道府県もここに追加可 -->
+    <!-- ...追加可能 -->
   </select>
   <select id="city">
     <option value="">市区町村を選択</option>
@@ -110,10 +116,12 @@
 <!-- JS -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
-  const supabase = supabase.createClient(
-    'https://viihcgkjzzhkdiwdzdex.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-  );
+  if (!window.supabase) {
+    window.supabase = supabase.createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    );
+  }
 
   let currentData = [];
   let currentPage = 1;
@@ -126,14 +134,11 @@
     const { data, error } = await supabase.from(table).select('city,service_type').limit(10000);
     if (error) return console.error(error);
 
-    const cities = [...new Set(data.map(d => d.city))].sort();
-    const services = [...new Set(data.map(d => d.service_type))].sort();
+    const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
+    const services = [...new Set(data.map(d => d.service_type).filter(Boolean))].sort();
 
-    const citySelect = document.getElementById('city');
-    citySelect.innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
-
-    const serviceSelect = document.getElementById('service');
-    serviceSelect.innerHTML = '<option value="">サービスの種類を選択</option>' + services.map(s => `<option value="${s}">${s}</option>`).join('');
+    document.getElementById('city').innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+    document.getElementById('service').innerHTML = '<option value="">サービスの種類を選択</option>' + services.map(s => `<option value="${s}">${s}</option>`).join('');
   });
 
   document.getElementById('search-btn').addEventListener('click', async () => {
