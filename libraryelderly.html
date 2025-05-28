@@ -1,19 +1,61 @@
-<div id="libraryelderly-app">
-    <h1>介護事業所検索（高齢者）</h1>
-    <p>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
-    <div class="filter-group">
-      <select id="prefSelect"><option value="">都道府県</option></select>
-      <select id="citySelect"><option value="">市区町村</option></select>
-      <select id="serviceSelect"><option value="">サービスの種別</option></select>
-      <button id="searchBtn">表示</button>
-    </div>
-    <div id="result_count"></div>
-    <div id="tableContainer"></div>
-    <div id="pagination" class="pagination"></div>
-  </div>
+<style>
+#libraryelderly-app {
+  font-family: sans-serif;
+  background-color: #fff;
+  padding: 1rem;
+}
+#libraryelderly-app select, #libraryelderly-app button {
+  font-size: 0.9rem;
+  padding: 0.4rem 0.6rem;
+  margin-right: 0.5rem;
+}
+#libraryelderly-app table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+#libraryelderly-app th, #libraryelderly-app td {
+  border: 1px solid #ccc;
+  padding: 6px 8px;
+  text-align: left;
+}
+#libraryelderly-app th {
+  background-color: #f0f0f0;
+}
+#libraryelderly-app td:nth-child(1) { width: 40px; text-align: center; }
+#libraryelderly-app td:nth-child(2) { min-width: 160px; max-width: 200px; }
+#libraryelderly-app td:nth-child(3) { min-width: 120px; max-width: 140px; }
+#libraryelderly-app td:nth-child(4),
+#libraryelderly-app td:nth-child(5),
+#libraryelderly-app td:nth-child(6) { min-width: 110px; max-width: 130px; word-break: break-word; }
+#libraryelderly-app td:nth-child(7) { min-width: 200px; max-width: 260px; }
+#libraryelderly-app td:nth-child(8) { min-width: 130px; max-width: 160px; }
+#libraryelderly-app td:nth-child(9) { min-width: 140px; max-width: 180px; }
+#libraryelderly-app td:nth-child(10) { min-width: 80px; max-width: 100px; word-break: break-all; }
+#libraryelderly-app .pagination button {
+  margin: 0 0.25rem;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.85rem;
+}
+</style>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
-  <script>
+<div id="libraryelderly-app">
+  <h2>介護事業所検索（高齢者）</h2>
+  <p>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+  <div class="filter-group">
+    <select id="prefSelect"><option value="">都道府県</option></select>
+    <select id="citySelect"><option value="">市区町村</option></select>
+    <select id="serviceSelect"><option value="">サービスの種別</option></select>
+    <button id="searchBtn">表示</button>
+  </div>
+  <div id="result_count" class="mt-2 text-sm text-gray-600"></div>
+  <div id="tableContainer"></div>
+  <div id="pagination" class="pagination mt-3"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
+<script>
 (() => {
   const supabase = window.supabaseClient || window.supabase.createClient(
     "https://viihcgkjzzhkdiwdzdex.supabase.co",
@@ -37,14 +79,13 @@
 
   const perPage = 1000;
   let currentPage = 1;
-  let totalPages = 1;
   let totalData = [];
 
   const elPref = document.getElementById("prefSelect");
   const elCity = document.getElementById("citySelect");
   const elType = document.getElementById("serviceSelect");
-  const elCount = document.getElementById("result_count");
   const elTable = document.getElementById("tableContainer");
+  const elCount = document.getElementById("result_count");
   const elPagination = document.getElementById("pagination");
 
   function renderTable(data) {
@@ -68,6 +109,7 @@
 
   function renderPagination() {
     elPagination.innerHTML = "";
+    const totalPages = Math.ceil(totalData.length / perPage);
     if (totalPages <= 1) return;
     if (currentPage > 1) {
       const prev = document.createElement("button");
@@ -85,14 +127,18 @@
   }
 
   async function loadOptions(table) {
-    const [{ data: cities }, { data: services }] = await Promise.all([
-      supabase.from(table).select("city").not("city", "is", null).neq("city", "").limit(10000),
-      supabase.from(table).select("service_type").not("service_type", "is", null).neq("service_type", "").limit(10000)
-    ]);
-    const citySet = [...new Set((cities || []).map(d => d.city))].sort();
-    const serviceSet = [...new Set((services || []).map(d => d.service_type))].sort();
-    elCity.innerHTML = '<option value="">市区町村</option>' + citySet.map(c => `<option>${c}</option>`).join('');
-    elType.innerHTML = '<option value="">サービスの種別</option>' + serviceSet.map(s => `<option>${s}</option>`).join('');
+    try {
+      const [cityRes, typeRes] = await Promise.all([
+        supabase.from(table).select("city").not("city", "is", null).neq("city", "").limit(10000),
+        supabase.from(table).select("service_type").not("service_type", "is", null).neq("service_type", "").limit(10000)
+      ]);
+      const citySet = [...new Set((cityRes.data || []).map(r => r.city))].sort();
+      const typeSet = [...new Set((typeRes.data || []).map(r => r.service_type))].sort();
+      elCity.innerHTML = '<option value="">市区町村</option>' + citySet.map(c => `<option>${c}</option>`).join('');
+      elType.innerHTML = '<option value="">サービスの種別</option>' + typeSet.map(t => `<option>${t}</option>`).join('');
+    } catch (e) {
+      console.error("フィルター取得エラー", e);
+    }
   }
 
   async function fetchData() {
@@ -104,7 +150,6 @@
     if (elType.value) query = query.eq("service_type", elType.value);
     const { data } = await query;
     totalData = data || [];
-    totalPages = Math.ceil(totalData.length / perPage);
     currentPage = 1;
     elCount.textContent = `該当件数：${totalData.length} 件`;
     renderTable(totalData);
@@ -122,4 +167,4 @@
     };
   })();
 })();
-  </script>
+</script>
