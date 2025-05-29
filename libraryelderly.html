@@ -1,172 +1,131 @@
+<!-- CARELAYタウン：介護事業所検索（高齢者）アプリ完全版 -->
+<div id="app-elderly-search">
+  <div class="filter-row">
+    <select id="prefSelect"><option value="">都道府県を選択</option></select>
+    <select id="citySelect"><option value="">市区町村を選択</option></select>
+    <select id="typeSelect"><option value="">サービスの種類を選択</option></select>
+    <button id="loadButton">表示</button>
+  </div>
+  <div id="pagerTop" class="pager"></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
+          <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
+</div>
+
 <style>
-  body {
-    font-family: sans-serif;
-    background: white;
-    margin: 0;
-    padding: 1em;
+  #app-elderly-search { font-family: sans-serif; background: white; padding: 10px; }
+  #app-elderly-search .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  #app-elderly-search select, #app-elderly-search button {
+    padding: 6px 8px; font-size: 14px;
   }
-  h2 {
-    font-size: 20px;
-    margin-bottom: 0.2em;
+  #app-elderly-search button {
+    background: #0066cc; color: white; border: none; border-radius: 4px;
   }
-  .note {
-    font-size: 12px;
-    margin-bottom: 1em;
-    color: #555;
+  #app-elderly-search .table-wrap { overflow-x: auto; }
+  #app-elderly-search table {
+    border-collapse: collapse; width: 1550px; background: white;
   }
-  .filters {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin-bottom: 1em;
+  #app-elderly-search th, #app-elderly-search td {
+    border: 1px solid #ccc; padding: 6px 8px; white-space: nowrap;
   }
-  select, button {
-    font-size: 14px;
-    padding: 6px 10px;
-  }
-  button {
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #0056b3;
-  }
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-  }
-  th, td {
-    border: 1px solid #ccc;
-    padding: 6px 8px;
-    white-space: nowrap;
-  }
-  th {
-    background: #f0f0f0;
-  }
-  .pagination {
-    margin: 1em 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 8px;
+  #app-elderly-search th:nth-child(1) { width: 200px; }
+  #app-elderly-search th:nth-child(2) { width: 140px; }
+  #app-elderly-search th:nth-child(3), th:nth-child(4) { width: 120px; }
+  #app-elderly-search th:nth-child(5) { width: 180px; }
+  #app-elderly-search th:nth-child(6) { width: 250px; }
+  #app-elderly-search th:nth-child(7) { width: 140px; }
+  #app-elderly-search th:nth-child(8) { width: 200px; }
+  #app-elderly-search th:nth-child(9) { width: 180px; }
+  #app-elderly-search .pager {
+    margin: 10px 0; text-align: center; font-size: 14px;
   }
 </style>
 
-<h2>介護事業所検索（高齢者）</h2>
-<div class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</div>
-
-<div class="filters">
-  <select id="prefecture"><option value="">都道府県</option></select>
-  <select id="city"><option value="">市区町村</option></select>
-  <select id="service"><option value="">サービスの種類</option></select>
-  <button id="search-btn">表示</button>
-</div>
-
-<div id="pagination" class="pagination"></div>
-
-<table id="results-table">
-  <thead>
-    <tr>
-      <th>No</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
-      <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
-  if (!window.__supabaseClient) {
-    window.__supabaseClient = window.supabase.createClient(
-      'https://udcrfwejohzmhfojnwha.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI'
-    );
-  }
-  const sb = window.__supabaseClient;
-  let fullData = [], currentPage = 1, pageSize = 1000;
+(() => {
+  const supabase = window.supabase.createClient(
+    'https://viihcgkjzzhkdiwdzdex.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+  );
 
-  const tablePrefixMap = {
-    "北海道": "01_hokkaido", "青森県": "02_aomori"
+  const tableMap = {
+    "北海道": "01_hokkaido", "青森県": "02_aomori", "岩手県": "03_iwate", "宮城県": "04_miyagi", "秋田県": "05_akita", "山形県": "06_yamagata",
+    "福島県": "07_fukushima", "茨城県": "08_ibaraki", "栃木県": "09_tochigi", "群馬県": "10_gunma", "埼玉県": "11_saitama", "千葉県": "12_chiba",
+    "東京都": "13_tokyo", "神奈川県": "14_kanagawa", "新潟県": "15_niigata", "富山県": "16_toyama", "石川県": "17_ishikawa", "福井県": "18_fukui",
+    "山梨県": "19_yamanashi", "長野県": "20_nagano", "岐阜県": "21_gifu", "静岡県": "22_shizuoka", "愛知県": "23_aichi", "三重県": "24_mie",
+    "滋賀県": "25_shiga", "京都府": "26_kyoto", "大阪府": "27_osaka", "兵庫県": "28_hyogo", "奈良県": "29_nara", "和歌山県": "30_wakayama",
+    "鳥取県": "31_tottori", "島根県": "32_shimane", "岡山県": "33_okayama", "広島県": "34_hiroshima", "山口県": "35_yamaguchi",
+    "徳島県": "36_tokushima", "香川県": "37_kagawa", "愛媛県": "38_ehime", "高知県": "39_kochi", "福岡県": "40_fukuoka", "佐賀県": "41_saga",
+    "長崎県": "42_nagasaki", "熊本県": "43_kumamoto", "大分県": "44_oita", "宮崎県": "45_miyazaki", "鹿児島県": "46_kagoshima", "沖縄県": "47_okinawa"
   };
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const prefs = Object.keys(tablePrefixMap);
-    const prefSel = document.getElementById('prefecture');
-    prefs.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p; o.textContent = p;
-      prefSel.appendChild(o);
-    });
-    prefSel.addEventListener('change', loadFilters);
-    document.getElementById('search-btn').addEventListener('click', searchData);
-    document.getElementById('pagination').addEventListener('click', handlePageClick);
-  });
+  const prefSel = document.getElementById("prefSelect");
+  const citySel = document.getElementById("citySelect");
+  const typeSel = document.getElementById("typeSelect");
+  const btn = document.getElementById("loadButton");
+  const body = document.getElementById("resultBody");
+  const pager = document.getElementById("pagerTop");
 
-  async function loadFilters() {
-    const pref = document.getElementById('prefecture').value;
-    const table = tablePrefixMap[pref];
-    const citySel = document.getElementById('city');
-    const serviceSel = document.getElementById('service');
-    citySel.innerHTML = '<option value="">市区町村</option>';
-    serviceSel.innerHTML = '<option value="">サービスの種類</option>';
-    const { data: cityData } = await sb.from(table).select('city').limit(10000);
-    const { data: typeData } = await sb.from(table).select('service_type').limit(10000);
-    const cities = [...new Set((cityData||[]).map(d => d.city).filter(Boolean))];
-    const types = [...new Set((typeData||[]).map(d => d.service_type).filter(Boolean))];
-    cities.sort().forEach(c => citySel.innerHTML += `<option value="${c}">${c}</option>`);
-    types.sort().forEach(t => serviceSel.innerHTML += `<option value="${t}">${t}</option>`);
+  let currentData = [], currentPage = 1;
+
+  for (const pref in tableMap) {
+    const o = document.createElement("option");
+    o.value = pref; o.textContent = pref;
+    prefSel.appendChild(o);
   }
 
-  async function searchData() {
-    const pref = document.getElementById('prefecture').value;
-    const city = document.getElementById('city').value;
-    const service = document.getElementById('service').value;
-    const table = tablePrefixMap[pref];
-    let query = sb.from(table).select('*').limit(10000);
-    if (city) query = query.eq('city', city);
-    if (service) query = query.eq('service_type', service);
-    const { data, error } = await query;
-    if (!error && data) {
-      fullData = data; currentPage = 1;
-      renderTable(); renderPagination();
-    }
-  }
+  btn.onclick = async () => {
+    const pref = prefSel.value;
+    if (!pref || !tableMap[pref]) return;
+    const table = tableMap[pref];
+    const { data, error } = await supabase.from(table).select("*").limit(10000);
+    currentData = (data || []);
+    currentPage = 1;
+    renderTable();
+    renderPager();
+    loadFilters(currentData);
+  };
 
   function renderTable() {
-    const start = (currentPage - 1) * pageSize;
-    const data = fullData.slice(start, start + pageSize);
-    const tbody = document.querySelector('#results-table tbody');
-    tbody.innerHTML = '';
-    data.forEach((r, i) => {
+    body.innerHTML = "";
+    const perPage = 100;
+    const list = currentData.slice((currentPage - 1) * perPage, currentPage * perPage);
+    list.forEach(r => {
       const row = `<tr>
-        <td>${start + i + 1}</td><td>${r.office_name}</td><td>${r.service_type}</td>
-        <td>${r.phone}</td><td>${r.fax}</td><td>${r.email}</td><td>${r.address}</td>
-        <td>${r.office_number}</td><td>${r.organization_name}</td>
-        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ''}</td>
+        <td>${r.office_name || ""}</td><td>${r.service_type || ""}</td><td>${r.phone || ""}</td>
+        <td>${r.fax || ""}</td><td>${r.email || ""}</td><td>${r.address || ""}</td>
+        <td>${r.office_number || ""}</td><td>${r.organization_name || ""}</td>
+        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
       </tr>`;
-      tbody.insertAdjacentHTML('beforeend', row);
+      body.insertAdjacentHTML("beforeend", row);
     });
   }
 
-  function renderPagination() {
-    const total = Math.ceil(fullData.length / pageSize);
-    const p = document.getElementById('pagination');
-    if (total <= 1) return p.innerHTML = '';
-    p.innerHTML = `
-      <button data-nav="-1" ${currentPage === 1 ? 'disabled' : ''}>◁</button>
-      ${currentPage} / ${total}ページ
-      <button data-nav="1" ${currentPage === total ? 'disabled' : ''}>▷</button>
+  function renderPager() {
+    const max = Math.ceil(currentData.length / 100);
+    pager.innerHTML = `
+      <button ${currentPage === 1 ? "disabled" : ""} onclick="(() => { currentPage--; renderTable(); renderPager(); })()">◁</button>
+      ${currentPage} / ${max} ページ
+      <button ${currentPage === max ? "disabled" : ""} onclick="(() => { currentPage++; renderTable(); renderPager(); })()">▷</button>
     `;
   }
 
-  function handlePageClick(e) {
-    if (e.target.tagName === 'BUTTON' && e.target.dataset.nav) {
-      const offset = Number(e.target.dataset.nav);
-      currentPage += offset;
-      renderTable(); renderPagination();
-    }
+  function loadFilters(data) {
+    const cities = [...new Set(data.map(r => r.city).filter(Boolean))].sort();
+    const types = [...new Set(data.map(r => r.service_type).filter(Boolean))].sort();
+    citySel.innerHTML = '<option value="">市区町村を選択</option>';
+    typeSel.innerHTML = '<option value="">サービスの種類を選択</option>';
+    cities.forEach(c => citySel.innerHTML += `<option>${c}</option>`);
+    types.forEach(t => typeSel.innerHTML += `<option>${t}</option>`);
   }
+})();
 </script>
