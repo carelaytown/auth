@@ -1,100 +1,54 @@
-<div id="app-search">
-  <h1>介護事業所検索（高齢者）</h1>
-  <div class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</div>
+<div class="app-container">
+  <h2>介護事業所検索（高齢者）</h2>
+  <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</p>
 
-  <div>
+  <div class="filters">
     <select id="prefSelect">
-      <option disabled selected>都道府県を選択</option>
+      <option value="">都道府県を選択</option>
     </select>
     <select id="citySelect">
-      <option disabled selected>市区町村を選択</option>
+      <option value="">市区町村を選択</option>
     </select>
     <select id="serviceSelect">
-      <option disabled selected>サービスの種類を選択</option>
+      <option value="">サービスの種類を選択</option>
     </select>
     <button id="searchBtn">表示</button>
   </div>
 
-  <div class="meta">
-    <div id="count">対象件数：0件</div>
-    <div class="pagination" id="pagination"></div>
+  <div class="status">
+    <span id="count">対象件数：0件</span>
+    <span id="pagination"></span>
   </div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>事業所名</th>
-        <th>サービスの種類</th>
-        <th>電話番号</th>
-        <th>FAX番号</th>
-        <th>Email</th>
-        <th>住所</th>
-        <th>事業所番号</th>
-        <th>法人名称</th>
-        <th>ホームページ</th>
-      </tr>
-    </thead>
-    <tbody id="resultBody"></tbody>
-  </table>
+  <div class="result-table">
+    <table>
+      <thead>
+        <tr>
+          <th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th><th>Email</th>
+          <th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
 </div>
 
 <style>
-#app-search {
-  font-family: "Segoe UI", sans-serif;
-  max-width: 1200px;
-  margin: auto;
-  padding: 1em;
-}
-#app-search h1 {
-  font-size: 1.5em;
-  margin-bottom: 0.2em;
-}
-#app-search .note {
-  font-size: 0.9em;
-  color: #666;
-  margin-bottom: 1em;
-}
-#app-search select, #app-search button {
-  padding: 0.4em;
-  margin-right: 0.5em;
-  font-size: 0.9em;
-}
-#app-search table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 1em;
-}
-#app-search th, #app-search td {
-  border: 1px solid #ccc;
-  padding: 0.4em 0.6em;
-  text-align: left;
-  max-width: 200px;
-  overflow-wrap: break-word;
-}
-#app-search th {
-  background: #f0f0f0;
-}
-#app-search .meta {
-  margin-top: 1em;
-  display: flex;
-  justify-content: space-between;
-}
-#app-search .pagination {
-  font-size: 0.9em;
-  user-select: none;
-}
-#app-search .pagination span {
-  cursor: pointer;
-  margin: 0 0.5em;
-}
+  .app-container { font-family: sans-serif; max-width: 1000px; margin: auto; padding: 1em; }
+  .filters { display: flex; gap: 1em; margin-bottom: 1em; flex-wrap: wrap; }
+  select, button { padding: 0.5em; font-size: 1em; }
+  .status { margin-bottom: 0.5em; display: flex; justify-content: space-between; }
+  .result-table table { width: 100%; border-collapse: collapse; }
+  .result-table th, .result-table td { border: 1px solid #ccc; padding: 0.4em; font-size: 0.9em; text-align: left; }
+  .result-table th { background: #f0f0f0; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-window.initAppSearch = function() {
+window.initAppSearch = async function() {
   const supabase = window.supabase.createClient(
     'https://viihcgkjzzhkdiwdzdex.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenhoZGRleCIsInJvbGUiOiJhbm9uIiwiaWF0IjoxNzE2OTM5NTk2LCJleHAiOjIwMzI1MTU1OTZ9.P8T7UuQKJ_FKJUl2tEbl5C54UZObT8zPOX9nPhW4Ujw'
   );
 
   const PREFS = [
@@ -115,6 +69,9 @@ window.initAppSearch = function() {
     ["46_kagoshima", "鹿児島県"], ["47_okinawa", "沖縄県"]
   ];
 
+  let allData = [], filteredData = [], currentPage = 1;
+  const pageSize = 100;
+
   const prefSelect = document.getElementById("prefSelect");
   const citySelect = document.getElementById("citySelect");
   const serviceSelect = document.getElementById("serviceSelect");
@@ -123,17 +80,12 @@ window.initAppSearch = function() {
   const countDisplay = document.getElementById("count");
   const pagination = document.getElementById("pagination");
 
-  if (!prefSelect || !citySelect || !serviceSelect || !searchBtn) return;
-
   PREFS.forEach(([value, label]) => {
     const op = document.createElement("option");
     op.value = value;
     op.textContent = label;
     prefSelect.appendChild(op);
   });
-
-  let allData = [], filteredData = [], currentPage = 1;
-  const pageSize = 100;
 
   prefSelect.addEventListener("change", async () => {
     citySelect.innerHTML = '<option value="">すべて</option>';
@@ -214,5 +166,5 @@ window.initAppSearch = function() {
       }
     };
   }
-};
+}
 </script>
