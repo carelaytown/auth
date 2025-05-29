@@ -30,12 +30,19 @@
 }
 #kaigo-search-app .table-container { margin-top: 1rem; overflow-x: auto; }
 #kaigo-search-app table {
-  border-collapse: collapse; width: 100%; table-layout: fixed;
+  border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 13px;
 }
-#kaigo-search-app th, #kaigo-search-app td {
-  border: 1px solid #ccc; padding: 0.5rem; word-wrap: break-word;
+#kaigo-search-app th {
+  background-color: #e3f2fd;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
 }
-#kaigo-search-app th { background-color: #f0f0f0; }
+#kaigo-search-app td {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  word-wrap: break-word;
+}
 #kaigo-search-app .pagination {
   margin-top: 0.5rem; text-align: center;
 }
@@ -119,7 +126,13 @@
     table.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>" +
       pageData.map((row, i) =>
         "<tr><td>" + (start + i + 1) + "</td>" +
-        fields.map(f => `<td>${row[f] || ""}</td>`).join("") + "</tr>"
+        fields.map(f => {
+          if (f === "url" && row[f]) {
+            return `<td><a href="${row[f]}" target="_blank">リンク</a></td>`;
+          } else {
+            return `<td>${row[f] || ""}</td>`;
+          }
+        }).join("") + "</tr>"
       ).join("");
     resultInfo.textContent = `対象件数：${data.length}件`;
     const totalPages = Math.max(1, Math.ceil(data.length / perPage));
