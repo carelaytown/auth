@@ -9,9 +9,15 @@
     <button id="searchBtn">表示</button>
   </div>
   <div class="result-info"></div>
+  <div class="pagination">
+    <button id="prevPage">◁</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">▷</button>
+    <input type="number" id="pageJump" min="1" style="width: 60px;" />
+    <button id="jumpBtn">移動</button>
+  </div>
   <div class="table-container">
     <table id="resultTable"></table>
-    <div class="pagination"><button id="prevPage">◁</button><span id="pageInfo"></span><button id="nextPage">▷</button></div>
   </div>
 </div>
 
@@ -42,55 +48,12 @@
     "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
   );
 
-  const prefectures = [
-    { jp: "北海道", table: "01_hokkaido" },
-    { jp: "青森県", table: "02_aomori" },
-    { jp: "岩手県", table: "03_iwate" },
-    { jp: "宮城県", table: "04_miyagi" },
-    { jp: "秋田県", table: "05_akita" },
-    { jp: "山形県", table: "06_yamagata" },
-    { jp: "福島県", table: "07_fukushima" },
-    { jp: "茨城県", table: "08_ibaraki" },
-    { jp: "栃木県", table: "09_tochigi" },
-    { jp: "群馬県", table: "10_gunma" },
-    { jp: "埼玉県", table: "11_saitama" },
-    { jp: "千葉県", table: "12_chiba" },
-    { jp: "東京都", table: "13_tokyo" },
-    { jp: "神奈川県", table: "14_kanagawa" },
-    { jp: "新潟県", table: "15_niigata" },
-    { jp: "富山県", table: "16_toyama" },
-    { jp: "石川県", table: "17_ishikawa" },
-    { jp: "福井県", table: "18_fukui" },
-    { jp: "山梨県", table: "19_yamanashi" },
-    { jp: "長野県", table: "20_nagano" },
-    { jp: "岐阜県", table: "21_gifu" },
-    { jp: "静岡県", table: "22_shizuoka" },
-    { jp: "愛知県", table: "23_aichi" },
-    { jp: "三重県", table: "24_mie" },
-    { jp: "滋賀県", table: "25_shiga" },
-    { jp: "京都府", table: "26_kyoto" },
-    { jp: "大阪府", table: "27_osaka" },
-    { jp: "兵庫県", table: "28_hyogo" },
-    { jp: "奈良県", table: "29_nara" },
-    { jp: "和歌山県", table: "30_wakayama" },
-    { jp: "鳥取県", table: "31_tottori" },
-    { jp: "島根県", table: "32_shimane" },
-    { jp: "岡山県", table: "33_okayama" },
-    { jp: "広島県", table: "34_hiroshima" },
-    { jp: "山口県", table: "35_yamaguchi" },
-    { jp: "徳島県", table: "36_tokushima" },
-    { jp: "香川県", table: "37_kagawa" },
-    { jp: "愛媛県", table: "38_ehime" },
-    { jp: "高知県", table: "39_kochi" },
-    { jp: "福岡県", table: "40_fukuoka" },
-    { jp: "佐賀県", table: "41_saga" },
-    { jp: "長崎県", table: "42_nagasaki" },
-    { jp: "熊本県", table: "43_kumamoto" },
-    { jp: "大分県", table: "44_oita" },
-    { jp: "宮崎県", table: "45_miyazaki" },
-    { jp: "鹿児島県", table: "46_kagoshima" },
-    { jp: "沖縄県", table: "47_okinawa" }
-  ];
+  const prefectures = [...Array(47).keys()].map(i => {
+    const code = String(i + 1).padStart(2, "0");
+    const names = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+    const romans = ["hokkaido","aomori","iwate","miyagi","akita","yamagata","fukushima","ibaraki","tochigi","gunma","saitama","chiba","tokyo","kanagawa","niigata","toyama","ishikawa","fukui","yamanashi","nagano","gifu","shizuoka","aichi","mie","shiga","kyoto","osaka","hyogo","nara","wakayama","tottori","shimane","okayama","hiroshima","yamaguchi","tokushima","kagawa","ehime","kochi","fukuoka","saga","nagasaki","kumamoto","oita","miyazaki","kagoshima","okinawa"];
+    return { jp: names[i], table: `${code}_${romans[i]}` };
+  });
 
   let fullData = [];
   let currentPage = 1;
@@ -105,6 +68,8 @@
   const prevPage = app.querySelector("#prevPage");
   const nextPage = app.querySelector("#nextPage");
   const resultInfo = app.querySelector(".result-info");
+  const pageJump = app.querySelector("#pageJump");
+  const jumpBtn = app.querySelector("#jumpBtn");
 
   prefectures.forEach(pref => {
     const opt = document.createElement("option");
@@ -149,12 +114,17 @@
   function renderTable(data) {
     const start = (currentPage - 1) * perPage;
     const pageData = data.slice(start, start + perPage);
-    const headers = ["事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
+    const headers = ["No", "事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
     const fields = ["office_name", "service_type", "phone", "fax", "email", "address", "office_number", "organization_name", "url"];
     table.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>" +
-      pageData.map(row => "<tr>" + fields.map(f => `<td>${row[f] || ""}</td>`).join("") + "</tr>").join("");
+      pageData.map((row, i) =>
+        "<tr><td>" + (start + i + 1) + "</td>" +
+        fields.map(f => `<td>${row[f] || ""}</td>`).join("") + "</tr>"
+      ).join("");
     resultInfo.textContent = `対象件数：${data.length}件`;
-    pageInfo.textContent = `${currentPage}/${Math.ceil(data.length / perPage)}ページ`;
+    const totalPages = Math.max(1, Math.ceil(data.length / perPage));
+    pageInfo.textContent = `${currentPage}/${totalPages}ページ`;
+    pageJump.max = totalPages;
   }
 
   searchBtn.onclick = () => {
@@ -175,6 +145,15 @@
       currentPage++;
       renderTable(filterData());
     }
+  };
+
+  jumpBtn.onclick = () => {
+    const totalPages = Math.ceil(filterData().length / perPage);
+    let targetPage = parseInt(pageJump.value);
+    if (isNaN(targetPage)) return;
+    targetPage = Math.max(1, Math.min(totalPages, targetPage));
+    currentPage = targetPage;
+    renderTable(filterData());
   };
 
   prefectureSelect.onchange = async () => {
