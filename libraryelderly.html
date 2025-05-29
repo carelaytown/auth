@@ -3,7 +3,7 @@
   <h2 class="app-title">介護事業所検索（高齢者）</h2>
   <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</p>
   <div class="filters">
-    <select id="prefectureSelect"><option>都道府県を選択</option></select>
+    <select id="prefectureSelect"><option value="">都道府県を選択</option></select>
     <select id="citySelect"><option>市区町村を選択</option></select>
     <select id="serviceSelect"><option>サービスの種類を選択</option></select>
     <button id="searchBtn">表示</button>
@@ -37,9 +37,60 @@
 
 <script>
 (() => {
-  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
-  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
-  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+  const supabase = window.supabase.createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
+
+  const prefectures = [
+    { jp: "北海道", table: "01_hokkaido" },
+    { jp: "青森県", table: "02_aomori" },
+    { jp: "岩手県", table: "03_iwate" },
+    { jp: "宮城県", table: "04_miyagi" },
+    { jp: "秋田県", table: "05_akita" },
+    { jp: "山形県", table: "06_yamagata" },
+    { jp: "福島県", table: "07_fukushima" },
+    { jp: "茨城県", table: "08_ibaraki" },
+    { jp: "栃木県", table: "09_tochigi" },
+    { jp: "群馬県", table: "10_gunma" },
+    { jp: "埼玉県", table: "11_saitama" },
+    { jp: "千葉県", table: "12_chiba" },
+    { jp: "東京都", table: "13_tokyo" },
+    { jp: "神奈川県", table: "14_kanagawa" },
+    { jp: "新潟県", table: "15_niigata" },
+    { jp: "富山県", table: "16_toyama" },
+    { jp: "石川県", table: "17_ishikawa" },
+    { jp: "福井県", table: "18_fukui" },
+    { jp: "山梨県", table: "19_yamanashi" },
+    { jp: "長野県", table: "20_nagano" },
+    { jp: "岐阜県", table: "21_gifu" },
+    { jp: "静岡県", table: "22_shizuoka" },
+    { jp: "愛知県", table: "23_aichi" },
+    { jp: "三重県", table: "24_mie" },
+    { jp: "滋賀県", table: "25_shiga" },
+    { jp: "京都府", table: "26_kyoto" },
+    { jp: "大阪府", table: "27_osaka" },
+    { jp: "兵庫県", table: "28_hyogo" },
+    { jp: "奈良県", table: "29_nara" },
+    { jp: "和歌山県", table: "30_wakayama" },
+    { jp: "鳥取県", table: "31_tottori" },
+    { jp: "島根県", table: "32_shimane" },
+    { jp: "岡山県", table: "33_okayama" },
+    { jp: "広島県", table: "34_hiroshima" },
+    { jp: "山口県", table: "35_yamaguchi" },
+    { jp: "徳島県", table: "36_tokushima" },
+    { jp: "香川県", table: "37_kagawa" },
+    { jp: "愛媛県", table: "38_ehime" },
+    { jp: "高知県", table: "39_kochi" },
+    { jp: "福岡県", table: "40_fukuoka" },
+    { jp: "佐賀県", table: "41_saga" },
+    { jp: "長崎県", table: "42_nagasaki" },
+    { jp: "熊本県", table: "43_kumamoto" },
+    { jp: "大分県", table: "44_oita" },
+    { jp: "宮崎県", table: "45_miyazaki" },
+    { jp: "鹿児島県", table: "46_kagoshima" },
+    { jp: "沖縄県", table: "47_okinawa" }
+  ];
 
   let fullData = [];
   let currentPage = 1;
@@ -55,28 +106,14 @@
   const nextPage = app.querySelector("#nextPage");
   const resultInfo = app.querySelector(".result-info");
 
-  const prefectureMap = {
-    "01": "北海道", "02": "青森県", "03": "岩手県", "04": "宮城県", "05": "秋田県",
-    "06": "山形県", "07": "福島県", "08": "茨城県", "09": "栃木県", "10": "群馬県",
-    "11": "埼玉県", "12": "千葉県", "13": "東京都", "14": "神奈川県", "15": "新潟県",
-    "16": "富山県", "17": "石川県", "18": "福井県", "19": "山梨県", "20": "長野県",
-    "21": "岐阜県", "22": "静岡県", "23": "愛知県", "24": "三重県", "25": "滋賀県",
-    "26": "京都府", "27": "大阪府", "28": "兵庫県", "29": "奈良県", "30": "和歌山県",
-    "31": "鳥取県", "32": "島根県", "33": "岡山県", "34": "広島県", "35": "山口県",
-    "36": "徳島県", "37": "香川県", "38": "愛媛県", "39": "高知県", "40": "福岡県",
-    "41": "佐賀県", "42": "長崎県", "43": "熊本県", "44": "大分県", "45": "宮崎県",
-    "46": "鹿児島県", "47": "沖縄県"
-  };
-
-  for (const code in prefectureMap) {
+  prefectures.forEach(pref => {
     const opt = document.createElement("option");
-    opt.value = code;
-    opt.textContent = prefectureMap[code];
+    opt.value = pref.table;
+    opt.textContent = pref.jp;
     prefectureSelect.appendChild(opt);
-  }
+  });
 
-  async function fetchTableData(code) {
-    const tableName = code + "_" + prefectureMap[code].replace("県", "").replace("府", "").replace("都", "").toLowerCase();
+  async function fetchTableData(tableName) {
     const allRows = [];
     let from = 0;
     while (true) {
@@ -94,7 +131,7 @@
   }
 
   function updateFilters() {
-    const cities = uniqueValues(fullData, "address").map(addr => addr.split(" ")[1] || addr);
+    const cities = uniqueValues(fullData, "city");
     const services = uniqueValues(fullData, "service_type");
     citySelect.innerHTML = "<option>すべて</option>" + cities.map(v => `<option>${v}</option>`).join("");
     serviceSelect.innerHTML = "<option>すべて</option>" + services.map(v => `<option>${v}</option>`).join("");
@@ -104,7 +141,7 @@
     const city = citySelect.value;
     const service = serviceSelect.value;
     return fullData.filter(row => {
-      return (city === "すべて" || row.address.includes(city)) &&
+      return (city === "すべて" || row.city === city) &&
              (service === "すべて" || row.service_type === service);
     });
   }
@@ -145,9 +182,9 @@
     table.innerHTML = "";
     citySelect.innerHTML = "<option>市区町村を選択</option>";
     serviceSelect.innerHTML = "<option>サービスの種類を選択</option>";
-    const code = prefectureSelect.value;
-    if (!code) return;
-    fullData = await fetchTableData(code);
+    const tableName = prefectureSelect.value;
+    if (!tableName) return;
+    fullData = await fetchTableData(tableName);
     updateFilters();
     currentPage = 1;
     renderTable(fullData);
