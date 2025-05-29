@@ -1,36 +1,32 @@
-<!-- CARELAYタウン完全版：supabase重複定義エラー修正済み -->
-<!-- JS動作保証／都道府県選択で動的にフィルター取得 -->
+<!-- 完全動作版：supabase変数未使用、安全なclient命名、JS構文エラー回避済み -->
 
-<!-- Supabase CDN 読み込み（v2） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
   if (!window.supabaseClient) {
-    window.supabaseClient = supabase.createClient(
+    window.supabaseClient = window.supabase.createClient(
       'https://udcrfwejohzmhfojnwha.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI'
     );
   }
 
-  const supabase = window.supabaseClient;
+  const client = window.supabaseClient;
   const pageSize = 1000;
   let fullData = [], currentPage = 1;
 
   const tablePrefixMap = {
     "北海道": "01_hokkaido", "青森県": "02_aomori"
-    // ...必要な都道府県追加
+    // 他の都道府県も追加可能
   };
 
   document.addEventListener('DOMContentLoaded', () => {
-    const prefs = Object.keys(tablePrefixMap);
     const prefSelect = document.getElementById('prefecture');
-    prefs.forEach(p => {
-      const o = document.createElement('option');
-      o.value = p; o.textContent = p;
-      prefSelect.appendChild(o);
+    Object.keys(tablePrefixMap).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p; opt.textContent = p;
+      prefSelect.appendChild(opt);
     });
 
-    document.getElementById('prefecture').addEventListener('change', loadFilters);
+    prefSelect.addEventListener('change', loadFilters);
     document.getElementById('search-btn').addEventListener('click', searchData);
     document.getElementById('prev-page').addEventListener('click', () => {
       if (currentPage > 1) { currentPage--; renderTable(); }
@@ -49,16 +45,12 @@
     citySel.innerHTML = '<option>市区町村</option>';
     serviceSel.innerHTML = '<option>サービスの種別</option>';
     const table = tablePrefixMap[pref];
-    const cityRes = await supabase.from(table).select('city').limit(10000);
-    const serviceRes = await supabase.from(table).select('service_type').limit(10000);
-    if (cityRes.data) {
-      const cities = [...new Set(cityRes.data.map(d => d.city).filter(Boolean))].sort();
-      cities.forEach(c => citySel.innerHTML += `<option>${c}</option>`);
-    }
-    if (serviceRes.data) {
-      const types = [...new Set(serviceRes.data.map(d => d.service_type).filter(Boolean))].sort();
-      types.forEach(s => serviceSel.innerHTML += `<option>${s}</option>`);
-    }
+    const { data: cityData } = await client.from(table).select('city').limit(10000);
+    const { data: serviceData } = await client.from(table).select('service_type').limit(10000);
+    const cities = [...new Set((cityData || []).map(d => d.city).filter(Boolean))];
+    const services = [...new Set((serviceData || []).map(d => d.service_type).filter(Boolean))];
+    cities.sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
+    services.sort().forEach(s => serviceSel.innerHTML += `<option>${s}</option>`);
   }
 
   async function searchData() {
@@ -66,25 +58,27 @@
     const city = document.getElementById('city').value;
     const service = document.getElementById('service').value;
     const table = tablePrefixMap[pref];
-    let query = supabase.from(table).select('*').limit(10000);
+    let query = client.from(table).select('*').limit(10000);
     if (city !== '市区町村') query = query.eq('city', city);
     if (service !== 'サービスの種別') query = query.eq('service_type', service);
     const { data, error } = await query;
-    if (data) {
+    if (!error && data) {
       fullData = data; currentPage = 1; renderTable();
     }
   }
 
   function renderTable() {
-    const start = (currentPage - 1) * pageSize;
-    const rows = fullData.slice(start, start + pageSize);
     const tbody = document.querySelector('#results-table tbody');
     tbody.innerHTML = '';
-    rows.forEach((r, i) => {
-      const row = `<tr><td>${start + i + 1}</td><td>${r.office_name}</td><td>${r.service_type}</td>
+    const start = (currentPage - 1) * pageSize;
+    const pageData = fullData.slice(start, start + pageSize);
+    pageData.forEach((r, i) => {
+      const row = `<tr>
+        <td>${start + i + 1}</td><td>${r.office_name}</td><td>${r.service_type}</td>
         <td>${r.phone}</td><td>${r.fax}</td><td>${r.email}</td><td>${r.address}</td>
         <td>${r.office_number}</td><td>${r.organization_name}</td>
-        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ''}</td></tr>`;
+        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ''}</td>
+      </tr>`;
       tbody.insertAdjacentHTML('beforeend', row);
     });
     document.getElementById('page-info').textContent =
