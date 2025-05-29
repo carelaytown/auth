@@ -1,5 +1,4 @@
-<!-- CARELAYタウン「介護事業所検索（高齢者）」：完全修正バージョン -->
-<!-- JSエラー修正済・ページングは表の上・キャンバス不使用 -->
+<!-- CARELAYタウン「介護事業所検索（高齢者）」修正済：UMD版Supabase対応 -->
 
 <style>
   body { background: white; font-family: sans-serif; }
@@ -51,10 +50,12 @@
   </table>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+<!-- ✅ 正しいUMD形式のSupabase読み込み -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
+  const { createClient } = supabase;
   if (!window.mySupabase) {
-    window.mySupabase = supabase.createClient(
+    window.mySupabase = createClient(
       'https://udcrfwejohzmhfojnwha.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI'
     );
@@ -63,7 +64,7 @@
   const prefMap = {
     "北海道": "01_hokkaido",
     "青森県": "02_aomori"
-    // 必要に応じて全47都道府県を追加
+    // 他の都道府県も必要に応じて追記
   };
 
   let currentData = [], currentPage = 1, pageSize = 100, totalPages = 1;
