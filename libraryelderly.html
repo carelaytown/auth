@@ -4,89 +4,95 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>介護事業所検索（高齢者）</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@1.35.6/dist/umd/supabase.min.js"></script>
   <style>
-    body {
-      font-family: "Helvetica Neue", sans-serif;
-      background: #f9f9f9;
-      margin: 0;
-      padding: 1rem;
+    #elderly-search-app * {
+      box-sizing: border-box;
     }
-    h1 {
+    #elderly-search-app {
+      font-family: "Helvetica Neue", sans-serif;
+      background: transparent;
+      padding: 0;
+      margin: 0;
+    }
+    #elderly-search-app h1 {
       font-size: 1.4rem;
       margin-bottom: 0.5rem;
     }
-    small {
+    #elderly-search-app small {
       color: gray;
     }
-    select, button {
+    #elderly-search-app select,
+    #elderly-search-app button {
       padding: 0.4rem;
       margin-right: 0.5rem;
       border-radius: 6px;
       border: 1px solid #ccc;
       font-size: 0.9rem;
     }
-    button {
+    #elderly-search-app button {
       background-color: #007bff;
       color: white;
       cursor: pointer;
     }
-    table {
+    #elderly-search-app table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 1rem;
     }
-    th, td {
+    #elderly-search-app th,
+    #elderly-search-app td {
       border: 1px solid #ccc;
       padding: 0.5rem;
       text-align: left;
       font-size: 0.85rem;
       white-space: nowrap;
     }
-    th {
+    #elderly-search-app th {
       background-color: #f0f0f0;
     }
-    #pagination span {
+    #elderly-search-app #pagination span {
       margin: 0 0.5rem;
       cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>介護事業所検索（高齢者）</h1>
-  <small>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</small>
-  <div style="margin-top: 1rem;">
-    <select id="prefSelect"><option value="">都道府県を選択</option></select>
-    <select id="citySelect"><option value="">市区町村を選択</option></select>
-    <select id="serviceSelect"><option value="">サービスの種類を選択</option></select>
-    <button id="searchBtn">表示</button>
+  <div id="elderly-search-app">
+    <h1>介護事業所検索（高齢者）</h1>
+    <small>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</small>
+    <div style="margin-top: 1rem;">
+      <select id="prefSelect"><option value="">都道府県を選択</option></select>
+      <select id="citySelect"><option value="">市区町村を選択</option></select>
+      <select id="serviceSelect"><option value="">サービスの種類を選択</option></select>
+      <button id="searchBtn">表示</button>
+    </div>
+    <div id="count" style="margin-top:1rem;">対象件数：0件</div>
+    <div id="pagination"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>事業所名</th>
+          <th>サービスの種類</th>
+          <th>電話番号</th>
+          <th>FAX番号</th>
+          <th>Email</th>
+          <th>住所</th>
+          <th>事業所番号</th>
+          <th>法人名称</th>
+          <th>ホームページ</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
   </div>
-  <div id="count" style="margin-top:1rem;">対象件数：0件</div>
-  <div id="pagination"></div>
-  <table>
-    <thead>
-      <tr>
-        <th>事業所名</th>
-        <th>サービスの種類</th>
-        <th>電話番号</th>
-        <th>FAX番号</th>
-        <th>Email</th>
-        <th>住所</th>
-        <th>事業所番号</th>
-        <th>法人名称</th>
-        <th>ホームページ</th>
-      </tr>
-    </thead>
-    <tbody id="resultBody"></tbody>
-  </table>
-
-  <script type="text/plain" data-run="app-search">
-  window.initAppSearch = function () {
-    const supabase = window.supabase.createClient(
+  <script>
+    const supabase = supabase.createClient(
       'https://viihcgkjzzhkdiwdzdex.supabase.co',
       'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY5NzM4NzUsImV4cCI6MjAzODU0OTg3NX0._KwF5-VO5_7Ep47aWVW-kgUvTRnSDdM1oq6EzQHeKcg'
     );
 
-    const PREFS = [...document.querySelectorAll('#prefSelect option[value]')].length > 1 ? [] : [
+    const PREFS = [
       ["01_hokkaido", "北海道"], ["02_aomori", "青森県"], ["03_iwate", "岩手県"], ["04_miyagi", "宮城県"],
       ["05_akita", "秋田県"], ["06_yamagata", "山形県"], ["07_fukushima", "福島県"],
       ["08_ibaraki", "茨城県"], ["09_tochigi", "栃木県"], ["10_gunma", "群馬県"],
@@ -131,6 +137,7 @@
       currentPage = 1;
 
       const table = prefSelect.value;
+      if (!table) return;
       let from = 0, to = 999;
       while (true) {
         const { data, error } = await supabase.from(table).select("*").range(from, to);
@@ -198,12 +205,6 @@
         }
       };
     }
-  }
-  </script>
-  <script>
-    const scriptEl = document.querySelector('script[data-run]');
-    if (scriptEl) eval(scriptEl.textContent);
-    if (typeof initAppSearch === 'function') initAppSearch();
   </script>
 </body>
 </html>
