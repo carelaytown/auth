@@ -91,7 +91,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-window.addEventListener("DOMContentLoaded", () => {
+(() => {
   const supabase = window.supabase.createClient(
     'https://viihcgkjzzhkdiwdzdex.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
@@ -115,9 +115,6 @@ window.addEventListener("DOMContentLoaded", () => {
     ["46_kagoshima", "鹿児島県"], ["47_okinawa", "沖縄県"]
   ];
 
-  let allData = [], filteredData = [], currentPage = 1;
-  const pageSize = 100;
-
   const prefSelect = document.getElementById("prefSelect");
   const citySelect = document.getElementById("citySelect");
   const serviceSelect = document.getElementById("serviceSelect");
@@ -126,12 +123,17 @@ window.addEventListener("DOMContentLoaded", () => {
   const countDisplay = document.getElementById("count");
   const pagination = document.getElementById("pagination");
 
+  if (!prefSelect || !citySelect || !serviceSelect || !searchBtn) return;
+
   PREFS.forEach(([value, label]) => {
     const op = document.createElement("option");
     op.value = value;
     op.textContent = label;
     prefSelect.appendChild(op);
   });
+
+  let allData = [], filteredData = [], currentPage = 1;
+  const pageSize = 100;
 
   prefSelect.addEventListener("change", async () => {
     citySelect.innerHTML = '<option value="">すべて</option>';
@@ -212,5 +214,5 @@ window.addEventListener("DOMContentLoaded", () => {
       }
     };
   }
-});
+})();
 </script>
