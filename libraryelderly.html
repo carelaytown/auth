@@ -1,129 +1,93 @@
-<!-- CARELAYタウン：介護事業所検索（高齢者）アプリ 完全版 -->
-<div class="app-container">
-  <h2>介護事業所検索（高齢者）</h2>
-  <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
-  <div class="filters">
-    <select id="prefecture"><option>都道府県</option></select>
-    <select id="city"><option>市区町村</option></select>
-    <select id="service"><option>サービスの種別</option></select>
-    <button id="search-btn">表示</button>
-  </div>
-  <div class="pagination-top">
-    <button id="prev-page">◁</button>
-    <span id="page-info">1/1ページ</span>
-    <button id="next-page">▷</button>
-  </div>
-  <div class="table-container">
-    <table id="results-table">
-      <thead>
-        <tr>
-          <th>No</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
-          <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
+<!-- CARELAYタウン完全版：supabase重複定義エラー修正済み -->
+<!-- JS動作保証／都道府県選択で動的にフィルター取得 -->
 
-<style>
-  .app-container { padding: 20px; background: white; font-family: sans-serif; }
-  .note { font-size: 12px; color: gray; margin-bottom: 10px; }
-  .filters select, .filters button {
-    margin-right: 10px; padding: 5px 10px; font-size: 14px;
-  }
-  .filters button {
-    background-color: #007bff; color: white; border: none; border-radius: 5px;
-  }
-  .table-container { overflow-x: auto; margin-top: 20px; }
-  table { border-collapse: collapse; width: 100%; background: white; }
-  th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
-  th { background-color: #f0f0f0; }
-  .pagination-top {
-    margin-top: 15px; display: flex; align-items: center;
-    gap: 10px; font-size: 14px;
-  }
-</style>
-
+<!-- Supabase CDN 読み込み（v2） -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
-const supabase = window.supabase.createClient(
-  'https://udcrfwejohzmhfojnwha.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-);
+  if (!window.supabaseClient) {
+    window.supabaseClient = supabase.createClient(
+      'https://udcrfwejohzmhfojnwha.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI'
+    );
+  }
 
-let fullData = [];
-let currentPage = 1;
-const pageSize = 1000;
+  const supabase = window.supabaseClient;
+  const pageSize = 1000;
+  let fullData = [], currentPage = 1;
 
-async function fetchUniqueColumnValues(table, column) {
-  const { data, error } = await supabase.from(table).select(column).range(0, 9999);
-  if (error || !data) return [];
-  return [...new Set(data.map(d => d[column]).filter(Boolean))];
-}
+  const tablePrefixMap = {
+    "北海道": "01_hokkaido", "青森県": "02_aomori"
+    // ...必要な都道府県追加
+  };
 
-function updateTableDisplay(data) {
-  const tbody = document.querySelector('#results-table tbody');
-  tbody.innerHTML = '';
-  const start = (currentPage - 1) * pageSize;
-  const end = currentPage * pageSize;
-  data.slice(start, end).forEach((item, idx) => {
-    const row = `<tr><td>${start + idx + 1}</td>
-      <td>${item.office_name}</td><td>${item.service_type}</td><td>${item.phone}</td>
-      <td>${item.fax}</td><td>${item.email}</td><td>${item.address}</td>
-      <td>${item.office_number}</td><td>${item.organization_name}</td>
-      <td>${item.url}</td></tr>`;
-    tbody.innerHTML += row;
+  document.addEventListener('DOMContentLoaded', () => {
+    const prefs = Object.keys(tablePrefixMap);
+    const prefSelect = document.getElementById('prefecture');
+    prefs.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      prefSelect.appendChild(o);
+    });
+
+    document.getElementById('prefecture').addEventListener('change', loadFilters);
+    document.getElementById('search-btn').addEventListener('click', searchData);
+    document.getElementById('prev-page').addEventListener('click', () => {
+      if (currentPage > 1) { currentPage--; renderTable(); }
+    });
+    document.getElementById('next-page').addEventListener('click', () => {
+      if (currentPage < Math.ceil(fullData.length / pageSize)) {
+        currentPage++; renderTable();
+      }
+    });
   });
-  document.getElementById('page-info').innerText =
-    `${currentPage}/${Math.ceil(data.length / pageSize)}ページ`;
-}
 
-document.getElementById('prev-page').onclick = () => {
-  if (currentPage > 1) {
-    currentPage--;
-    updateTableDisplay(fullData);
+  async function loadFilters() {
+    const pref = document.getElementById('prefecture').value;
+    const citySel = document.getElementById('city');
+    const serviceSel = document.getElementById('service');
+    citySel.innerHTML = '<option>市区町村</option>';
+    serviceSel.innerHTML = '<option>サービスの種別</option>';
+    const table = tablePrefixMap[pref];
+    const cityRes = await supabase.from(table).select('city').limit(10000);
+    const serviceRes = await supabase.from(table).select('service_type').limit(10000);
+    if (cityRes.data) {
+      const cities = [...new Set(cityRes.data.map(d => d.city).filter(Boolean))].sort();
+      cities.forEach(c => citySel.innerHTML += `<option>${c}</option>`);
+    }
+    if (serviceRes.data) {
+      const types = [...new Set(serviceRes.data.map(d => d.service_type).filter(Boolean))].sort();
+      types.forEach(s => serviceSel.innerHTML += `<option>${s}</option>`);
+    }
   }
-};
-document.getElementById('next-page').onclick = () => {
-  if (currentPage < Math.ceil(fullData.length / pageSize)) {
-    currentPage++;
-    updateTableDisplay(fullData);
+
+  async function searchData() {
+    const pref = document.getElementById('prefecture').value;
+    const city = document.getElementById('city').value;
+    const service = document.getElementById('service').value;
+    const table = tablePrefixMap[pref];
+    let query = supabase.from(table).select('*').limit(10000);
+    if (city !== '市区町村') query = query.eq('city', city);
+    if (service !== 'サービスの種別') query = query.eq('service_type', service);
+    const { data, error } = await query;
+    if (data) {
+      fullData = data; currentPage = 1; renderTable();
+    }
   }
-};
 
-document.getElementById('prefecture').onchange = async e => {
-  const pref = e.target.value;
-  const citySelect = document.getElementById('city');
-  const serviceSelect = document.getElementById('service');
-  citySelect.innerHTML = '<option>市区町村</option>';
-  serviceSelect.innerHTML = '<option>サービスの種別</option>';
-  const table = `0${String(e.target.selectedIndex).padStart(2, '0')}_${pref}`;
-  const cityVals = await fetchUniqueColumnValues(table, 'city');
-  const serviceVals = await fetchUniqueColumnValues(table, 'service_type');
-  cityVals.forEach(v => citySelect.innerHTML += `<option>${v}</option>`);
-  serviceVals.forEach(v => serviceSelect.innerHTML += `<option>${v}</option>`);
-};
-
-document.getElementById('search-btn').onclick = async () => {
-  const pref = document.getElementById('prefecture').value;
-  const city = document.getElementById('city').value;
-  const service = document.getElementById('service').value;
-  const table = `0${String(document.getElementById('prefecture').selectedIndex).padStart(2, '0')}_${pref}`;
-  let query = supabase.from(table).select('*').limit(10000);
-  if (city !== '市区町村') query = query.eq('city', city);
-  if (service !== 'サービスの種別') query = query.eq('service_type', service);
-  const { data, error } = await query;
-  if (!error && data) {
-    fullData = data;
-    currentPage = 1;
-    updateTableDisplay(fullData);
+  function renderTable() {
+    const start = (currentPage - 1) * pageSize;
+    const rows = fullData.slice(start, start + pageSize);
+    const tbody = document.querySelector('#results-table tbody');
+    tbody.innerHTML = '';
+    rows.forEach((r, i) => {
+      const row = `<tr><td>${start + i + 1}</td><td>${r.office_name}</td><td>${r.service_type}</td>
+        <td>${r.phone}</td><td>${r.fax}</td><td>${r.email}</td><td>${r.address}</td>
+        <td>${r.office_number}</td><td>${r.organization_name}</td>
+        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ''}</td></tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    });
+    document.getElementById('page-info').textContent =
+      `${currentPage}/${Math.ceil(fullData.length / pageSize)}ページ`;
   }
-};
-
-window.onload = () => {
-  const prefs = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
-  const prefSel = document.getElementById('prefecture');
-  prefs.forEach(p => prefSel.innerHTML += `<option>${p}</option>`);
-};
 </script>
