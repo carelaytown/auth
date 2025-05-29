@@ -1,5 +1,6 @@
 <!-- 介護事業所検索（高齢者）アプリ -->
 <div id="kaigo-search-app" class="app-container">
+  <h2 class="app-title">介護事業所検索（高齢者）</h2>
   <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</p>
   <div class="filters">
     <select id="prefectureSelect"><option>都道府県を選択</option></select>
@@ -16,7 +17,8 @@
 
 <style>
 #kaigo-search-app { font-family: sans-serif; padding: 1rem; }
-#kaigo-search-app .note { font-size: 0.8rem; color: #555; }
+#kaigo-search-app .app-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+#kaigo-search-app .note { font-size: 0.8rem; color: #555; margin-bottom: 0.5rem; }
 #kaigo-search-app .filters select, #kaigo-search-app .filters button {
   margin: 0.2rem; padding: 0.4rem;
 }
@@ -33,14 +35,12 @@
 }
 </style>
 
-<script type="module">
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-const supabase = createClient(
-  "https://viihcgkjzzhkdiwdzdex.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
-);
-
+<script>
 (() => {
+  const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
+  const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
   let fullData = [];
   let currentPage = 1;
   const perPage = 100;
@@ -154,3 +154,4 @@ const supabase = createClient(
   };
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
