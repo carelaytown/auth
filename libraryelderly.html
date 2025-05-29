@@ -1,1 +1,156 @@
+<!-- 介護事業所検索（高齢者）アプリ -->
+<div id="kaigo-search-app" class="app-container">
+  <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</p>
+  <div class="filters">
+    <select id="prefectureSelect"><option>都道府県を選択</option></select>
+    <select id="citySelect"><option>市区町村を選択</option></select>
+    <select id="serviceSelect"><option>サービスの種類を選択</option></select>
+    <button id="searchBtn">表示</button>
+  </div>
+  <div class="result-info"></div>
+  <div class="table-container">
+    <table id="resultTable"></table>
+    <div class="pagination"><button id="prevPage">◁</button><span id="pageInfo"></span><button id="nextPage">▷</button></div>
+  </div>
+</div>
 
+<style>
+#kaigo-search-app { font-family: sans-serif; padding: 1rem; }
+#kaigo-search-app .note { font-size: 0.8rem; color: #555; }
+#kaigo-search-app .filters select, #kaigo-search-app .filters button {
+  margin: 0.2rem; padding: 0.4rem;
+}
+#kaigo-search-app .table-container { margin-top: 1rem; overflow-x: auto; }
+#kaigo-search-app table {
+  border-collapse: collapse; width: 100%; table-layout: fixed;
+}
+#kaigo-search-app th, #kaigo-search-app td {
+  border: 1px solid #ccc; padding: 0.5rem; word-wrap: break-word;
+}
+#kaigo-search-app th { background-color: #f0f0f0; }
+#kaigo-search-app .pagination {
+  margin-top: 0.5rem; text-align: center;
+}
+</style>
+
+<script type="module">
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+const supabase = createClient(
+  "https://viihcgkjzzhkdiwdzdex.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+);
+
+(() => {
+  let fullData = [];
+  let currentPage = 1;
+  const perPage = 100;
+  const app = document.getElementById("kaigo-search-app");
+  const prefectureSelect = app.querySelector("#prefectureSelect");
+  const citySelect = app.querySelector("#citySelect");
+  const serviceSelect = app.querySelector("#serviceSelect");
+  const searchBtn = app.querySelector("#searchBtn");
+  const table = app.querySelector("#resultTable");
+  const pageInfo = app.querySelector("#pageInfo");
+  const prevPage = app.querySelector("#prevPage");
+  const nextPage = app.querySelector("#nextPage");
+  const resultInfo = app.querySelector(".result-info");
+
+  const prefectureMap = {
+    "01": "北海道", "02": "青森県", "03": "岩手県", "04": "宮城県", "05": "秋田県",
+    "06": "山形県", "07": "福島県", "08": "茨城県", "09": "栃木県", "10": "群馬県",
+    "11": "埼玉県", "12": "千葉県", "13": "東京都", "14": "神奈川県", "15": "新潟県",
+    "16": "富山県", "17": "石川県", "18": "福井県", "19": "山梨県", "20": "長野県",
+    "21": "岐阜県", "22": "静岡県", "23": "愛知県", "24": "三重県", "25": "滋賀県",
+    "26": "京都府", "27": "大阪府", "28": "兵庫県", "29": "奈良県", "30": "和歌山県",
+    "31": "鳥取県", "32": "島根県", "33": "岡山県", "34": "広島県", "35": "山口県",
+    "36": "徳島県", "37": "香川県", "38": "愛媛県", "39": "高知県", "40": "福岡県",
+    "41": "佐賀県", "42": "長崎県", "43": "熊本県", "44": "大分県", "45": "宮崎県",
+    "46": "鹿児島県", "47": "沖縄県"
+  };
+
+  for (const code in prefectureMap) {
+    const opt = document.createElement("option");
+    opt.value = code;
+    opt.textContent = prefectureMap[code];
+    prefectureSelect.appendChild(opt);
+  }
+
+  async function fetchTableData(code) {
+    const tableName = code + "_" + prefectureMap[code].replace("県", "").replace("府", "").replace("都", "").toLowerCase();
+    const allRows = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase.from(tableName).select("*").range(from, from + 999);
+      if (error || !data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+    return allRows;
+  }
+
+  function uniqueValues(data, key) {
+    return [...new Set(data.map(row => row[key]).filter(Boolean))].sort();
+  }
+
+  function updateFilters() {
+    const cities = uniqueValues(fullData, "address").map(addr => addr.split(" ")[1] || addr);
+    const services = uniqueValues(fullData, "service_type");
+    citySelect.innerHTML = "<option>すべて</option>" + cities.map(v => `<option>${v}</option>`).join("");
+    serviceSelect.innerHTML = "<option>すべて</option>" + services.map(v => `<option>${v}</option>`).join("");
+  }
+
+  function filterData() {
+    const city = citySelect.value;
+    const service = serviceSelect.value;
+    return fullData.filter(row => {
+      return (city === "すべて" || row.address.includes(city)) &&
+             (service === "すべて" || row.service_type === service);
+    });
+  }
+
+  function renderTable(data) {
+    const start = (currentPage - 1) * perPage;
+    const pageData = data.slice(start, start + perPage);
+    const headers = ["事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
+    const fields = ["office_name", "service_type", "phone", "fax", "email", "address", "office_number", "organization_name", "url"];
+    table.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>" +
+      pageData.map(row => "<tr>" + fields.map(f => `<td>${row[f] || ""}</td>`).join("") + "</tr>").join("");
+    resultInfo.textContent = `対象件数：${data.length}件`;
+    pageInfo.textContent = `${currentPage}/${Math.ceil(data.length / perPage)}ページ`;
+  }
+
+  searchBtn.onclick = () => {
+    currentPage = 1;
+    renderTable(filterData());
+  };
+
+  prevPage.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable(filterData());
+    }
+  };
+
+  nextPage.onclick = () => {
+    const totalPages = Math.ceil(filterData().length / perPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable(filterData());
+    }
+  };
+
+  prefectureSelect.onchange = async () => {
+    fullData = [];
+    table.innerHTML = "";
+    citySelect.innerHTML = "<option>市区町村を選択</option>";
+    serviceSelect.innerHTML = "<option>サービスの種類を選択</option>";
+    const code = prefectureSelect.value;
+    if (!code) return;
+    fullData = await fetchTableData(code);
+    updateFilters();
+    currentPage = 1;
+    renderTable(fullData);
+  };
+})();
+</script>
