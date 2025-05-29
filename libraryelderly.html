@@ -1,6 +1,83 @@
-<!-- エラー完全回避：supabase再定義なし・window.__supabaseClient使用 -->
+<style>
+  body {
+    font-family: sans-serif;
+    background: white;
+    margin: 0;
+    padding: 1em;
+  }
+  h2 {
+    font-size: 20px;
+    margin-bottom: 0.2em;
+  }
+  .note {
+    font-size: 12px;
+    margin-bottom: 1em;
+    color: #555;
+  }
+  .filters {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1em;
+  }
+  select, button {
+    font-size: 14px;
+    padding: 6px 10px;
+  }
+  button {
+    background: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #0056b3;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+  th {
+    background: #f0f0f0;
+  }
+  .pagination {
+    margin: 1em 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+</style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<h2>介護事業所検索（高齢者）</h2>
+<div class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</div>
+
+<div class="filters">
+  <select id="prefecture"><option value="">都道府県</option></select>
+  <select id="city"><option value="">市区町村</option></select>
+  <select id="service"><option value="">サービスの種類</option></select>
+  <button id="search-btn">表示</button>
+</div>
+
+<div id="pagination" class="pagination"></div>
+
+<table id="results-table">
+  <thead>
+    <tr>
+      <th>No</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
+      <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
   if (!window.__supabaseClient) {
     window.__supabaseClient = window.supabase.createClient(
@@ -9,55 +86,38 @@
     );
   }
   const sb = window.__supabaseClient;
-
-  // 以下、全て sb.from(...) で処理
   let fullData = [], currentPage = 1, pageSize = 1000;
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const prefSelect = document.getElementById('prefecture');
-    const prefs = [
-      '北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県',
-      '新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県',
-      '奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県',
-      '熊本県','大分県','宮崎県','鹿児島県','沖縄県'
-    ];
-    prefs.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p;
-      opt.textContent = p;
-      prefSelect.appendChild(opt);
-    });
-
-    prefSelect.addEventListener('change', loadFilters);
-    document.getElementById('search-btn').addEventListener('click', searchData);
-    document.getElementById('prev-page').addEventListener('click', () => {
-      if (currentPage > 1) { currentPage--; renderTable(); }
-    });
-    document.getElementById('next-page').addEventListener('click', () => {
-      if (currentPage < Math.ceil(fullData.length / pageSize)) {
-        currentPage++; renderTable();
-      }
-    });
-  });
 
   const tablePrefixMap = {
     "北海道": "01_hokkaido", "青森県": "02_aomori"
-    // 他の都道府県は同様に続けてください
   };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const prefs = Object.keys(tablePrefixMap);
+    const prefSel = document.getElementById('prefecture');
+    prefs.forEach(p => {
+      const o = document.createElement('option');
+      o.value = p; o.textContent = p;
+      prefSel.appendChild(o);
+    });
+    prefSel.addEventListener('change', loadFilters);
+    document.getElementById('search-btn').addEventListener('click', searchData);
+    document.getElementById('pagination').addEventListener('click', handlePageClick);
+  });
 
   async function loadFilters() {
     const pref = document.getElementById('prefecture').value;
+    const table = tablePrefixMap[pref];
     const citySel = document.getElementById('city');
     const serviceSel = document.getElementById('service');
-    citySel.innerHTML = '<option>市区町村</option>';
-    serviceSel.innerHTML = '<option>サービスの種別</option>';
-    const table = tablePrefixMap[pref];
+    citySel.innerHTML = '<option value="">市区町村</option>';
+    serviceSel.innerHTML = '<option value="">サービスの種類</option>';
     const { data: cityData } = await sb.from(table).select('city').limit(10000);
-    const { data: serviceData } = await sb.from(table).select('service_type').limit(10000);
-    const cities = [...new Set((cityData || []).map(d => d.city).filter(Boolean))];
-    const services = [...new Set((serviceData || []).map(d => d.service_type).filter(Boolean))];
-    cities.sort().forEach(c => citySel.innerHTML += `<option>${c}</option>`);
-    services.sort().forEach(s => serviceSel.innerHTML += `<option>${s}</option>`);
+    const { data: typeData } = await sb.from(table).select('service_type').limit(10000);
+    const cities = [...new Set((cityData||[]).map(d => d.city).filter(Boolean))];
+    const types = [...new Set((typeData||[]).map(d => d.service_type).filter(Boolean))];
+    cities.sort().forEach(c => citySel.innerHTML += `<option value="${c}">${c}</option>`);
+    types.sort().forEach(t => serviceSel.innerHTML += `<option value="${t}">${t}</option>`);
   }
 
   async function searchData() {
@@ -66,30 +126,47 @@
     const service = document.getElementById('service').value;
     const table = tablePrefixMap[pref];
     let query = sb.from(table).select('*').limit(10000);
-    if (city !== '市区町村') query = query.eq('city', city);
-    if (service !== 'サービスの種別') query = query.eq('service_type', service);
+    if (city) query = query.eq('city', city);
+    if (service) query = query.eq('service_type', service);
     const { data, error } = await query;
     if (!error && data) {
-      fullData = data; currentPage = 1; renderTable();
+      fullData = data; currentPage = 1;
+      renderTable(); renderPagination();
     }
   }
 
   function renderTable() {
+    const start = (currentPage - 1) * pageSize;
+    const data = fullData.slice(start, start + pageSize);
     const tbody = document.querySelector('#results-table tbody');
     tbody.innerHTML = '';
-    const start = (currentPage - 1) * pageSize;
-    const pageData = fullData.slice(start, start + pageSize);
-    pageData.forEach((r, i) => {
+    data.forEach((r, i) => {
       const row = `<tr>
-        <td>${start + i + 1}</td>
-        <td>${r.office_name}</td><td>${r.service_type}</td><td>${r.phone}</td>
-        <td>${r.fax}</td><td>${r.email}</td><td>${r.address}</td>
+        <td>${start + i + 1}</td><td>${r.office_name}</td><td>${r.service_type}</td>
+        <td>${r.phone}</td><td>${r.fax}</td><td>${r.email}</td><td>${r.address}</td>
         <td>${r.office_number}</td><td>${r.organization_name}</td>
         <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ''}</td>
       </tr>`;
       tbody.insertAdjacentHTML('beforeend', row);
     });
-    document.getElementById('page-info').textContent =
-      `${currentPage}/${Math.ceil(fullData.length / pageSize)}ページ`;
+  }
+
+  function renderPagination() {
+    const total = Math.ceil(fullData.length / pageSize);
+    const p = document.getElementById('pagination');
+    if (total <= 1) return p.innerHTML = '';
+    p.innerHTML = `
+      <button data-nav="-1" ${currentPage === 1 ? 'disabled' : ''}>◁</button>
+      ${currentPage} / ${total}ページ
+      <button data-nav="1" ${currentPage === total ? 'disabled' : ''}>▷</button>
+    `;
+  }
+
+  function handlePageClick(e) {
+    if (e.target.tagName === 'BUTTON' && e.target.dataset.nav) {
+      const offset = Number(e.target.dataset.nav);
+      currentPage += offset;
+      renderTable(); renderPagination();
+    }
   }
 </script>
