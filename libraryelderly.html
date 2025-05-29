@@ -1,82 +1,154 @@
-<!-- スクリプト実行前にDOMが存在するようDOMContentLoadedでラップ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const supabase = window.supabase.createClient(
-    'https://viihcgkjzzhkdiwdzdex.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-  );
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>介護事業所検索（高齢者）</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f8f8f8;
+    }
+    .container {
+      padding: 1rem;
+      background: white;
+      margin: 1rem;
+      border-radius: 8px;
+    }
+    h1 {
+      font-size: 1.5rem;
+    }
+    select, button {
+      margin: 0.5rem 0.2rem;
+      padding: 0.3rem 0.6rem;
+      font-size: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      background: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.4rem;
+      text-align: left;
+    }
+    th {
+      background: #eee;
+    }
+    td:nth-child(1) { width: 14%; }
+    td:nth-child(2) { width: 10%; }
+    td:nth-child(3), td:nth-child(4), td:nth-child(5) { width: 10%; }
+    td:nth-child(6) { width: 20%; }
+    td:nth-child(7), td:nth-child(8) { width: 12%; }
+    td:nth-child(9) { width: 6%; text-align: center; }
+    #pagerTop {
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>介護事業所検索（高齢者）</h1>
+    <p>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+    <select id="prefSelect"><option value="">都道府県を選択</option></select>
+    <select id="citySelect"><option value="">市区町村を選択</option></select>
+    <select id="typeSelect"><option value="">サービスの種類を選択</option></select>
+    <button id="loadButton">表示</button>
+    <div id="pagerTop"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th><th>Email</th>
+          <th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+        </tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+  </div>
 
-  const tableMap = {
-    "北海道": "01_hokkaido", "青森県": "02_aomori", "岩手県": "03_iwate", "宮城県": "04_miyagi", "秋田県": "05_akita", "山形県": "06_yamagata",
-    "福島県": "07_fukushima", "茨城県": "08_ibaraki", "栃木県": "09_tochigi", "群馬県": "10_gunma", "埼玉県": "11_saitama", "千葉県": "12_chiba",
-    "東京都": "13_tokyo", "神奈川県": "14_kanagawa", "新潟県": "15_niigata", "富山県": "16_toyama", "石川県": "17_ishikawa", "福井県": "18_fukui",
-    "山梨県": "19_yamanashi", "長野県": "20_nagano", "岐阜県": "21_gifu", "静岡県": "22_shizuoka", "愛知県": "23_aichi", "三重県": "24_mie",
-    "滋賀県": "25_shiga", "京都府": "26_kyoto", "大阪府": "27_osaka", "兵庫県": "28_hyogo", "奈良県": "29_nara", "和歌山県": "30_wakayama",
-    "鳥取県": "31_tottori", "島根県": "32_shimane", "岡山県": "33_okayama", "広島県": "34_hiroshima", "山口県": "35_yamaguchi",
-    "徳島県": "36_tokushima", "香川県": "37_kagawa", "愛媛県": "38_ehime", "高知県": "39_kochi", "福岡県": "40_fukuoka", "佐賀県": "41_saga",
-    "長崎県": "42_nagasaki", "熊本県": "43_kumamoto", "大分県": "44_oita", "宮崎県": "45_miyazaki", "鹿児島県": "46_kagoshima", "沖縄県": "47_okinawa"
-  };
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const supabase = window.supabase.createClient(
+      'https://viihcgkjzzhkdiwdzdex.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    );
 
-  const prefSel = document.getElementById("prefSelect");
-  const citySel = document.getElementById("citySelect");
-  const typeSel = document.getElementById("typeSelect");
-  const btn = document.getElementById("loadButton");
-  const body = document.getElementById("resultBody");
-  const pager = document.getElementById("pagerTop");
+    const tableMap = {
+      "北海道": "01_hokkaido", "青森県": "02_aomori", "岩手県": "03_iwate", "宮城県": "04_miyagi", "秋田県": "05_akita", "山形県": "06_yamagata",
+      "福島県": "07_fukushima", "茨城県": "08_ibaraki", "栃木県": "09_tochigi", "群馬県": "10_gunma", "埼玉県": "11_saitama", "千葉県": "12_chiba",
+      "東京都": "13_tokyo", "神奈川県": "14_kanagawa", "新潟県": "15_niigata", "富山県": "16_toyama", "石川県": "17_ishikawa", "福井県": "18_fukui",
+      "山梨県": "19_yamanashi", "長野県": "20_nagano", "岐阜県": "21_gifu", "静岡県": "22_shizuoka", "愛知県": "23_aichi", "三重県": "24_mie",
+      "滋賀県": "25_shiga", "京都府": "26_kyoto", "大阪府": "27_osaka", "兵庫県": "28_hyogo", "奈良県": "29_nara", "和歌山県": "30_wakayama",
+      "鳥取県": "31_tottori", "島根県": "32_shimane", "岡山県": "33_okayama", "広島県": "34_hiroshima", "山口県": "35_yamaguchi",
+      "徳島県": "36_tokushima", "香川県": "37_kagawa", "愛媛県": "38_ehime", "高知県": "39_kochi", "福岡県": "40_fukuoka", "佐賀県": "41_saga",
+      "長崎県": "42_nagasaki", "熊本県": "43_kumamoto", "大分県": "44_oita", "宮崎県": "45_miyazaki", "鹿児島県": "46_kagoshima", "沖縄県": "47_okinawa"
+    };
 
-  let currentData = [], currentPage = 1;
+    const prefSel = document.getElementById("prefSelect");
+    const citySel = document.getElementById("citySelect");
+    const typeSel = document.getElementById("typeSelect");
+    const btn = document.getElementById("loadButton");
+    const body = document.getElementById("resultBody");
+    const pager = document.getElementById("pagerTop");
 
-  for (const pref in tableMap) {
-    const o = document.createElement("option");
-    o.value = pref; o.textContent = pref;
-    prefSel.appendChild(o);
-  }
+    let currentData = [], currentPage = 1;
 
-  btn.onclick = async () => {
-    const pref = prefSel.value;
-    if (!pref || !tableMap[pref]) return;
-    const table = tableMap[pref];
+    for (const pref in tableMap) {
+      const o = document.createElement("option");
+      o.value = pref; o.textContent = pref;
+      prefSel.appendChild(o);
+    }
 
-    const { data: rows } = await supabase.from(table).select("*").limit(10000);
-    currentData = rows || [];
-    currentPage = 1;
-    renderTable();
-    renderPager();
+    btn.onclick = async () => {
+      const pref = prefSel.value;
+      if (!pref || !tableMap[pref]) return;
+      const table = tableMap[pref];
 
-    const { data: meta } = await supabase.from(table).select("city, service_type").limit(10000);
-    const cities = [...new Set(meta.map(d => d.city).filter(x => x && x.trim()))].sort();
-    const types = [...new Set(meta.map(d => d.service_type).filter(x => x && x.trim()))].sort();
+      const { data: rows } = await supabase.from(table).select("*").limit(10000);
+      currentData = rows || [];
+      currentPage = 1;
+      renderTable();
+      renderPager();
 
-    citySel.innerHTML = '<option value="">市区町村を選択</option>';
-    cities.forEach(c => citySel.innerHTML += `<option>${c}</option>`);
+      const { data: meta } = await supabase.from(table).select("city, service_type").limit(10000);
+      const cities = [...new Set(meta.map(d => d.city).filter(x => x && x.trim()))].sort();
+      const types = [...new Set(meta.map(d => d.service_type).filter(x => x && x.trim()))].sort();
 
-    typeSel.innerHTML = '<option value="">サービスの種類を選択</option>';
-    types.forEach(t => typeSel.innerHTML += `<option>${t}</option>`);
-  };
+      citySel.innerHTML = '<option value="">市区町村を選択</option>';
+      cities.forEach(c => citySel.innerHTML += `<option>${c}</option>`);
 
-  function renderTable() {
-    body.innerHTML = "";
-    const perPage = 100;
-    const list = currentData.slice((currentPage - 1) * perPage, currentPage * perPage);
-    list.forEach(r => {
-      const row = `<tr>
-        <td>${r.office_name || ""}</td><td>${r.service_type || ""}</td><td>${r.phone || ""}</td>
-        <td>${r.fax || ""}</td><td>${r.email || ""}</td><td>${r.address || ""}</td>
-        <td>${r.office_number || ""}</td><td>${r.organization_name || ""}</td>
-        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
-      </tr>`;
-      body.insertAdjacentHTML("beforeend", row);
-    });
-  }
+      typeSel.innerHTML = '<option value="">サービスの種類を選択</option>';
+      types.forEach(t => typeSel.innerHTML += `<option>${t}</option>`);
+    };
 
-  function renderPager() {
-    const max = Math.ceil(currentData.length / 100);
-    pager.innerHTML = `
-      <button ${currentPage === 1 ? "disabled" : ""} onclick="(() => { currentPage--; renderTable(); renderPager(); })()">◁</button>
-      ${currentPage} / ${max} ページ
-      <button ${currentPage === max ? "disabled" : ""} onclick="(() => { currentPage++; renderTable(); renderPager(); })()">▷</button>
-    `;
-  }
-});
-</script>
+    function renderTable() {
+      body.innerHTML = "";
+      const perPage = 100;
+      const list = currentData.slice((currentPage - 1) * perPage, currentPage * perPage);
+      list.forEach(r => {
+        const row = `<tr>
+          <td>${r.office_name || ""}</td><td>${r.service_type || ""}</td><td>${r.phone || ""}</td>
+          <td>${r.fax || ""}</td><td>${r.email || ""}</td><td>${r.address || ""}</td>
+          <td>${r.office_number || ""}</td><td>${r.organization_name || ""}</td>
+          <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
+        </tr>`;
+        body.insertAdjacentHTML("beforeend", row);
+      });
+    }
+
+    function renderPager() {
+      const max = Math.ceil(currentData.length / 100);
+      pager.innerHTML = `
+        <button ${currentPage === 1 ? "disabled" : ""} onclick="(() => { currentPage--; renderTable(); renderPager(); })()">◁</button>
+        ${currentPage} / ${max} ページ
+        <button ${currentPage === max ? "disabled" : ""} onclick="(() => { currentPage++; renderTable(); renderPager(); })()">▷</button>
+      `;
+    }
+  });
+  </script>
+</body>
+</html>
