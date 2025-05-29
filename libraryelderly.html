@@ -1,9 +1,7 @@
-<!-- CARELAYタウン：介護事業所検索アプリ（完全修正版） -->
-<!-- 略: HTML + CSS構造は前回と同一 -->
-
+<!-- スクリプト実行前にDOMが存在するようDOMContentLoadedでラップ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
 <script>
-(() => {
+document.addEventListener("DOMContentLoaded", () => {
   const supabase = window.supabase.createClient(
     'https://viihcgkjzzhkdiwdzdex.supabase.co',
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
@@ -40,14 +38,12 @@
     if (!pref || !tableMap[pref]) return;
     const table = tableMap[pref];
 
-    // データ取得
     const { data: rows } = await supabase.from(table).select("*").limit(10000);
     currentData = rows || [];
     currentPage = 1;
     renderTable();
     renderPager();
 
-    // フィルター項目だけ再取得
     const { data: meta } = await supabase.from(table).select("city, service_type").limit(10000);
     const cities = [...new Set(meta.map(d => d.city).filter(x => x && x.trim()))].sort();
     const types = [...new Set(meta.map(d => d.service_type).filter(x => x && x.trim()))].sort();
@@ -82,5 +78,5 @@
       <button ${currentPage === max ? "disabled" : ""} onclick="(() => { currentPage++; renderTable(); renderPager(); })()">▷</button>
     `;
   }
-})();
+});
 </script>
