@@ -1,199 +1,183 @@
-<!-- CARELAYタウン安定版：該当件数＋ページング横並び + 全件取得対応 -->
-
-<div id="libraryelderly-app">
-  <h2 style="margin-bottom: 4px;">介護事業所検索（高齢者）</h2>
-  <p style="font-size: 13px; color: #555;">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
-
-  <div class="filter-area">
-    <select id="prefecture">
-      <option value="">都道府県を選択</option>
-      <option value="01_hokkaido">北海道</option>
-      <option value="02_aomori">青森県</option>
-    </select>
-    <select id="city">
-      <option value="">市区町村を選択</option>
-    </select>
-    <select id="service">
-      <option value="">サービスの種類を選択</option>
-    </select>
-    <button id="search-btn">表示</button>
-  </div>
-
-  <div id="result-area">
-    <div id="result-header">
-      <span id="result-count"></span>
-      <span id="pagination"></span>
-    </div>
-    <table id="result-table">
-      <thead>
-        <tr>
-          <th>通し番号</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
-          <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
 <style>
-  #libraryelderly-app {
-    background: white;
-    padding: 16px;
-    font-size: 14px;
+  body {
+    background-color: white;
+    font-family: sans-serif;
   }
-  #libraryelderly-app .filter-area {
+  .filter-container {
     display: flex;
     flex-wrap: wrap;
-    gap: 12px;
-    align-items: center;
-    margin: 12px 0;
+    gap: 1rem;
+    margin: 1rem 0;
   }
-  #libraryelderly-app select,
-  #libraryelderly-app button {
-    padding: 8px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    min-width: 160px;
+  .filter-container select, .filter-container button {
+    padding: 0.5rem;
+    font-size: 1rem;
   }
-  #libraryelderly-app button {
-    background: #007bff;
-    color: white;
-    border: none;
-    cursor: pointer;
+  .result-count {
+    margin-bottom: 0.5rem;
   }
-  #libraryelderly-app #result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 12px 0;
-    font-size: 14px;
-  }
-  #libraryelderly-app table {
+  table {
     width: 100%;
     border-collapse: collapse;
+    background-color: white;
     table-layout: fixed;
-    margin-top: 0;
   }
-  #libraryelderly-app th,
-  #libraryelderly-app td {
+  th, td {
     border: 1px solid #ccc;
-    padding: 6px 8px;
-    word-break: break-word;
-    font-size: 13px;
+    padding: 0.5rem;
+    text-align: left;
+    word-wrap: break-word;
   }
-  #libraryelderly-app th {
-    background: #f5f5f5;
+  th {
+    background-color: #f9f9f9;
   }
-  #libraryelderly-app #pagination button {
-    padding: 5px 10px;
-    margin-left: 4px;
-    border: 1px solid #999;
-    background: #fff;
-    cursor: pointer;
+  .pagination {
+    margin-top: 0.5rem;
+    text-align: center;
   }
-  #libraryelderly-app #pagination button.active {
-    background: #ccc;
+  .pagination button {
+    margin: 0 1rem;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
   }
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.5/dist/umd/supabase.js"></script>
+<div>
+  <h2>介護事業所検索（高齢者）</h2>
+  <p>このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+
+  <div class="filter-container">
+    <select id="prefSelect"><option value="">都道府県を選択</option></select>
+    <select id="citySelect"><option value="">市区町村を選択</option></select>
+    <select id="serviceSelect"><option value="">サービスの種別を選択</option></select>
+    <button id="filterBtn">表示</button>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+  <table>
+    <thead>
+      <tr>
+        <th>No</th><th>事業所名</th><th>サービスの種類</th><th>電話番号</th><th>FAX番号</th>
+        <th>Email</th><th>住所</th><th>事業所番号</th><th>法人名称</th><th>ホームページ</th>
+      </tr>
+    </thead>
+    <tbody id="resultTable"></tbody>
+  </table>
+
+  <div class="pagination">
+    <button id="prevPage">◁</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">▷</button>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
-(() => {
-  if (!window.supabase) {
-    window.supabase = supabase.createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
-    );
-  }
+  const supabase = supabase.createClient(
+    'https://udcrfwejohzmhfojnwha.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVkY3Jmd2Vqb2h6bWhmb2pud2hhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDU5ODk1NzgsImV4cCI6MjA2MTU2NTU3OH0.dqy_L8iPlbUDoozkha4yjar4ADvinxGc0a6ygSuBLQI'
+  );
 
-  const app = document.getElementById("libraryelderly-app");
-  const selPref = app.querySelector("#prefecture");
-  const selCity = app.querySelector("#city");
-  const selType = app.querySelector("#service");
-  const btnSearch = app.querySelector("#search-btn");
-  const tbl = app.querySelector("#result-table tbody");
-  const countEl = app.querySelector("#result-count");
-  const pagination = app.querySelector("#pagination");
-
-  let currentData = [];
+  const tablePrefix = ""; // ex: "01_hokkaido"
   let currentPage = 1;
-  const pageSize = 100;
+  let totalPage = 1;
+  let currentData = [];
 
-  selPref.addEventListener("change", async () => {
-    const table = selPref.value;
-    if (!table) return;
+  const prefMap = {
+    "北海道": "01_hokkaido",
+    "青森県": "02_aomori",
+    // 全47都道府県分を記述
+  };
 
-    try {
-      const { data, error } = await supabase.from(table).select("city,service_type").limit(10000);
-      if (error || !data) return console.error("選択肢読み込み失敗", error);
+  document.addEventListener('DOMContentLoaded', async () => {
+    const prefSelect = document.getElementById('prefSelect');
+    Object.keys(prefMap).forEach(pref => {
+      const option = document.createElement('option');
+      option.value = pref;
+      option.textContent = pref;
+      prefSelect.appendChild(option);
+    });
 
-      const cities = [...new Set(data.map(d => d.city).filter(Boolean))].sort();
-      selCity.innerHTML = '<option value="">市区町村を選択</option>' + cities.map(c => `<option>${c}</option>`).join('');
+    document.getElementById('filterBtn').addEventListener('click', () => {
+      currentPage = 1;
+      fetchData();
+    });
 
-      const types = [...new Set(data.map(d => d.service_type).filter(Boolean))].sort();
-      selType.innerHTML = '<option value="">サービスの種類を選択</option>' + types.map(s => `<option>${s}</option>`).join('');
-    } catch (e) {
-      console.error("都道府県変更エラー", e);
-    }
-  });
+    document.getElementById('prefSelect').addEventListener('change', async () => {
+      const pref = prefMap[prefSelect.value];
+      if (!pref) return;
+      const { data } = await supabase.from(pref).select('city, service_type').range(0, 9999);
+      const cities = [...new Set(data.map(x => x.city))].sort();
+      const services = [...new Set(data.map(x => x.service_type))].sort();
 
-  btnSearch.addEventListener("click", async () => {
-    const table = selPref.value;
-    if (!table) return;
+      const citySelect = document.getElementById('citySelect');
+      citySelect.innerHTML = '<option value="">市区町村を選択</option>';
+      cities.forEach(c => citySelect.innerHTML += `<option value="${c}">${c}</option>`);
 
-    let from = 0, to = 999, temp = [], chunk;
-    while (true) {
-      let query = supabase.from(table).select("*").range(from, to);
-      if (selCity.value) query = query.eq("city", selCity.value);
-      if (selType.value) query = query.eq("service_type", selType.value);
-      const { data, error } = await query;
-      if (error) {
-        console.error("データ取得エラー", error);
-        break;
+      const serviceSelect = document.getElementById('serviceSelect');
+      serviceSelect.innerHTML = '<option value="">サービスの種別を選択</option>';
+      services.forEach(s => serviceSelect.innerHTML += `<option value="${s}">${s}</option>`);
+    });
+
+    document.getElementById('prevPage').addEventListener('click', () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
       }
-      chunk = data;
-      temp.push(...chunk);
-      if (chunk.length < 1000) break;
-      from += 1000;
-      to += 1000;
-    }
+    });
 
-    currentData = temp;
-    currentPage = 1;
-    renderTable();
+    document.getElementById('nextPage').addEventListener('click', () => {
+      if (currentPage < totalPage) {
+        currentPage++;
+        renderTable();
+      }
+    });
   });
+
+  async function fetchData() {
+    const pref = document.getElementById('prefSelect').value;
+    const city = document.getElementById('citySelect').value;
+    const service = document.getElementById('serviceSelect').value;
+    const table = prefMap[pref];
+    if (!table) return;
+
+    let query = supabase.from(table).select('*').limit(10000);
+    if (city) query = query.eq('city', city);
+    if (service) query = query.eq('service_type', service);
+
+    const { data } = await query;
+    currentData = data;
+    currentPage = 1;
+    totalPage = Math.ceil(currentData.length / 1000);
+    renderTable();
+  }
 
   function renderTable() {
-    const start = (currentPage - 1) * pageSize;
-    const pageItems = currentData.slice(start, start + pageSize);
-    tbl.innerHTML = pageItems.map((r, i) => `
-      <tr>
-        <td>${start + i + 1}</td><td>${r.office_name || ""}</td><td>${r.service_type || ""}</td>
-        <td>${r.phone || ""}</td><td>${r.fax || ""}</td><td>${r.email || ""}</td>
-        <td>${r.address || ""}</td><td>${r.office_number || ""}</td>
-        <td>${r.organization_name || ""}</td>
-        <td>${r.url ? `<a href="${r.url}" target="_blank">リンク</a>` : ""}</td>
-      </tr>`).join("");
+    const start = (currentPage - 1) * 1000;
+    const end = start + 1000;
+    const data = currentData.slice(start, end);
 
-    countEl.textContent = `該当件数：${currentData.length}件`;
-    renderPagination();
-  }
+    const table = document.getElementById('resultTable');
+    const resultCount = document.getElementById('resultCount');
+    const pageInfo = document.getElementById('pageInfo');
 
-  function renderPagination() {
-    pagination.innerHTML = "";
-    const total = Math.ceil(currentData.length / pageSize);
-    for (let i = 1; i <= total; i++) {
-      const btn = document.createElement("button");
-      btn.textContent = i;
-      btn.className = i === currentPage ? "active" : "";
-      btn.onclick = () => {
-        currentPage = i;
-        renderTable();
-      };
-      pagination.appendChild(btn);
-    }
+    table.innerHTML = '';
+    data.forEach((row, index) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${start + index + 1}</td>
+        <td>${row.office_name}</td>
+        <td>${row.service_type}</td>
+        <td>${row.phone}</td>
+        <td>${row.fax}</td>
+        <td>${row.email}</td>
+        <td>${row.address}</td>
+        <td>${row.office_number}</td>
+        <td>${row.organization_name}</td>
+        <td>${row.url}</td>`;
+      table.appendChild(tr);
+    });
+    resultCount.textContent = `該当件数: ${currentData.length}`;
+    pageInfo.textContent = `${currentPage} / ${totalPage} ページ`;
   }
-})();
 </script>
