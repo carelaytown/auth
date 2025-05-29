@@ -85,7 +85,7 @@
     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDY5NzM4NzUsImV4cCI6MjAzODU0OTg3NX0._KwF5-VO5_7Ep47aWVW-kgUvTRnSDdM1oq6EzQHeKcg'
   );
 
-  const PREFS = [...
+  const PREFS = [
     ["01_hokkaido", "北海道"], ["02_aomori", "青森県"], ["03_iwate", "岩手県"],
     ["04_miyagi", "宮城県"], ["05_akita", "秋田県"], ["06_yamagata", "山形県"],
     ["07_fukushima", "福島県"], ["08_ibaraki", "茨城県"], ["09_tochigi", "栃木県"],
@@ -114,6 +114,8 @@
   let allData = [], filteredData = [], currentPage = 1;
   const pageSize = 100;
 
+  // リセットしてから追加
+  prefSelect.innerHTML = '<option value="">都道府県を選択</option>';
   PREFS.forEach(([value, label]) => {
     const op = document.createElement("option");
     op.value = value;
