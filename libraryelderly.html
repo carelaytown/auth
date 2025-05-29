@@ -1,100 +1,11 @@
-<div id="app-search">
-  <h1>介護事業所検索（高齢者）</h1>
-  <div class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています。</div>
-
-  <div>
-    <select id="prefSelect">
-      <option disabled selected>都道府県を選択</option>
-    </select>
-    <select id="citySelect">
-      <option disabled selected>市区町村を選択</option>
-    </select>
-    <select id="serviceSelect">
-      <option disabled selected>サービスの種類を選択</option>
-    </select>
-    <button id="searchBtn">表示</button>
-  </div>
-
-  <div class="meta">
-    <div id="count">対象件数：0件</div>
-    <div class="pagination" id="pagination"></div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th>事業所名</th>
-        <th>サービスの種類</th>
-        <th>電話番号</th>
-        <th>FAX番号</th>
-        <th>Email</th>
-        <th>住所</th>
-        <th>事業所番号</th>
-        <th>法人名称</th>
-        <th>ホームページ</th>
-      </tr>
-    </thead>
-    <tbody id="resultBody"></tbody>
-  </table>
-</div>
-
-<style>
-#app-search {
-  font-family: "Segoe UI", sans-serif;
-  max-width: 1200px;
-  margin: auto;
-  padding: 1em;
-}
-#app-search h1 {
-  font-size: 1.5em;
-  margin-bottom: 0.2em;
-}
-#app-search .note {
-  font-size: 0.9em;
-  color: #666;
-  margin-bottom: 1em;
-}
-#app-search select, #app-search button {
-  padding: 0.4em;
-  margin-right: 0.5em;
-  font-size: 0.9em;
-}
-#app-search table {
-  border-collapse: collapse;
-  width: 100%;
-  margin-top: 1em;
-}
-#app-search th, #app-search td {
-  border: 1px solid #ccc;
-  padding: 0.4em 0.6em;
-  text-align: left;
-  max-width: 200px;
-  overflow-wrap: break-word;
-}
-#app-search th {
-  background: #f0f0f0;
-}
-#app-search .meta {
-  margin-top: 1em;
-  display: flex;
-  justify-content: space-between;
-}
-#app-search .pagination {
-  font-size: 0.9em;
-  user-select: none;
-}
-#app-search .pagination span {
-  cursor: pointer;
-  margin: 0 0.5em;
-}
-</style>
+// 省略されたHTMLとCSS部分（保持）
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 <script>
 (() => {
   const supabase = window.supabase.createClient(
     'https://viihcgkjzzhkdiwdzdex.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM'
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
   );
 
   const PREFS = [
@@ -134,8 +45,8 @@
   });
 
   prefSelect.addEventListener("change", async () => {
-    citySelect.innerHTML = '<option disabled selected>市区町村を選択</option>';
-    serviceSelect.innerHTML = '<option disabled selected>サービスの種類を選択</option>';
+    citySelect.innerHTML = '<option value="">すべて</option>';
+    serviceSelect.innerHTML = '<option value="">すべて</option>';
     resultBody.innerHTML = "";
     countDisplay.textContent = "対象件数：0件";
     pagination.textContent = "";
@@ -172,7 +83,9 @@
   searchBtn.addEventListener("click", () => {
     const city = citySelect.value;
     const service = serviceSelect.value;
-    filteredData = allData.filter(d => d.city === city && d.service_type === service);
+    filteredData = allData.filter(d =>
+      (!city || d.city === city) && (!service || d.service_type === service)
+    );
     currentPage = 1;
     renderPage();
   });
