@@ -1,5 +1,8 @@
-<!-- CARELAYタウン：介護事業所検索（高齢者）アプリ完全版 -->
+<!-- CARELAYタウン：介護事業所検索（高齢者）アプリ 完全版＋タイトル注釈付き -->
 <div id="app-elderly-search">
+  <h2>介護事業所検索（高齢者）</h2>
+  <p class="note">このデータは高齢労働省のオープンデータ（2024年12月末時点）を使用しています</p>
+
   <div class="filter-row">
     <select id="prefSelect"><option value="">都道府県を選択</option></select>
     <select id="citySelect"><option value="">市区町村を選択</option></select>
@@ -22,6 +25,8 @@
 
 <style>
   #app-elderly-search { font-family: sans-serif; background: white; padding: 10px; }
+  #app-elderly-search h2 { font-size: 20px; margin-bottom: 0.3em; }
+  #app-elderly-search .note { font-size: 12px; margin-bottom: 1em; color: #555; }
   #app-elderly-search .filter-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   #app-elderly-search select, #app-elderly-search button {
     padding: 6px 8px; font-size: 14px;
