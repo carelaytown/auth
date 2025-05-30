@@ -1,0 +1,186 @@
+<!-- 介護事業所検索（障害福祉）アプリ -->
+<div id="kaigo-search-app" class="app-container">
+  <h2 class="app-title">介護事業所検索（障害福祉）</h2>
+  <p class="note">このデータは厚生労働省のオープンデータ（2025年3月末時点）を使用しています。</p>
+  <div class="filters">
+    <select id="prefectureSelect"><option value="">都道府県を選択</option></select>
+    <select id="citySelect"><option>市区町村を選択</option></select>
+    <select id="serviceSelect"><option>サービスの種類を選択</option></select>
+    <button id="searchBtn">表示</button>
+  </div>
+  <div class="result-info"></div>
+  <div class="pagination">
+    <button id="prevPage">◁</button>
+    <span id="pageInfo"></span>
+    <button id="nextPage">▷</button>
+    <input type="number" id="pageJump" min="1" style="width: 60px;" />
+    <button id="jumpBtn">移動</button>
+  </div>
+  <div class="table-container">
+    <table id="resultTable"></table>
+  </div>
+</div>
+
+<style>
+#kaigo-search-app { font-family: sans-serif; padding: 1rem; }
+#kaigo-search-app .app-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 0.5rem; }
+#kaigo-search-app .note { font-size: 0.8rem; color: #555; margin-bottom: 0.5rem; }
+#kaigo-search-app .filters select, #kaigo-search-app .filters button {
+  margin: 0.2rem; padding: 0.4rem;
+}
+#kaigo-search-app .table-container { margin-top: 1rem; overflow-x: auto; }
+#kaigo-search-app table {
+  border-collapse: collapse; width: 100%; table-layout: fixed; font-size: 13px;
+}
+#kaigo-search-app th {
+  background-color: #fff3e0;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+}
+#kaigo-search-app td {
+  background-color: #ffffff;
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  word-wrap: break-word;
+}
+#kaigo-search-app .pagination {
+  margin-top: 0.5rem; text-align: center;
+}
+</style>
+
+<script>
+(() => {
+  const supabase = window.supabase.createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
+
+  const prefectures = [...Array(47).keys()].map(i => {
+    const code = String(i + 1).padStart(2, "0");
+    const names = ["北海道","青森県","岩手県","宮城県","秋田県","山形県","福島県","茨城県","栃木県","群馬県","埼玉県","千葉県","東京都","神奈川県","新潟県","富山県","石川県","福井県","山梨県","長野県","岐阜県","静岡県","愛知県","三重県","滋賀県","京都府","大阪府","兵庫県","奈良県","和歌山県","鳥取県","島根県","岡山県","広島県","山口県","徳島県","香川県","愛媛県","高知県","福岡県","佐賀県","長崎県","熊本県","大分県","宮崎県","鹿児島県","沖縄県"];
+    const romans = ["hokkaido","aomori","iwate","miyagi","akita","yamagata","fukushima","ibaraki","tochigi","gunma","saitama","chiba","tokyo","kanagawa","niigata","toyama","ishikawa","fukui","yamanashi","nagano","gifu","shizuoka","aichi","mie","shiga","kyoto","osaka","hyogo","nara","wakayama","tottori","shimane","okayama","hiroshima","yamaguchi","tokushima","kagawa","ehime","kochi","fukuoka","saga","nagasaki","kumamoto","oita","miyazaki","kagoshima","okinawa"];
+    return { jp: names[i], table: `d${code}_${romans[i]}` };
+  });
+
+  let fullData = [];
+  let currentPage = 1;
+  const perPage = 100;
+  const app = document.getElementById("kaigo-search-app");
+  const prefectureSelect = app.querySelector("#prefectureSelect");
+  const citySelect = app.querySelector("#citySelect");
+  const serviceSelect = app.querySelector("#serviceSelect");
+  const searchBtn = app.querySelector("#searchBtn");
+  const table = app.querySelector("#resultTable");
+  const pageInfo = app.querySelector("#pageInfo");
+  const prevPage = app.querySelector("#prevPage");
+  const nextPage = app.querySelector("#nextPage");
+  const resultInfo = app.querySelector(".result-info");
+  const pageJump = app.querySelector("#pageJump");
+  const jumpBtn = app.querySelector("#jumpBtn");
+
+  prefectures.forEach(pref => {
+    const opt = document.createElement("option");
+    opt.value = pref.table;
+    opt.textContent = pref.jp;
+    prefectureSelect.appendChild(opt);
+  });
+
+  async function fetchTableData(tableName) {
+    const allRows = [];
+    let from = 0;
+    while (true) {
+      const { data, error } = await supabase.from(tableName).select("*").range(from, from + 999);
+      if (error || !data || data.length === 0) break;
+      allRows.push(...data);
+      if (data.length < 1000) break;
+      from += 1000;
+    }
+    return allRows;
+  }
+
+  function uniqueValues(data, key) {
+    return [...new Set(data.map(row => row[key]).filter(Boolean))].sort();
+  }
+
+  function updateFilters() {
+    const cities = uniqueValues(fullData, "city");
+    const services = uniqueValues(fullData, "service_type");
+    citySelect.innerHTML = "<option>すべて</option>" + cities.map(v => `<option>${v}</option>`).join("");
+    serviceSelect.innerHTML = "<option>すべて</option>" + services.map(v => `<option>${v}</option>`).join("");
+  }
+
+  function filterData() {
+    const city = citySelect.value;
+    const service = serviceSelect.value;
+    return fullData.filter(row => {
+      return (city === "すべて" || row.city === city) &&
+             (service === "すべて" || row.service_type === service);
+    });
+  }
+
+  function renderTable(data) {
+    const start = (currentPage - 1) * perPage;
+    const pageData = data.slice(start, start + perPage);
+    const headers = ["No", "事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
+    const fields = ["office_name", "service_type", "phone", "fax", "email", "address", "office_number", "organization_name", "url"];
+    table.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>" +
+      pageData.map((row, i) =>
+        "<tr><td>" + (start + i + 1) + "</td>" +
+        fields.map(f => {
+          if (f === "url" && row[f]) {
+            return `<td><a href="${row[f]}" target="_blank">リンク</a></td>`;
+          } else {
+            return `<td>${row[f] || ""}</td>`;
+          }
+        }).join("") + "</tr>"
+      ).join("");
+    resultInfo.textContent = `対象件数：${data.length}件`;
+    const totalPages = Math.max(1, Math.ceil(data.length / perPage));
+    pageInfo.textContent = `${currentPage}/${totalPages}ページ`;
+    pageJump.max = totalPages;
+  }
+
+  searchBtn.onclick = () => {
+    currentPage = 1;
+    renderTable(filterData());
+  };
+
+  prevPage.onclick = () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderTable(filterData());
+    }
+  };
+
+  nextPage.onclick = () => {
+    const totalPages = Math.ceil(filterData().length / perPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderTable(filterData());
+    }
+  };
+
+  jumpBtn.onclick = () => {
+    const totalPages = Math.ceil(filterData().length / perPage);
+    let targetPage = parseInt(pageJump.value);
+    if (isNaN(targetPage)) return;
+    targetPage = Math.max(1, Math.min(totalPages, targetPage));
+    currentPage = targetPage;
+    renderTable(filterData());
+  };
+
+  prefectureSelect.onchange = async () => {
+    fullData = [];
+    table.innerHTML = "";
+    citySelect.innerHTML = "<option>市区町村を選択</option>";
+    serviceSelect.innerHTML = "<option>サービスの種類を選択</option>";
+    const tableName = prefectureSelect.value;
+    if (!tableName) return;
+    fullData = await fetchTableData(tableName);
+    updateFilters();
+    currentPage = 1;
+    renderTable(fullData);
+  };
+})();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
