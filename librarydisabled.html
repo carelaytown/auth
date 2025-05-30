@@ -122,7 +122,7 @@
     const start = (currentPage - 1) * perPage;
     const pageData = data.slice(start, start + perPage);
     const headers = ["No", "事業所名", "サービスの種類", "電話番号", "FAX番号", "Email", "住所", "事業所番号", "法人名称", "ホームページ"];
-    const fields = ["office_name", "service_type", "phone", "fax", "email", "address", "office_number", "organization_name", "url"];
+    const fields = ["office_name", "service_type", "phone", "fax", "email", "address", "office_numbe", "organization_name", "url"];
     table.innerHTML = "<tr>" + headers.map(h => `<th>${h}</th>`).join("") + "</tr>" +
       pageData.map((row, i) =>
         "<tr><td>" + (start + i + 1) + "</td>" +
