@@ -86,7 +86,7 @@
 
   <script>
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';  // 実際のキーは省略
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 実運用ではマスク
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     window.supabaseClient = supabase;
     window.waitForSupabaseReady = function(callback) {
@@ -101,6 +101,7 @@
         }, 100);
       }
     };
+
     let userOrgName = "";
 
     async function initTopPage() {
