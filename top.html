@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -57,8 +58,8 @@
       flex-grow: 1;
       overflow-y: auto;
       padding: 20px;
-      min-width: 0;
-      max-width: calc(100% - 200px);
+      min-width: 0;     /* ✨ 子要素の影響で横スクロールしないようにする */
+      max-width: calc(100% - 200px); /* ✨ サイドバーとのバランス保証 */
     }
     footer {
       background-color: #1b355d; color: white;
@@ -86,7 +87,7 @@
 
   <script>
     const SUPABASE_URL = 'https://viihcgkjzzhkdiwdzdex.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // 実運用ではマスク
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     window.supabaseClient = supabase;
     window.waitForSupabaseReady = function(callback) {
@@ -101,7 +102,6 @@
         }, 100);
       }
     };
-
     let userOrgName = "";
 
     async function initTopPage() {
@@ -115,8 +115,7 @@
       document.getElementById("orgLabel").textContent = userOrgName;
       localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
-      const lastPage = sessionStorage.getItem("carelayCurrentPage");
-      loadMain(lastPage || "map");
+      loadMain("map");
     }
 
     async function fetchUserInfo(email) {
@@ -145,12 +144,15 @@
         .from("menu_config")
         .select("label, page, show, admin_only")
         .order("sort");
+
       if (error || !data) return;
       const sidebar = document.getElementById("sidebar");
       sidebar.innerHTML = "";
+
       for (const row of data.filter(row => row.show && (!row.admin_only || isAdmin))) {
         const block = document.createElement("div");
         block.className = "category-block";
+
         const title = document.createElement("div");
         title.className = "category-title";
         title.textContent = row.label;
@@ -158,19 +160,24 @@
           const submenu = block.querySelector(".submenu");
           submenu.style.display = submenu.style.display === "block" ? "none" : "block";
         };
+
         const submenu = document.createElement("div");
         submenu.className = "submenu";
+
         const appListBtn = document.createElement("button");
         appListBtn.textContent = "📋 アプリ一覧";
         appListBtn.onclick = () => loadMain(`${row.page}-list`);
         submenu.appendChild(appListBtn);
+
         const storageKey = "carelay" + row.page.charAt(0).toUpperCase() + row.page.slice(1);
         const addedApps = JSON.parse(localStorage.getItem(storageKey) || "[]");
+
         if (addedApps.length > 0) {
           const { data: apps } = await supabase
             .from("apps")
             .select("page, label, icon")
             .in("page", addedApps);
+
           apps.forEach(app => {
             const btn = document.createElement("button");
             btn.textContent = `${app.icon || ""} ${app.label}`;
@@ -178,6 +185,7 @@
             submenu.appendChild(btn);
           });
         }
+
         block.appendChild(title);
         block.appendChild(submenu);
         sidebar.appendChild(block);
@@ -185,7 +193,6 @@
     }
 
     function loadMain(pageName) {
-      sessionStorage.setItem("carelayCurrentPage", pageName);
       document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
       fetch(`${pageName}.html`)
         .then(res => res.text())
@@ -202,15 +209,13 @@
             }
             oldScript.parentNode.replaceChild(newScript, oldScript);
           });
+  
+          // ✅ マイページ再表示時に初期化処理を呼ぶ
           if (pageName === "mypage" && typeof initMypage === "function") {
             initMypage();
           }
         });
     }
-
-    window.addEventListener("pagehide", () => {
-      sessionStorage.removeItem("carelayCurrentPage");
-    });
   </script>
 </body>
 </html>
