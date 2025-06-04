@@ -116,6 +116,8 @@
       localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
       const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
+      console.log("Restoring last page from sessionStorage:", lastPage);
+      loadMain(lastPage);
       loadMain(lastPage);
     }
 
@@ -195,6 +197,9 @@
 
     function loadMain(pageName) {
       sessionStorage.setItem("carelaytown_last_page", pageName);
+      console.log("loadMain called with:", pageName);
+      sessionStorage.setItem("carelaytown_last_page", pageName);
+      console.log("Saved to sessionStorage:", pageName);
       document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
       fetch(`${pageName}.html`)
         .then(res => res.text())
