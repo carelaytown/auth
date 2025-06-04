@@ -115,8 +115,8 @@
       document.getElementById("orgLabel").textContent = userOrgName;
       localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
-      const lastPage = sessionStorage.getItem("carelayCurrentPage");
-      loadMain(lastPage || "map");
+      const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
+      loadMain(lastPage);
     }
 
     async function fetchUserInfo(email) {
@@ -194,7 +194,7 @@
     }
 
     function loadMain(pageName) {
-      sessionStorage.setItem("carelayCurrentPage", pageName);
+      sessionStorage.setItem("carelaytown_last_page", pageName);
       document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
       fetch(`${pageName}.html`)
         .then(res => res.text())
@@ -219,7 +219,7 @@
         });
     }
     window.addEventListener("pagehide", () => {
-      sessionStorage.removeItem("carelayCurrentPage");
+      sessionStorage.removeItem("carelaytown_last_page");
     });
   </script>
 </body>
