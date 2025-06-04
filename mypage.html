@@ -26,20 +26,10 @@
   </div>
 </div>
 
-<div id="mypage-modal" class="modal-bg" style="display:none;">
-  <div class="modal-box">
-    <p id="modalMessage">メッセージ</p>
-    <button id="modalOk">OK</button>
-    <button id="modalCancel">キャンセル</button>
-  </div>
-</div>
-
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
-  let modalAction = "", modalTarget = "";
-
   const carelayUser = localStorage.getItem("carelayUser") || "";
   const tokenKey = "carelayGoogleToken_" + carelayUser;
   let googleToken = localStorage.getItem(tokenKey) || "";
@@ -58,6 +48,7 @@
         googleStatus.textContent = "Google連携が完了しています（" + user.email + "）";
       }
     } catch (e) {
+      alert("Googleアカウントの情報取得に失敗しました");
       console.error("メール取得失敗", e);
     }
   }
