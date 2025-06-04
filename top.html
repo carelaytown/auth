@@ -184,6 +184,7 @@
             btn.textContent = `${app.icon || ""} ${app.label}`;
             btn.onclick = () => loadMain(app.page);
             submenu.appendChild(btn);
+          });
         }
 
         block.appendChild(title);
@@ -209,14 +210,18 @@
               newScript.textContent = oldScript.textContent;
             }
             oldScript.parentNode.replaceChild(newScript, oldScript);
+          });
+  
           // ✅ マイページ再表示時に初期化処理を呼ぶ
           if (pageName === "mypage" && typeof initMypage === "function") {
             initMypage();
           }
+        });
     }
-    window.addEventListener("pagehide", () => {
-      sessionStorage.removeItem("carelaytown_last_page");
-    });
   </script>
 </body>
 </html>
+// ページ閉じたら sessionStorage を消去（タブ再訪時はトップに戻す）
+window.addEventListener("pagehide", () => {
+  sessionStorage.removeItem("carelaytown_last_page");
+});
