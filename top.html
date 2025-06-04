@@ -68,7 +68,7 @@
     }
   </style>
 </head>
-<body onload="initTopPage()">
+<body>
   <header>
     <div style="display: flex; align-items: center;">
       <button class="logo-button" onclick="loadMain('map')">🏡 CARELAYタウン</button>
@@ -221,6 +221,7 @@
     window.addEventListener("pagehide", () => {
       sessionStorage.removeItem("carelaytown_last_page");
     });
+    window.addEventListener("DOMContentLoaded", initTopPage);
   </script>
 </body>
 </html>
