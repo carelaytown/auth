@@ -115,9 +115,12 @@
       document.getElementById("orgLabel").textContent = userOrgName;
       localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
-      const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
       console.log("Restoring last page from sessionStorage:", lastPage);
-      loadMain(lastPage);
+      const lastPage = sessionStorage.getItem("carelaytown_last_page");
+      if (lastPage) {
+        console.log("Restoring last page from sessionStorage:", lastPage);
+        loadMain(lastPage);
+      }
       loadMain(lastPage);
     }
 
