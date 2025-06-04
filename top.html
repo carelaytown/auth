@@ -68,7 +68,7 @@
     }
   </style>
 </head>
-<body>
+<body onload="initTopPage()">
   <header>
     <div style="display: flex; align-items: center;">
       <button class="logo-button" onclick="loadMain('map')">🏡 CARELAYタウン</button>
@@ -115,19 +115,9 @@
       document.getElementById("orgLabel").textContent = userOrgName;
       localStorage.setItem("carelayOrgName", userOrgName);
       await setupAccordionMenu();
-      const restoredPage = sessionStorage.getItem("carelaytown_last_page");
-      if (restoredPage) {
-        console.log("Restoring last page from sessionStorage:", restoredPage);
-        loadMain(restoredPage);
-      } else {
-        loadMain("map");
-      }
-      console.log("Restoring last page from sessionStorage:", lastPage);
-      if (lastPage) {
-        console.log("Restoring last page from sessionStorage:", lastPage);
-        loadMain(lastPage);
-      }
+      const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
       loadMain(lastPage);
+      loadMain("map");
     }
 
     async function fetchUserInfo(email) {
@@ -206,11 +196,6 @@
 
     function loadMain(pageName) {
       sessionStorage.setItem("carelaytown_last_page", pageName);
-      console.log("loadMain called with:", pageName);
-      sessionStorage.setItem("carelaytown_last_page", pageName);
-      console.log("Saved to sessionStorage:", pageName);
-      console.log("Saving page to sessionStorage:", pageName);
-      sessionStorage.setItem("carelaytown_last_page", pageName);
       document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
       fetch(`${pageName}.html`)
         .then(res => res.text())
@@ -234,14 +219,10 @@
           }
         });
     }
-    window.addEventListener("pagehide", () => {
-      sessionStorage.removeItem("carelaytown_last_page");
-    });
-window.onload = () => {
-  const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
-  console.log("Restoring page from sessionStorage:", lastPage);
-  loadMain(lastPage);
-};
   </script>
 </body>
 </html>
+// ページ閉じたら sessionStorage を消去（タブ再訪時はトップに戻す）
+window.addEventListener("pagehide", () => {
+  sessionStorage.removeItem("carelaytown_last_page");
+});
