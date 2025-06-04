@@ -209,6 +209,8 @@
       console.log("loadMain called with:", pageName);
       sessionStorage.setItem("carelaytown_last_page", pageName);
       console.log("Saved to sessionStorage:", pageName);
+      console.log("Saving page to sessionStorage:", pageName);
+      sessionStorage.setItem("carelaytown_last_page", pageName);
       document.getElementById("main").innerHTML = "<p>読み込み中...</p>";
       fetch(`${pageName}.html`)
         .then(res => res.text())
@@ -235,7 +237,11 @@
     window.addEventListener("pagehide", () => {
       sessionStorage.removeItem("carelaytown_last_page");
     });
-    window.addEventListener("DOMContentLoaded", initTopPage);
+window.onload = () => {
+  const lastPage = sessionStorage.getItem("carelaytown_last_page") || "map";
+  console.log("Restoring page from sessionStorage:", lastPage);
+  loadMain(lastPage);
+};
   </script>
 </body>
 </html>
