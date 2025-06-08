@@ -1,367 +1,267 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>CARELAYマイページ</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    #mypage-app .mypage-container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    #mypage-app .box {
+      background-color: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #mypage-app .highlight { background-color: #e6f0ff; }
+    #mypage-app .input-area { background-color: #f4f4f4; }
+    #mypage-app .google-connect { background-color: #e8f5e9; border-left: 5px solid #66bb6a; }
+    #mypage-app .warning { background-color: #fff8e1; }
+    #mypage-app .account-list button {
+      display: inline-flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      background: #eef4ff;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin-top: 8px;
+      cursor: pointer;
+    }
+    #mypage-app input[type="email"] {
+      width: 100%;
+      padding: 8px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+    #mypage-app button {
+      padding: 8px 16px;
+      background-color: #2a6ebb;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    #mypage-app button:hover { background-color: #1e5393; }
+    #mypage-app .email { font-size: 14px; color: #555; }
+    #mypage-app .org { font-weight: bold; }
+    .modal-bg {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      animation: fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+    .modal-box {
+      background: #fff;
+      padding: 25px;
+      border-radius: 12px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      position: relative;
+    }
+    .modal-box::before {
+      content: "⚠️";
+      font-size: 32px;
+      display: block;
+      margin-bottom: 10px;
+    }
+    .modal-box p {
+      margin-bottom: 20px;
+      font-size: 16px;
+      color: #333;
+    }
+    .modal-box button {
+      display: inline-block;
+      width: 100px;
+      padding: 8px;
+      margin: 8px 5px 0;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      border: none;
+    }
+    #modalOk {
+      background-color: #2a6ebb;
+      color: white;
+    }
+    #modalCancel {
+      background-color: #eee;
+      color: #333;
+    }
+    #modalCancel:hover { background-color: #ddd; }
+    #modalOk:hover { background-color: #1e5393; }
+    #mypage-app .account-list button span {
+      color: #333 !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="mypage-app">
+    <div class="mypage-container">
+      <div class="box highlight">
+        <strong>ログイン中のアカウント</strong><br>
+        <div class="org" id="orgOutput">(取得中…)</div>
+        <div class="email" id="emailOutput">-</div>
+      </div>
 
-<div id="mypage-app">
-  <div class="mypage-container">
-    <div class="box highlight">
-      <strong>ログイン中のアカウント</strong><br>
-      <div class="org" id="orgOutput">(取得中…)</div>
-      <div class="email" id="emailOutput">-</div>
-    </div>
+      <div class="box input-area">
+        <strong>アカウント切替・追加</strong>
+        <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
+        <button id="addAccountBtn">追加して切り替え</button>
+        <div class="account-list" id="accountList"></div>
+      </div>
 
-    <div class="box input-area">
-      <strong>アカウント切替・追加</strong>
-      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
-      <button id="addAccountBtn">追加して切り替え</button>
-      <div class="account-list" id="accountList"></div>
-    </div>
+      <div class="box google-connect" id="googleBox">
+        <strong>Google連携</strong><br>
+        <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+        <button id="googleConnectBtn">🔗 Googleで連携</button>
+      </div>
 
-    <div class="box google-connect" id="googleBox">
-      <strong>Google連携</strong><br>
-      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-      <button id="googleConnectBtn">🔗 Googleで連携</button>
-    </div>
-
-    <div class="box warning">
-      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+      <div class="box warning">
+        <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div id="mypage-modal" class="modal-bg" style="display:none;">
-  <div class="modal-box">
-    <p id="modalMessage">メッセージ</p>
-    <button id="modalOk">OK</button>
-    <button id="modalCancel">キャンセル</button>
+  <div id="mypage-modal" class="modal-bg" style="display:none;">
+    <div class="modal-box">
+      <p id="modalMessage">メッセージ</p>
+      <button id="modalOk">OK</button>
+      <button id="modalCancel">キャンセル</button>
+    </div>
   </div>
-</div>
 
-<style>
-  #mypage-app .mypage-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  #mypage-app .box {
-    background-color: white;
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  }
-  #mypage-app .highlight { background-color: #e6f0ff; }
-  #mypage-app .input-area { background-color: #f4f4f4; }
-  #mypage-app .google-connect { background-color: #e8f5e9; border-left: 5px solid #66bb6a; }
-  #mypage-app .warning { background-color: #fff8e1; }
-  #mypage-app .account-list button {
-    display: inline-flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    background: #eef4ff;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 6px 10px;
-    margin-top: 8px;
-    cursor: pointer;
-  }
-  #mypage-app input[type="email"] {
-    width: 100%;
-    padding: 8px;
-    font-size: 14px;
-    margin-bottom: 10px;
-  }
-  #mypage-app button {
-    padding: 8px 16px;
-    background-color: #2a6ebb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  #mypage-app button:hover { background-color: #1e5393; }
-  #mypage-app .email { font-size: 14px; color: #555; }
-  #mypage-app .org { font-weight: bold; }
+  <script>
+  (() => {
+    const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
+    let googleToken = "";
+    let modalAction = "", modalTarget = "", modalState = "";
+    const tokenTimeKey = "carelayGoogleTokenTime";
+    const carelayUser = localStorage.getItem("carelayUser") || "";
+    const tokenKey = "carelayGoogleToken_" + carelayUser;
+    googleToken = localStorage.getItem(tokenKey) || "";
 
-  .modal-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  .modal-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 300px;
-    text-align: center;
-  }
-
-<style>
-  .modal-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    animation: fadeIn 0.2s ease;
-  }
-
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-
-  .modal-box {
-    background: #fff;
-    padding: 25px;
-    border-radius: 12px;
-    width: 320px;
-    text-align: center;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    position: relative;
-  }
-
-  .modal-box::before {
-    content: "⚠️";
-    font-size: 32px;
-    display: block;
-    margin-bottom: 10px;
-  }
-
-  .modal-box p {
-    margin-bottom: 20px;
-    font-size: 16px;
-    color: #333;
-  }
-
-  .modal-box button {
-    display: inline-block;
-    width: 100px;
-    padding: 8px;
-    margin: 8px 5px 0;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-    border: none;
-  }
-
-  #modalOk {
-    background-color: #2a6ebb;
-    color: white;
-  }
-
-  #modalCancel {
-    background-color: #eee;
-    color: #333;
-  }
-
-  #modalCancel:hover {
-    background-color: #ddd;
-  }
-
-  #modalOk:hover {
-    background-color: #1e5393;
-  }
-
-#mypage-app .account-list button span {
-  color: #333 !important;
-}
-</style>
-
-</style>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script>
-(() => {
-  const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
-  let googleToken = localStorage.getItem("carelayGoogleToken") || "";
-  let modalAction = "", modalTarget = "";
-      // アカウントごとにトークン保存・表示
-      const carelayUser = localStorage.getItem("carelayUser") || "";
-      const tokenKey = "carelayGoogleToken_" + carelayUser;
-      googleToken = localStorage.getItem(tokenKey) || "";
-
-      function fetchGoogleAccountEmail() {
-  if (!googleToken) {
-    showModal("Google連携が切れています。再連携してください", "reconnect");
-    return;
-  }
-        if (!googleToken) return;
-        fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-          headers: { Authorization: "Bearer " + googleToken }
-        })
-        .then(res => res.json())
-        .then(user => {
-          if (user && user.email) {
-            const emailTag = document.createElement("div");
-            emailTag.style.fontSize = "13px";
-            emailTag.style.color = "#555";
-            emailTag.textContent = "連携中: " + user.email;
-            googleStatus.textContent = "Google連携が完了しています（" + user.email + "）";
-          }
-        });
-      }
-
-
-  function initMypage() {
-    const supabase = window.supabaseClient;
-    if (!supabase) return;
-
-    const orgOutput = document.getElementById("orgOutput");
-    const emailOutput = document.getElementById("emailOutput");
-    const accountList = document.getElementById("accountList");
     const googleStatus = document.getElementById("googleStatus");
     const googleBtn = document.getElementById("googleConnectBtn");
-
     const modal = document.getElementById("mypage-modal");
     const modalMessage = document.getElementById("modalMessage");
 
-    function fetchCurrentOrg() {
-      const email = localStorage.getItem("carelayUser") || "-";
-      emailOutput.textContent = email;
-      orgOutput.textContent = email === "-" ? "(未ログイン)" : localStorage.getItem("carelayOrgName") || "(未取得)";
+    function showModal(message, state = "") {
+      modalState = state;
+      modalMessage.textContent = message;
+      modal.style.display = "flex";
     }
 
-    function renderAccountList() {
-      const list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-      const current = localStorage.getItem("carelayUser");
-      accountList.innerHTML = "";
-      list.forEach(email => {
-        if (email === current) return;
-        const btn = document.createElement("button");
-        const span = document.createElement("span");
-        span.textContent = email;
-        const del = document.createElement("i");
-        del.textContent = "🗑️";
-        del.onclick = e => { e.stopPropagation(); confirmDelete(email); };
-        btn.append(span, del);
-        btn.onclick = () => {
-          localStorage.setItem("carelayUser", email);
-          localStorage.setItem("carelayApproved", "ok");
-          location.reload();
-        };
-        accountList.appendChild(btn);
+    function hideModal() {
+      modal.style.display = "none";
+      modalState = "";
+    }
+
+    function updateGoogleStatus(email = null) {
+      if (email) {
+        googleStatus.textContent = "Google連携が完了しています（" + email + "）";
+        googleBtn.textContent = "🔓 連携解除";
+      } else {
+        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
+        googleBtn.textContent = "🔗 Googleで連携";
+      }
+    }
+
+    function isTokenExpired() {
+      const saved = parseInt(localStorage.getItem(tokenTimeKey) || "0", 10);
+      return !saved || (Date.now() - saved > 3600 * 1000);
+    }
+
+    function fetchGoogleAccountEmail() {
+      if (!googleToken) {
+        updateGoogleStatus(null);
+        return;
+      }
+      fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+        headers: { Authorization: "Bearer " + googleToken }
+      })
+      .then(res => {
+        if (res.status !== 200) throw new Error("token invalid");
+        return res.json();
+      })
+      .then(user => {
+        if (user && user.email) {
+          updateGoogleStatus(user.email);
+        } else {
+          updateGoogleStatus(null);
+        }
+      })
+      .catch(() => {
+        updateGoogleStatus(null);
       });
     }
 
-    function confirmDelete(email) {
-      modalAction = "delete";
-      modalTarget = email;
-      modalMessage.textContent = `${email} を削除しますか？`;
-      modal.style.display = "flex";
-    }
-
-    function confirmAdd() {
-      const input = document.getElementById("newAccount").value.trim().toLowerCase();
-      if (!input) {
-        modalAction = "alert";
-        modalMessage.textContent = "メールアドレスを入力してください。";
-        modal.style.display = "flex";
+    function autoRefreshGoogleToken() {
+      if (!googleToken || !isTokenExpired()) {
+        fetchGoogleAccountEmail();
         return;
       }
-      modalAction = "add";
-      modalTarget = input;
-      modalMessage.textContent = `${input} を追加して切り替えますか？`;
-      modal.style.display = "flex";
-    }
-
-    function confirmLogout() {
-      modalAction = "logout";
-      modalMessage.textContent = "本当にログアウトしますか？";
-      modal.style.display = "flex";
-    }
-
-    async function modalOk() {
-  if (modalState === "reconnect") {
-    hideModal();
-    handleGoogleAuth();
-    return;
-  }
-      modal.style.display = "none";
-      const target = modalTarget.trim().toLowerCase();
-      if (modalAction === "add") {
-        const { data, error } = await supabase.from("applications").select("org_name, status").eq("email", target);
-        if (!error && data.length > 0 && data[0].status === "approved") {
-          localStorage.setItem("carelayUser", target);
-          localStorage.setItem("carelayApproved", "ok");
-          localStorage.setItem("carelayOrgName", data[0].org_name || "(不明)");
-          let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-          if (!list.includes(target)) {
-            list.push(target);
-            localStorage.setItem("carelayList", JSON.stringify(list));
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+        prompt: "none",
+        callback: res => {
+          if (res && res.access_token) {
+            googleToken = res.access_token;
+            localStorage.setItem(tokenKey, googleToken);
+            localStorage.setItem(tokenTimeKey, Date.now().toString());
+            fetchGoogleAccountEmail();
+          } else {
+            updateGoogleStatus(null);
           }
-          location.reload();
-        } else {
-          modalAction = "alert";
-          modalMessage.textContent = "承認されていないアカウントです。";
-          modal.style.display = "flex";
         }
-      } else if (modalAction === "delete") {
-        let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-        list = list.filter(e => e !== modalTarget);
-        localStorage.setItem("carelayList", JSON.stringify(list));
-        renderAccountList();
-      } else if (modalAction === "logout") {
-        localStorage.clear();
-        location.href = "index.html";
-      }
-    }
-
-    function modalCancel() {
-      modal.style.display = "none";
-      modalAction = "";
+      });
+      tokenClient.requestAccessToken();
     }
 
     function handleGoogleAuth() {
       if (googleToken) {
         localStorage.removeItem(tokenKey);
-        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-        googleBtn.textContent = "🔗 Googleで連携";
+        localStorage.removeItem(tokenTimeKey);
+        updateGoogleStatus(null);
         googleToken = "";
         return;
       }
       const tokenClient = google.accounts.oauth2.initTokenClient({
-  client_id: clientId,
-  scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  callback: res => {
-    if (res && res.access_token) {
-      googleToken = res.access_token;
-      localStorage.setItem(tokenKey, googleToken);
-      googleStatus.textContent = "Google連携が完了しています。";
-      googleBtn.textContent = "🔓 連携解除";
-    }
-  }
-});
-tokenClient.requestAccessToken();
-    }
-
-    // 初期表示
-    fetchCurrentOrg();
-    renderAccountList();
-    if (googleToken) {googleStatus.textContent = "Google連携が完了しています。";
-    googleBtn.textContent = "🔓 連携解除";
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+        prompt: "consent",
+        callback: res => {
+          if (res && res.access_token) {
+            googleToken = res.access_token;
+            localStorage.setItem(tokenKey, googleToken);
+            localStorage.setItem(tokenTimeKey, Date.now().toString());
+            fetchGoogleAccountEmail();
+          }
+        }
+      });
+      tokenClient.requestAccessToken();
     }
 
-    // イベント登録
-    document.getElementById("addAccountBtn").onclick = confirmAdd;
-    document.getElementById("logoutBtn").onclick = confirmLogout;
-    document.getElementById("modalOk").onclick = modalOk;
-    document.getElementById("modalCancel").onclick = modalCancel;
-    googleBtn.onclick = handleGoogleAuth;
-    fetchGoogleAccountEmail();
-  }
-
-  if (window.waitForSupabaseReady) {
-    window.waitForSupabaseReady(initMypage);
-  } else {
-    window.addEventListener("DOMContentLoaded", initMypage);
-  }
-})();
-</script>
+    document.addEventListener("DOMContentLoaded", () => {
+      autoRefreshGoogleToken();
+      googleBtn.onclick = handleGoogleAuth;
+    });
+  })();
+  </script>
+</body>
+</html>
