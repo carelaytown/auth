@@ -1,4 +1,4 @@
-window.window.modalState = "";
+let modalState = "";
 
 <div id="mypage-app">
 <div class="mypage-container">
@@ -173,20 +173,13 @@ window.window.modalState = "";
 
     async function checkTokenValidity(token) {
       const userKey = localStorage.getItem("carelayUser");
-      const tokenKey = userKey ? "carelayGoogleToken_" + userKey : null;
-      const storedToken = tokenKey ? localStorage.getItem(tokenKey) : null;
-      const wasLinked = !!(userKey && storedToken);
-      if (!token) return true;
+      const tokenKey = "carelayGoogleToken_" + userKey;
+      const savedToken = localStorage.getItem(tokenKey);
+      const wasLinked = !!(userKey && savedToken);
 
       const test = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
         headers: { Authorization: "Bearer " + token }
       });
-      if (test.status === 401 && wasLinked) {
-        showModal("Google連携が切れています。再連携してください", "reconnect");
-        return false;
-      }
-      return true;
-    });
       if (test.status === 401 && wasLinked) {
         showModal("Google連携が切れています。再連携してください", "reconnect");
         return false;
@@ -317,7 +310,7 @@ function initMypage() {
     }
 
     async function modalOk() {
-  if (window.window.modalState === "reconnect") {
+  if (modalState === "reconnect") {
     hideModal();
     handleGoogleAuth();
     return;
