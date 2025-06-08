@@ -1,5 +1,4 @@
-<style>
-  #mypage-app .mypage-container {
+<style>  #mypage-app .mypage-container {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
@@ -53,9 +52,27 @@
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    animation: fadeIn 0.2s ease;
   }
   .modal-box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    text-align: center;
+  }
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
     background: #fff;
     padding: 25px;
     border-radius: 12px;
@@ -65,7 +82,7 @@
     position: relative;
   }
   .modal-box::before {
-    content: "\26A0";
+    content: "⚠️";
     font-size: 32px;
     display: block;
     margin-bottom: 10px;
@@ -99,44 +116,40 @@
   #modalOk:hover {
     background-color: #1e5393;
   }
-  #mypage-app .account-list button span {
-    color: #333 !important;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; } to { opacity: 1; }
-  }
-</style>
+#mypage-app .account-list button span {
+  color: #333 !important;
+}</style>
 <div id="mypage-app">
-  <div class="mypage-container">
-    <div class="box highlight">
-      <strong>ログイン中のアカウント</strong><br/>
-      <div class="org" id="orgOutput">(取得中…)</div>
-      <div class="email" id="emailOutput">-</div>
-    </div>
-    <div class="box input-area">
-      <strong>アカウント切替・追加</strong>
-      <input id="newAccount" placeholder="メールアドレスを入力" type="email" />
-      <button id="addAccountBtn">追加して切り替え</button>
-      <div class="account-list" id="accountList"></div>
-    </div>
-    <div class="box google-connect" id="googleBox">
-      <strong>Google連携</strong><br/>
-      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-        <button id="googleConnectBtn">🔗 Googleで連携</button>
-        <button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
-      </div>
-    </div>
-    <div class="box warning">
-      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
-    </div>
-  </div>
+<div class="mypage-container">
+<div class="box highlight">
+<strong>ログイン中のアカウント</strong><br/>
+<div class="org" id="orgOutput">(取得中…)</div>
+<div class="email" id="emailOutput">-</div>
+</div>
+<div class="box input-area">
+<strong>アカウント切替・追加</strong>
+<input id="newAccount" placeholder="メールアドレスを入力" type="email"/>
+<button id="addAccountBtn">追加して切り替え</button>
+<div class="account-list" id="accountList"></div>
+</div>
+<div class="box google-connect" id="googleBox">
+<strong>Google連携</strong><br/>
+<div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+<button id="googleConnectBtn">🔗 Googleで連携</button>
+<button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
+</div>
+</div>
+<div class="box warning">
+<button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+</div>
+</div>
 </div>
 <div class="modal-bg" id="mypage-modal" style="display:none;">
-  <div class="modal-box">
-    <p id="modalMessage">メッセージ</p>
-    <button id="modalOk">OK</button>
-    <button id="modalCancel">キャンセル</button>
-  </div>
+<div class="modal-box">
+<p id="modalMessage">メッセージ</p>
+<button id="modalOk">OK</button>
+<button id="modalCancel">キャンセル</button>
 </div>
-<script defer src="https://accounts.google.com/gsi/client"></script>
+</div>
+<script async="" defer="" src="https://accounts.google.com/gsi/client"></script>
