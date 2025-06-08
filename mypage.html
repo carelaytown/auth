@@ -1,46 +1,4 @@
-
-<div id="mypage-app">
-  <div class="mypage-container">
-    <div class="box highlight">
-      <strong>ログイン中のアカウント</strong><br>
-      <div class="org" id="orgOutput">(取得中…)</div>
-      <div class="email" id="emailOutput">-</div>
-    </div>
-
-    <div class="box input-area">
-      <strong>アカウント切替・追加</strong>
-      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
-      <button id="addAccountBtn">追加して切り替え</button>
-      <div class="account-list" id="accountList"></div>
-    </div>
-
-    
-    <div class="box google-connect" id="googleBox">
-      <strong>Google連携</strong><br>
-      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-        <button id="googleConnectBtn">🔗 Googleで連携</button>
-        <button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
-      </div>
-    </div>
-
-
-    <div class="box warning">
-      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
-    </div>
-  </div>
-</div>
-
-<div id="mypage-modal" class="modal-bg" style="display:none;">
-  <div class="modal-box">
-    <p id="modalMessage">メッセージ</p>
-    <button id="modalOk">OK</button>
-    <button id="modalCancel">キャンセル</button>
-  </div>
-</div>
-
-<style>
-  #mypage-app .mypage-container {
+<style>  #mypage-app .mypage-container {
     max-width: 600px;
     margin: 0 auto;
     padding: 20px;
@@ -85,7 +43,6 @@
   #mypage-app button:hover { background-color: #1e5393; }
   #mypage-app .email { font-size: 14px; color: #555; }
   #mypage-app .org { font-weight: bold; }
-
   .modal-bg {
     position: fixed;
     top: 0; left: 0;
@@ -103,9 +60,6 @@
     width: 300px;
     text-align: center;
   }
-
-<style>
-  .modal-bg {
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
@@ -116,12 +70,9 @@
     z-index: 9999;
     animation: fadeIn 0.2s ease;
   }
-
   @keyframes fadeIn {
     from { opacity: 0; } to { opacity: 1; }
   }
-
-  .modal-box {
     background: #fff;
     padding: 25px;
     border-radius: 12px;
@@ -130,20 +81,17 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.2);
     position: relative;
   }
-
   .modal-box::before {
     content: "⚠️";
     font-size: 32px;
     display: block;
     margin-bottom: 10px;
   }
-
   .modal-box p {
     margin-bottom: 20px;
     font-size: 16px;
     color: #333;
   }
-
   .modal-box button {
     display: inline-block;
     width: 100px;
@@ -154,124 +102,56 @@
     cursor: pointer;
     border: none;
   }
-
   #modalOk {
     background-color: #2a6ebb;
     color: white;
   }
-
   #modalCancel {
     background-color: #eee;
     color: #333;
   }
-
   #modalCancel:hover {
     background-color: #ddd;
   }
-
   #modalOk:hover {
     background-color: #1e5393;
   }
-
 #mypage-app .account-list button span {
   color: #333 !important;
-}
-</style>
-
-</style>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script>
-window.modalState = "";
-
-function showModal(message, state = "") {
-  window.modalState = state;
-  const modal = document.getElementById("mypage-modal");
-  const modalMessage = document.getElementById("modalMessage");
-  if (modal && modalMessage) {
-    modalMessage.textContent = message;
-    modal.style.display = "flex";
-  }
-}
-
-async function checkTokenValidity(token) {
-  const userKey = localStorage.getItem("carelayUser");
-  const tokenKey = userKey ? "carelayGoogleToken_" + userKey : null;
-  const savedToken = tokenKey ? localStorage.getItem(tokenKey) : null;
-  const wasLinked = !!(userKey && savedToken);
-  if (!token || !wasLinked) return true;
-
-  const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  if (res.status === 401 && wasLinked) {
-    showModal("Google連携が切れています。再連携してください", "reconnect");
-    return false;
-  }
-  return true;
-}
-
-
-
-async function createCarelayFolder(token) {
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
-
-  if (data.files?.[0]?.id) {
-    localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-    showModal("CARELAYTOWN フォルダは既に作成されています。");
-    return;
-  }
-
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: "CARELAYTOWN",
-      mimeType: "application/vnd.google-apps.folder"
-    })
-  });
-  const newData = await createRes.json();
-  if (newData.id) {
-    localStorage.setItem("carelayDriveFolderId", newData.id);
-    showModal("CARELAYTOWN フォルダを新しく作成しました。");
-  }
-}
-
-
-  let driveFolderIdTemp = localStorage.getItem("carelayDriveFolderId");
-  if (existing) return;
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
-  if (data.files?.[0]?.id) {
-    localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-    return;
-  }
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: "CARELAYTOWN",
-      mimeType: "application/vnd.google-apps.folder"
-    })
-  });
-  const newData = await createRes.json();
-  if (newData.id) {
-    localStorage.setItem("carelayDriveFolderId", newData.id);
-  }
-}
-</script>
-
+}</style>
+<div id="mypage-app">
+<div class="mypage-container">
+<div class="box highlight">
+<strong>ログイン中のアカウント</strong><br/>
+<div class="org" id="orgOutput">(取得中…)</div>
+<div class="email" id="emailOutput">-</div>
+</div>
+<div class="box input-area">
+<strong>アカウント切替・追加</strong>
+<input id="newAccount" placeholder="メールアドレスを入力" type="email"/>
+<button id="addAccountBtn">追加して切り替え</button>
+<div class="account-list" id="accountList"></div>
+</div>
+<div class="box google-connect" id="googleBox">
+<strong>Google連携</strong><br/>
+<div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+<button id="googleConnectBtn">🔗 Googleで連携</button>
+<button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
+</div>
+</div>
+<div class="box warning">
+<button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+</div>
+</div>
+</div>
+<div class="modal-bg" id="mypage-modal" style="display:none;">
+<div class="modal-box">
+<p id="modalMessage">メッセージ</p>
+<button id="modalOk">OK</button>
+<button id="modalCancel">キャンセル</button>
+</div>
+</div>
 <script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
