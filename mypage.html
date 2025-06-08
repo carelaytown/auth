@@ -306,11 +306,11 @@
   client_id: clientId,
   scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
   prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
   callback: res => {
     if (res && res.access_token) {
-      googleToken = res.access_token;
+      googleToken = resp.access_token;
       localStorage.setItem(tokenKey, googleToken);
+      localStorage.setItem("carelayGoogleConnected", "true");
       googleStatus.textContent = "Google連携が完了しています。";
       googleBtn.textContent = "🔓 連携解除";
     }
