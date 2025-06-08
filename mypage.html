@@ -185,6 +185,7 @@
 
 
   function initMypage() {
+    document.getElementById("createDriveFolderBtn").onclick = () => createCarelayFolder(googleToken);
     const supabase = window.supabaseClient;
     if (!supabase) return;
 
