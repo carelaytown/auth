@@ -1,33 +1,39 @@
+
 <div id="mypage-app">
-<div class="mypage-container">
-<div class="box highlight">
-<strong>ログイン中のアカウント</strong><br/>
-<div class="org" id="orgOutput">(取得中…)</div>
-<div class="email" id="emailOutput">-</div>
+  <div class="mypage-container">
+    <div class="box highlight">
+      <strong>ログイン中のアカウント</strong><br>
+      <div class="org" id="orgOutput">(取得中…)</div>
+      <div class="email" id="emailOutput">-</div>
+    </div>
+
+    <div class="box input-area">
+      <strong>アカウント切替・追加</strong>
+      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
+      <button id="addAccountBtn">追加して切り替え</button>
+      <div class="account-list" id="accountList"></div>
+    </div>
+
+    <div class="box google-connect" id="googleBox">
+      <strong>Google連携</strong><br>
+      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+      <button id="googleConnectBtn">🔗 Googleで連携</button>
+    </div>
+
+    <div class="box warning">
+      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+    </div>
+  </div>
 </div>
-<div class="box input-area">
-<strong>アカウント切替・追加</strong>
-<input id="newAccount" placeholder="メールアドレスを入力" type="email"/>
-<button id="addAccountBtn">追加して切り替え</button>
-<div class="account-list" id="accountList"></div>
+
+<div id="mypage-modal" class="modal-bg" style="display:none;">
+  <div class="modal-box">
+    <p id="modalMessage">メッセージ</p>
+    <button id="modalOk">OK</button>
+    <button id="modalCancel">キャンセル</button>
+  </div>
 </div>
-<div class="box google-connect" id="googleBox">
-<strong>Google連携</strong><br/>
-<div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-<button id="googleConnectBtn">🔗 Googleで連携</button>
-</div>
-<div class="box warning">
-<button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
-</div>
-</div>
-</div>
-<div class="modal-bg" id="modal" style="display:none;">
-<div class="modal-box">
-<p id="modalMessage">メッセージ</p>
-<button id="modalOk">OK</button>
-<button id="modalCancel">キャンセル</button>
-</div>
-</div>
+
 <style>
   #mypage-app .mypage-container {
     max-width: 600px;
@@ -166,86 +172,10 @@
   color: #333 !important;
 }
 </style>
-<script async="" defer="" src="https://accounts.google.com/gsi/client">
 
-function showModal(message, state = "") {
-  window.modalState = state;
-  const modal = document.getElementById("modal");
-  const modalMessage = document.getElementById("modalMessage");
-  if (modal && modalMessage) {
-    modalMessage.textContent = message;
-    modal.style.display = "block";
-  }
-}
+</style>
 
-// Google Drive 連携とフォルダ作成・トークンチェック
-window.modalState = "";
-
-function showModal(message, state = "") {
-  window.modalState = state;
-  const modal = document.getElementById("modal");
-  const modalMessage = document.getElementById("modalMessage");
-  modalMessage.textContent = message;
-  modal.style.display = "block";
-}
-
-document.getElementById("modalOk").onclick = () => {
-  const modal = document.getElementById("modal");
-  modal.style.display = "none";
-  if (window.modalState === "reconnect") {
-    tokenClient.requestAccessToken({ prompt: "consent" });
-  }
-};
-
-document.getElementById("modalCancel").onclick = () => {
-  document.getElementById("modal").style.display = "none";
-};
-
-async function checkTokenValidity(token) {
-  const wasLinked = localStorage.getItem("carelayGoogleConnected") === "true";
-  if (!token) return true;
-  const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  if (res.status === 401 && wasLinked) {
-    showModal("Google連携が切れています。再連携してください", "reconnect");
-    return false;
-  }
-  return true;
-}
-
-async function createCarelayFolder(token) {
-  const existing = localStorage.getItem("carelayDriveFolderId");
-  if (existing) return;
-
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    method: "GET",
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
-  if (data.files && data.files.length > 0) {
-    localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-    return;
-  }
-
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: "CARELAYTOWN",
-      mimeType: "application/vnd.google-apps.folder"
-    })
-  });
-  const createData = await createRes.json();
-  if (createData.id) {
-    localStorage.setItem("carelayDriveFolderId", createData.id);
-  }
-}
-    
-</script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
