@@ -17,6 +17,7 @@
     <div class="box google-connect" id="googleBox">
       <strong>Google連携</strong><br>
       <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+      <button id="createDriveFolderBtn" style="margin-top:10px;">📁 CARELAYTOWNフォルダを作成</button>
       <button id="googleConnectBtn">🔗 Googleで連携</button>
     </div>
 
@@ -415,7 +416,21 @@ tokenClient.requestAccessToken();
     document.getElementById("modalCancel").onclick = modalCancel;
     googleBtn.onclick = handleGoogleAuth;
     if (googleToken) {
+    if (googleToken) {
     fetchGoogleAccountEmail();
+  }
+
+    const createFolderBtn = document.getElementById("createDriveFolderBtn");
+    createFolderBtn.onclick = () => {
+      if (googleToken) {
+        createCarelayFolder(googleToken).then(() => {
+          showModal("CARELAYTOWN フォルダを作成しました。");
+        });
+      } else {
+        showModal("Google連携が必要です。先に連携してください。");
+      }
+    };
+
   }
   }
 
