@@ -1,44 +1,3 @@
-
-<div id="mypage-app">
-  <div class="mypage-container">
-    <div class="box highlight">
-      <strong>ログイン中のアカウント</strong><br>
-      <div class="org" id="orgOutput">(取得中…)</div>
-      <div class="email" id="emailOutput">-</div>
-    </div>
-
-    <div class="box input-area">
-      <strong>アカウント切替・追加</strong>
-      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
-      <button id="addAccountBtn">追加して切り替え</button>
-      <div class="account-list" id="accountList"></div>
-    </div>
-
-    
-    <div class="box google-connect" id="googleBox">
-      <strong>Google連携</strong><br>
-      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-        <button id="googleConnectBtn">🔗 Googleで連携</button>
-        <button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
-      </div>
-    </div>
-
-
-    <div class="box warning">
-      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
-    </div>
-  </div>
-</div>
-
-<div id="mypage-modal" class="modal-bg" style="display:none;">
-  <div class="modal-box">
-    <p id="modalMessage">メッセージ</p>
-    <button id="modalOk">OK</button>
-    <button id="modalCancel">キャンセル</button>
-  </div>
-</div>
-
 <style>
   #mypage-app .mypage-container {
     max-width: 600px;
@@ -177,6 +136,47 @@
   color: #333 !important;
 }
 </style>
+<div id="mypage-app">
+  <div class="mypage-container">
+    <div class="box highlight">
+      <strong>ログイン中のアカウント</strong><br>
+      <div class="org" id="orgOutput">(取得中…)</div>
+      <div class="email" id="emailOutput">-</div>
+    </div>
+
+    <div class="box input-area">
+      <strong>アカウント切替・追加</strong>
+      <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
+      <button id="addAccountBtn">追加して切り替え</button>
+      <div class="account-list" id="accountList"></div>
+    </div>
+
+    
+    <div class="box google-connect" id="googleBox">
+      <strong>Google連携</strong><br>
+      <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+        <button id="googleConnectBtn">🔗 Googleで連携</button>
+        <button id="createDriveFolderBtn">📁 CARELAYTOWNフォルダを作成</button>
+      </div>
+    </div>
+
+
+    <div class="box warning">
+      <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+    </div>
+  </div>
+</div>
+
+<div id="mypage-modal" class="modal-bg" style="display:none;">
+  <div class="modal-box">
+    <p id="modalMessage">メッセージ</p>
+    <button id="modalOk">OK</button>
+    <button id="modalCancel">キャンセル</button>
+  </div>
+</div>
+
+
 
 </style>
 
@@ -213,9 +213,7 @@ async function checkTokenValidity(token) {
 
 
 
-async function createCarelayFolder(token) {
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    headers: { Authorization: "Bearer " + token }
+
   });
   const data = await res.json();
 
@@ -435,7 +433,6 @@ async function createCarelayFolder(token) {
   client_id: clientId,
   scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
   prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
   callback: res => {
     if (res && res.access_token) {
       googleToken = res.access_token;
@@ -473,3 +470,6 @@ tokenClient.requestAccessToken();
   }
 })();
 </script>
+async function createCarelayFolder(token) {
+  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
+    headers: { Authorization: "Bearer " + token }
