@@ -154,145 +154,147 @@
     </div>
   </div>
 
-  <!-- Google連携 + フォルダ作成 -->
-  <script>
-  (() => {
-    const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
-    const carelayUser = localStorage.getItem("carelayUser") || "";
-    const tokenKey = "carelayGoogleToken_" + carelayUser;
-    const tokenTimeKey = "carelayGoogleTokenTime_" + carelayUser;
-    const folderKey = "carelayDriveFolderId";
-    let googleToken = localStorage.getItem(tokenKey) || "";
+  <!-- Google連携のJSのみ改修 -->
+  
+<script>
+(() => {
+  const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
+  const carelayUser = localStorage.getItem("carelayUser") || "";
+  const tokenKey = "carelayGoogleToken_" + carelayUser;
+  const tokenTimeKey = "carelayGoogleTokenTime_" + carelayUser;
+  const folderKey = "carelayDriveFolderId";
+  let googleToken = localStorage.getItem(tokenKey) || "";
 
-    function updateGoogleStatus(email = null) {
-      const statusEl = document.getElementById("googleStatus");
-      const btnEl = document.getElementById("googleConnectBtn");
-      if (email) {
-        statusEl.textContent = "Google連携が完了しています（" + email + "）";
-        btnEl.textContent = "🔓 連携解除";
+  function updateGoogleStatus(email = null) {
+    const statusEl = document.getElementById("googleStatus");
+    const btnEl = document.getElementById("googleConnectBtn");
+    if (email) {
+      statusEl.textContent = "Google連携が完了しています（" + email + "）";
+      btnEl.textContent = "🔓 連携解除";
+    } else {
+      statusEl.textContent = "Googleアカウントとまだ連携されていません。";
+      btnEl.textContent = "🔗 Googleで連携";
+    }
+  }
+
+  function isTokenExpired() {
+    const saved = parseInt(localStorage.getItem(tokenTimeKey) || "0", 10);
+    return !saved || (Date.now() - saved > 3600 * 1000);
+  }
+
+  function fetchGoogleAccountEmail() {
+    if (!googleToken) {
+      updateGoogleStatus(null);
+      return;
+    }
+    fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+      headers: { Authorization: "Bearer " + googleToken }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Invalid token");
+      return res.json();
+    })
+    .then(user => {
+      if (user && user.email) {
+        updateGoogleStatus(user.email);
       } else {
-        statusEl.textContent = "Googleアカウントとまだ連携されていません。";
-        btnEl.textContent = "🔗 Googleで連携";
-      }
-    }
-
-    function isTokenExpired() {
-      const saved = parseInt(localStorage.getItem(tokenTimeKey) || "0", 10);
-      return !saved || (Date.now() - saved > 3600 * 1000);
-    }
-
-    function fetchGoogleAccountEmail() {
-      if (!googleToken) {
         updateGoogleStatus(null);
-        return;
       }
-      fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-        headers: { Authorization: "Bearer " + googleToken }
-      })
-      .then(res => {
-        if (!res.ok) throw new Error("Invalid token");
-        return res.json();
-      })
-      .then(user => {
-        if (user && user.email) {
-          updateGoogleStatus(user.email);
+    })
+    .catch(() => {
+      updateGoogleStatus(null);
+    });
+  }
+
+  function ensureCarelayFolder() {
+    fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
+      headers: {
+        Authorization: "Bearer " + googleToken
+      }
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.files && data.files.length > 0) {
+        localStorage.setItem(folderKey, data.files[0].id);
+      } else {
+        fetch("https://www.googleapis.com/drive/v3/files", {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + googleToken,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: "CARELAYTOWN",
+            mimeType: "application/vnd.google-apps.folder"
+          })
+        })
+        .then(res => res.json())
+        .then(folder => {
+          if (folder.id) {
+            localStorage.setItem(folderKey, folder.id);
+          }
+        });
+      }
+    });
+  }
+
+  function autoRefreshGoogleToken() {
+    if (!googleToken || !isTokenExpired()) {
+      fetchGoogleAccountEmail();
+      return;
+    }
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+      prompt: "none",
+      callback: res => {
+        if (res && res.access_token) {
+          googleToken = res.access_token;
+          localStorage.setItem(tokenKey, googleToken);
+          localStorage.setItem(tokenTimeKey, Date.now().toString());
+          fetchGoogleAccountEmail();
+          ensureCarelayFolder();
         } else {
           updateGoogleStatus(null);
         }
-      })
-      .catch(() => {
-        updateGoogleStatus(null);
-      });
-    }
-
-    function ensureCarelayFolder() {
-      fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-        headers: {
-          Authorization: "Bearer " + googleToken
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.files && data.files.length > 0) {
-          localStorage.setItem(folderKey, data.files[0].id);
-        } else {
-          fetch("https://www.googleapis.com/drive/v3/files", {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer " + googleToken,
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              name: "CARELAYTOWN",
-              mimeType: "application/vnd.google-apps.folder"
-            })
-          })
-          .then(res => res.json())
-          .then(folder => {
-            if (folder.id) {
-              localStorage.setItem(folderKey, folder.id);
-            }
-          });
-        }
-      });
-    }
-
-    function autoRefreshGoogleToken() {
-      if (!googleToken || !isTokenExpired()) {
-        fetchGoogleAccountEmail();
-        return;
       }
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-        prompt: "none",
-        callback: res => {
-          if (res && res.access_token) {
-            googleToken = res.access_token;
-            localStorage.setItem(tokenKey, googleToken);
-            localStorage.setItem(tokenTimeKey, Date.now().toString());
-            fetchGoogleAccountEmail();
-            ensureCarelayFolder();
-          } else {
-            updateGoogleStatus(null);
-          }
-        }
-      });
-      tokenClient.requestAccessToken();
-    }
-
-    function handleGoogleAuth() {
-      if (googleToken) {
-        localStorage.removeItem(tokenKey);
-        localStorage.removeItem(tokenTimeKey);
-        localStorage.removeItem(folderKey);
-        updateGoogleStatus(null);
-        googleToken = "";
-        return;
-      }
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-        prompt: "consent",
-        callback: res => {
-          if (res && res.access_token) {
-            googleToken = res.access_token;
-            localStorage.setItem(tokenKey, googleToken);
-            localStorage.setItem(tokenTimeKey, Date.now().toString());
-            fetchGoogleAccountEmail();
-            ensureCarelayFolder();
-          }
-        }
-      });
-      tokenClient.requestAccessToken();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      autoRefreshGoogleToken();
-      const btn = document.getElementById("googleConnectBtn");
-      if (btn) btn.onclick = handleGoogleAuth;
     });
-  })();
-  </script>
+    tokenClient.requestAccessToken();
+  }
+
+  function handleGoogleAuth() {
+    if (googleToken) {
+      localStorage.removeItem(tokenKey);
+      localStorage.removeItem(tokenTimeKey);
+      localStorage.removeItem(folderKey);
+      updateGoogleStatus(null);
+      googleToken = "";
+      return;
+    }
+    const tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: clientId,
+      scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+      prompt: "consent",
+      callback: res => {
+        if (res && res.access_token) {
+          googleToken = res.access_token;
+          localStorage.setItem(tokenKey, googleToken);
+          localStorage.setItem(tokenTimeKey, Date.now().toString());
+          fetchGoogleAccountEmail();
+          ensureCarelayFolder();
+        }
+      }
+    });
+    tokenClient.requestAccessToken();
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    autoRefreshGoogleToken();
+    const btn = document.getElementById("googleConnectBtn");
+    if (btn) btn.onclick = handleGoogleAuth;
+  });
+})();
+</script>
+
 </body>
 </html>
