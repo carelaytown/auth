@@ -154,13 +154,14 @@
     </div>
   </div>
 
-  <!-- Google連携のJSのみ改修 -->
+  <!-- Google連携 + フォルダ作成 -->
   <script>
   (() => {
     const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
     const carelayUser = localStorage.getItem("carelayUser") || "";
     const tokenKey = "carelayGoogleToken_" + carelayUser;
     const tokenTimeKey = "carelayGoogleTokenTime_" + carelayUser;
+    const folderKey = "carelayDriveFolderId";
     let googleToken = localStorage.getItem(tokenKey) || "";
 
     function updateGoogleStatus(email = null) {
@@ -204,6 +205,38 @@
       });
     }
 
+    function ensureCarelayFolder() {
+      fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
+        headers: {
+          Authorization: "Bearer " + googleToken
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.files && data.files.length > 0) {
+          localStorage.setItem(folderKey, data.files[0].id);
+        } else {
+          fetch("https://www.googleapis.com/drive/v3/files", {
+            method: "POST",
+            headers: {
+              Authorization: "Bearer " + googleToken,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              name: "CARELAYTOWN",
+              mimeType: "application/vnd.google-apps.folder"
+            })
+          })
+          .then(res => res.json())
+          .then(folder => {
+            if (folder.id) {
+              localStorage.setItem(folderKey, folder.id);
+            }
+          });
+        }
+      });
+    }
+
     function autoRefreshGoogleToken() {
       if (!googleToken || !isTokenExpired()) {
         fetchGoogleAccountEmail();
@@ -219,6 +252,7 @@
             localStorage.setItem(tokenKey, googleToken);
             localStorage.setItem(tokenTimeKey, Date.now().toString());
             fetchGoogleAccountEmail();
+            ensureCarelayFolder();
           } else {
             updateGoogleStatus(null);
           }
@@ -231,6 +265,7 @@
       if (googleToken) {
         localStorage.removeItem(tokenKey);
         localStorage.removeItem(tokenTimeKey);
+        localStorage.removeItem(folderKey);
         updateGoogleStatus(null);
         googleToken = "";
         return;
@@ -245,6 +280,7 @@
             localStorage.setItem(tokenKey, googleToken);
             localStorage.setItem(tokenTimeKey, Date.now().toString());
             fetchGoogleAccountEmail();
+            ensureCarelayFolder();
           }
         }
       });
