@@ -194,7 +194,7 @@ async function checkTokenValidity(token) {
   const tokenKey = userKey ? "carelayGoogleToken_" + userKey : null;
   const savedToken = tokenKey ? localStorage.getItem(tokenKey) : null;
   const wasLinked = !!(userKey && savedToken);
-  if (!token) return true;
+  if (!token || !wasLinked) return true;
 
   const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
     headers: { Authorization: "Bearer " + token }
