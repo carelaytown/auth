@@ -1,4 +1,3 @@
-
 <div id="mypage-app">
 <div class="mypage-container">
 <div class="box highlight">
@@ -168,6 +167,17 @@
 }
 </style>
 <script async="" defer="" src="https://accounts.google.com/gsi/client">
+
+function showModal(message, state = "") {
+  window.modalState = state;
+  const modal = document.getElementById("modal");
+  const modalMessage = document.getElementById("modalMessage");
+  if (modal && modalMessage) {
+    modalMessage.textContent = message;
+    modal.style.display = "block";
+  }
+}
+
 // Google Drive 連携とフォルダ作成・トークンチェック
 window.modalState = "";
 
