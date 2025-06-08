@@ -258,5 +258,55 @@
     });
   })();
   </script>
+
+<script>
+function initMypage() {
+  const orgEl = document.getElementById("orgOutput");
+  const emailEl = document.getElementById("emailOutput");
+  const newAccountInput = document.getElementById("newAccount");
+  const addAccountBtn = document.getElementById("addAccountBtn");
+  const accountList = document.getElementById("accountList");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  const userId = localStorage.getItem("carelayUser");
+  const allAccounts = JSON.parse(localStorage.getItem("carelayAccounts") || "[]");
+  const current = allAccounts.find(a => a.id === userId);
+
+  if (current) {
+    orgEl.textContent = current.org;
+    emailEl.textContent = current.email;
+  }
+
+  accountList.innerHTML = "";
+  allAccounts.forEach(acc => {
+    const btn = document.createElement("button");
+    btn.innerHTML = '<span>' + acc.org + "（" + acc.email + "）</span><span>切替</span>";
+    btn.onclick = () => {
+      localStorage.setItem("carelayUser", acc.id);
+      location.reload();
+    };
+    accountList.appendChild(btn);
+  });
+
+  addAccountBtn.onclick = () => {
+    const email = newAccountInput.value.trim();
+    if (!email) return alert("メールアドレスを入力してください");
+    const org = prompt("このアカウントの事業所名を入力してください") || "";
+    const newId = crypto.randomUUID();
+    allAccounts.push({ id: newId, org, email });
+    localStorage.setItem("carelayAccounts", JSON.stringify(allAccounts));
+    localStorage.setItem("carelayUser", newId);
+    location.reload();
+  };
+
+  logoutBtn.onclick = () => {
+    if (!confirm("ログアウトしますか？")) return;
+    localStorage.removeItem("carelayUser");
+    location.href = "index.html";
+  };
+}
+
+document.addEventListener("DOMContentLoaded", initMypage);
+</script>
 </body>
 </html>
