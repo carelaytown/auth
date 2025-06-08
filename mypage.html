@@ -221,7 +221,15 @@
       }
 
 
-  function initMypage() {
+  
+function showModal(message, state = "") {
+  const modal = document.getElementById("mypage-modal");
+  const modalMessage = document.getElementById("modalMessage");
+  modalMessage.textContent = message;
+  modal.style.display = "flex";
+}
+
+function initMypage() {
     const supabase = window.supabaseClient;
     if (!supabase) return;
 
