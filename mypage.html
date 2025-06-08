@@ -175,7 +175,20 @@
 
 </style>
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer>
+    async function checkTokenValidity(token) {
+      const test = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+        headers: { Authorization: "Bearer " + token }
+      });
+      if (test.status === 401) {
+        console.warn("トークン期限切れ。再取得を試みます。");
+        tokenClient.requestAccessToken({ prompt: '' });
+        return false;
+      }
+      return true;
+    }
+
+</script>
 <script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
