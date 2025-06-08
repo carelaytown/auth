@@ -308,7 +308,7 @@
   prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
   callback: res => {
     if (res && res.access_token) {
-      googleToken = resp.access_token;
+      googleToken = res.access_token;
       localStorage.setItem(tokenKey, googleToken);
       localStorage.setItem("carelayGoogleConnected", "true");
       googleStatus.textContent = "Google連携が完了しています。";
