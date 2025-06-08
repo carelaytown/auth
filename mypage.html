@@ -244,8 +244,7 @@ async function createCarelayFolder(token) {
 }
 
 
-  let driveFolderIdTemp = localStorage.getItem("carelayDriveFolderId");
-  if (existing) return;
+    if (existing) return;
   const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
     headers: { Authorization: "Bearer " + token }
   });
@@ -305,6 +304,17 @@ async function createCarelayFolder(token) {
 
 
   function initMypage() {
+  const createBtn = document.getElementById("createDriveFolderBtn");
+  if (createBtn) {
+    createBtn.onclick = () => {
+      if (googleToken) {
+        createCarelayFolder(googleToken);
+      } else {
+        showModal("まずGoogle連携をしてください", "alert");
+      }
+    };
+  }
+
     const supabase = window.supabaseClient;
     if (!supabase) return;
 
