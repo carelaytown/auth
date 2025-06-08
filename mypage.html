@@ -208,13 +208,13 @@ async function checkTokenValidity(token) {
 
 
 async function createCarelayFolder(token) {
-  const existing = localStorage.getItem("carelayDriveFolderId");
-  if (existing) {
+  const folderId = localStorage.getItem("carelayDriveFolderId");
+  if (folderId) {
     showModal("CARELAYTOWN フォルダは既に作成されています。");
     return;
   }
 
-  const existing = localStorage.getItem("carelayDriveFolderId");
+  const folderId = localStorage.getItem("carelayDriveFolderId");
   if (existing) return;
   const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
     headers: { Authorization: "Bearer " + token }
