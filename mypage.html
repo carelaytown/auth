@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="ja">
 <head>
-<meta charset="utf-8"/>
-
-<script async="" defer="" src="https://accounts.google.com/gsi/client"></script>
-<style>
+  <meta charset="UTF-8">
+  <title>CARELAYマイページ</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
     #mypage-app .mypage-container {
       max-width: 600px;
       margin: 0 auto;
@@ -120,177 +119,144 @@
   </style>
 </head>
 <body>
-<div id="mypage-app">
-<div class="mypage-container">
-<div class="box highlight">
-<strong>ログイン中のアカウント</strong><br/>
-<div class="org" id="orgOutput">(取得中…)</div>
-<div class="email" id="emailOutput">-</div>
-</div>
-<div class="box input-area">
-<strong>アカウント切替・追加</strong>
-<input id="newAccount" placeholder="メールアドレスを入力" type="email"/>
-<button id="addAccountBtn">追加して切り替え</button>
-<div class="account-list" id="accountList"></div>
-</div>
-<div class="box google-connect" id="googleBox">
-<strong>Google連携</strong><br/>
-<div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
-<button id="googleConnectBtn">🔗 Googleで連携</button>
-</div>
-<div class="box warning">
-<button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
-</div>
-</div>
-</div>
-<div class="modal-bg" id="mypage-modal" style="display:none;">
-<div class="modal-box">
-<p id="modalMessage">メッセージ</p>
-<button id="modalOk">OK</button>
-<button id="modalCancel">キャンセル</button>
-</div>
-</div>
-<!-- Google連携のJSのみ改修 -->
-<script>
-(() => {
-  const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
-  const carelayUser = localStorage.getItem("carelayUser") || "";
-  const tokenKey = "carelayGoogleToken_" + carelayUser;
-  const tokenTimeKey = "carelayGoogleTokenTime_" + carelayUser;
-  const folderKey = "carelayDriveFolderId";
-  let googleToken = localStorage.getItem(tokenKey) || "";
-  let modalState = "";
+  <div id="mypage-app">
+    <div class="mypage-container">
+      <div class="box highlight">
+        <strong>ログイン中のアカウント</strong><br>
+        <div class="org" id="orgOutput">(取得中…)</div>
+        <div class="email" id="emailOutput">-</div>
+      </div>
 
-  function updateGoogleStatus(email = null) {
-    const statusEl = document.getElementById("googleStatus");
-    const btnEl = document.getElementById("googleConnectBtn");
-    if (email) {
-      statusEl.textContent = "Google連携が完了しています（" + email + "）";
-      btnEl.textContent = "🔓 連携解除";
-    } else {
-      statusEl.textContent = "Googleアカウントとまだ連携されていません。";
-      btnEl.textContent = "🔗 Googleで連携";
-    }
-  }
+      <div class="box input-area">
+        <strong>アカウント切替・追加</strong>
+        <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
+        <button id="addAccountBtn">追加して切り替え</button>
+        <div class="account-list" id="accountList"></div>
+      </div>
 
-  function isTokenExpired() {
-    const saved = parseInt(localStorage.getItem(tokenTimeKey) || "0", 10);
-    return !saved || (Date.now() - saved > 3600 * 1000);
-  }
+      <div class="box google-connect" id="googleBox">
+        <strong>Google連携</strong><br>
+        <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
+        <button id="googleConnectBtn">🔗 Googleで連携</button>
+      </div>
 
-  function fetchGoogleAccountEmail() {
-    if (!googleToken) {
-      updateGoogleStatus(null);
-      return;
-    }
-    fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-      headers: { Authorization: "Bearer " + googleToken }
-    })
-    .then(res => {
-      if (!res.ok) throw new Error("Invalid token");
-      return res.json();
-    })
-    .then(user => {
-      if (user && user.email) {
-        updateGoogleStatus(user.email);
+      <div class="box warning">
+        <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="mypage-modal" class="modal-bg" style="display:none;">
+    <div class="modal-box">
+      <p id="modalMessage">メッセージ</p>
+      <button id="modalOk">OK</button>
+      <button id="modalCancel">キャンセル</button>
+    </div>
+  </div>
+
+  <!-- Google連携のJSのみ改修 -->
+  <script>
+  (() => {
+    const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
+    const carelayUser = localStorage.getItem("carelayUser") || "";
+    const tokenKey = "carelayGoogleToken_" + carelayUser;
+    const tokenTimeKey = "carelayGoogleTokenTime_" + carelayUser;
+    let googleToken = localStorage.getItem(tokenKey) || "";
+
+    function updateGoogleStatus(email = null) {
+      const statusEl = document.getElementById("googleStatus");
+      const btnEl = document.getElementById("googleConnectBtn");
+      if (email) {
+        statusEl.textContent = "Google連携が完了しています（" + email + "）";
+        btnEl.textContent = "🔓 連携解除";
       } else {
+        statusEl.textContent = "Googleアカウントとまだ連携されていません。";
+        btnEl.textContent = "🔗 Googleで連携";
+      }
+    }
+
+    function isTokenExpired() {
+      const saved = parseInt(localStorage.getItem(tokenTimeKey) || "0", 10);
+      return !saved || (Date.now() - saved > 3600 * 1000);
+    }
+
+    function fetchGoogleAccountEmail() {
+      if (!googleToken) {
         updateGoogleStatus(null);
+        return;
       }
-    })
-    .catch(() => {
-      updateGoogleStatus(null);
-    });
-  }
-
-  function ensureCarelayFolder() {
-    fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-      headers: { Authorization: "Bearer " + googleToken }
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.files && data.files.length > 0) {
-        localStorage.setItem(folderKey, data.files[0].id);
-      } else {
-        fetch("https://www.googleapis.com/drive/v3/files", {
-          method: "POST",
-          headers: {
-            Authorization: "Bearer " + googleToken,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            name: "CARELAYTOWN",
-            mimeType: "application/vnd.google-apps.folder"
-          })
-        })
-        .then(res => res.json())
-        .then(folder => {
-          if (folder.id) {
-            localStorage.setItem(folderKey, folder.id);
-          }
-        });
-      }
-    });
-  }
-
-  function handleGoogleAuth() {
-    const googleBtn = document.getElementById("googleConnectBtn");
-    if (googleToken) {
-      localStorage.removeItem(tokenKey);
-      localStorage.removeItem(tokenTimeKey);
-      localStorage.removeItem(folderKey);
-      updateGoogleStatus(null);
-      googleToken = "";
-      return;
-    }
-    const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-      prompt: "consent",
-      callback: res => {
-        if (res && res.access_token) {
-          googleToken = res.access_token;
-          localStorage.setItem(tokenKey, googleToken);
-          localStorage.setItem(tokenTimeKey, Date.now().toString());
-          fetchGoogleAccountEmail();
-          ensureCarelayFolder();
-        }
-      }
-    });
-    tokenClient.requestAccessToken();
-  }
-
-  function autoRefreshGoogleToken() {
-    if (!googleToken || !isTokenExpired()) {
-      fetchGoogleAccountEmail();
-      return;
-    }
-    const tokenClient = google.accounts.oauth2.initTokenClient({
-      client_id: clientId,
-      scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-      prompt: "none",
-      callback: res => {
-        if (res && res.access_token) {
-          googleToken = res.access_token;
-          localStorage.setItem(tokenKey, googleToken);
-          localStorage.setItem(tokenTimeKey, Date.now().toString());
-          fetchGoogleAccountEmail();
-          ensureCarelayFolder();
+      fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+        headers: { Authorization: "Bearer " + googleToken }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error("Invalid token");
+        return res.json();
+      })
+      .then(user => {
+        if (user && user.email) {
+          updateGoogleStatus(user.email);
         } else {
           updateGoogleStatus(null);
         }
+      })
+      .catch(() => {
+        updateGoogleStatus(null);
+      });
+    }
+
+    function autoRefreshGoogleToken() {
+      if (!googleToken || !isTokenExpired()) {
+        fetchGoogleAccountEmail();
+        return;
       }
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+        prompt: "none",
+        callback: res => {
+          if (res && res.access_token) {
+            googleToken = res.access_token;
+            localStorage.setItem(tokenKey, googleToken);
+            localStorage.setItem(tokenTimeKey, Date.now().toString());
+            fetchGoogleAccountEmail();
+          } else {
+            updateGoogleStatus(null);
+          }
+        }
+      });
+      tokenClient.requestAccessToken();
+    }
+
+    function handleGoogleAuth() {
+      if (googleToken) {
+        localStorage.removeItem(tokenKey);
+        localStorage.removeItem(tokenTimeKey);
+        updateGoogleStatus(null);
+        googleToken = "";
+        return;
+      }
+      const tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
+        prompt: "consent",
+        callback: res => {
+          if (res && res.access_token) {
+            googleToken = res.access_token;
+            localStorage.setItem(tokenKey, googleToken);
+            localStorage.setItem(tokenTimeKey, Date.now().toString());
+            fetchGoogleAccountEmail();
+          }
+        }
+      });
+      tokenClient.requestAccessToken();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      autoRefreshGoogleToken();
+      const btn = document.getElementById("googleConnectBtn");
+      if (btn) btn.onclick = handleGoogleAuth;
     });
-    tokenClient.requestAccessToken();
-  }
-
-  function initGoogleOnly() {
-    autoRefreshGoogleToken();
-    const googleBtn = document.getElementById("googleConnectBtn");
-    if (googleBtn) googleBtn.onclick = handleGoogleAuth;
-  }
-
-  document.addEventListener("DOMContentLoaded", initGoogleOnly);
-})();
-</script>
+  })();
+  </script>
 </body>
 </html>
