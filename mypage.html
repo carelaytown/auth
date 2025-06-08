@@ -152,8 +152,19 @@
 <button id="modalCancel">キャンセル</button>
 </div>
 </div>
-<script>
-async function checkTokenValidity() {
+<script>let modalState = "";
+function showModal(message, state = "") {
+  modalState = state;
+  const modal = document.getElementById("mypage-modal");
+  const modalMessage = document.getElementById("modalMessage");
+  if (modal && modalMessage) {
+    modalMessage.textContent = message;
+    modal.style.display = "block";
+  }
+}
+
+
+async function checkTokenValidity(googleStatus, googleBtn) {
   if (!googleToken) return;
   const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
     headers: { Authorization: "Bearer " + googleToken }
@@ -269,14 +280,16 @@ async function checkTokenValidity() {
     }
 
     async function modalOk() {
-  if (modalState === "reconnect") {
+  
+      if (modalState === "reconnect") {
     hideModal();
     handleGoogleAuth();
     return;
   }
-      modal.style.display = "none";
+modal.style.display = "none";
       const target = modalTarget.trim().toLowerCase();
       if (modalAction === "add") {
+
         const { data, error } = await supabase.from("applications").select("org_name, status").eq("email", target);
         if (!error && data.length > 0 && data[0].status === "approved") {
           localStorage.setItem("carelayUser", target);
@@ -309,15 +322,20 @@ async function checkTokenValidity() {
       modalAction = "";
     }
 
-    function handleGoogleAuth() {
-      if (googleToken) {
-        checkTokenValidity();
-  localStorage.removeItem(tokenKey);
-        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-        googleBtn.textContent = "🔗 Googleで連携";
-        googleToken = "";
-        return;
-      }
+    async function handleGoogleAuth() {
+      
+  const googleStatus = document.getElementById("googleStatus");
+  const googleBtn = document.getElementById("googleBtn");
+  const googleToken = tokenKey ? localStorage.getItem(tokenKey) : null;
+
+  if (googleToken) {
+    const isValid = await checkTokenValidity(googleStatus, googleBtn);
+    if (isValid) {
+      fetchGoogleAccountEmail();
+      createCarelayFolder(googleToken);
+    }
+  }
+
       const tokenClient = google.accounts.oauth2.initTokenClient({
   client_id: clientId,
   scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
@@ -335,13 +353,63 @@ async function checkTokenValidity() {
 tokenClient.requestAccessToken();
     }
 
-    // 初期表示
+    
+function createCarelayFolder(token) {
+  if (!token) return;
+  const folderId = localStorage.getItem("carelayDriveFolderId");
+
+  if (folderId) {
+    // Drive APIで実在確認
+    fetch("https://www.googleapis.com/drive/v3/files/" + folderId, {
+      method: "GET",
+      headers: { Authorization: "Bearer " + token }
+    }).then(res => {
+      if (res.status === 404) {
+        localStorage.removeItem("carelayDriveFolderId");
+        createCarelayFolder(token); // 再帰的に新規作成へ
+      }
+    }).catch(() => {
+      localStorage.removeItem("carelayDriveFolderId");
+      createCarelayFolder(token);
+    });
+    return;
+  }
+
+  // 存在しない場合 → フォルダ新規作成
+  fetch("https://www.googleapis.com/drive/v3/files", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      name: "CARELAYTOWN",
+      mimeType: "application/vnd.google-apps.folder"
+    })
+  }).then(res => res.json()).then(data => {
+    if (data && data.id) {
+      localStorage.setItem("carelayDriveFolderId", data.id);
+    }
+  });
+}
+
+
+// 初期表示
     fetchCurrentOrg();
     renderAccountList();
-    if (googleToken) {checkTokenValidity();
-  googleStatus.textContent = "Google連携が完了しています。";
-    googleBtn.textContent = "🔓 連携解除";
+    
+  const googleStatus = document.getElementById("googleStatus");
+  const googleBtn = document.getElementById("googleBtn");
+  const googleToken = tokenKey ? localStorage.getItem(tokenKey) : null;
+
+  if (googleToken) {
+    const isValid = await checkTokenValidity(googleStatus, googleBtn);
+    if (isValid) {
+      fetchGoogleAccountEmail();
+      createCarelayFolder(googleToken);
     }
+  }
+
 
     // イベント登録
     document.getElementById("addAccountBtn").onclick = confirmAdd;
@@ -349,10 +417,19 @@ tokenClient.requestAccessToken();
     document.getElementById("modalOk").onclick = modalOk;
     document.getElementById("modalCancel").onclick = modalCancel;
     googleBtn.onclick = handleGoogleAuth;
-    if (googleToken) {
-    checkTokenValidity();
-  fetchGoogleAccountEmail();
+    
+  const googleStatus = document.getElementById("googleStatus");
+  const googleBtn = document.getElementById("googleBtn");
+  const googleToken = tokenKey ? localStorage.getItem(tokenKey) : null;
+
+  if (googleToken) {
+    const isValid = await checkTokenValidity(googleStatus, googleBtn);
+    if (isValid) {
+      fetchGoogleAccountEmail();
+      createCarelayFolder(googleToken);
+    }
   }
+
   }
 
   if (window.waitForSupabaseReady) {
