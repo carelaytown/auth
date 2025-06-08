@@ -414,7 +414,9 @@ tokenClient.requestAccessToken();
     document.getElementById("modalOk").onclick = modalOk;
     document.getElementById("modalCancel").onclick = modalCancel;
     googleBtn.onclick = handleGoogleAuth;
+    if (googleToken) {
     fetchGoogleAccountEmail();
+  }
   }
 
   if (window.waitForSupabaseReady) {
