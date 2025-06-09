@@ -226,6 +226,7 @@ body {
     (() => {
       let calcFormula = "";
       let calcResult = "";
+      let justCalculated = false;
       let prevFormula = "";
       let prevResult = "";
 
@@ -242,19 +243,21 @@ body {
       }
 
       
-window.appendCalc = val => {
-  
-    if (calcResult !== "" && calcResult !== 'Error') {
-      if (["+", "-", "*", "/"].includes(val)) {
-        calcFormula = calcResult;
-      } else {
-        calcFormula = "";
-      }
-    }
 
-  calcFormula += val;
+window.appendCalc = val => {
+  if (justCalculated) {
+    if (["+", "-", "*", "/"].includes(val)) {
+      calcFormula = calcResult + val;
+    } else {
+      calcFormula = val;
+    }
+    justCalculated = false;
+  } else {
+    calcFormula += val;
+  }
   updateDisplay();
 };
+
 
       window.clearCalc = () => {
         calcFormula = "";
@@ -272,6 +275,7 @@ window.appendCalc = val => {
           prevResult = calcResult;
           //  eval() is dangerous, consider using a safer math expression parser
           calcResult = eval(calcFormula);
+          justCalculated = true;
         } catch {
           calcResult = "Error";
         }
