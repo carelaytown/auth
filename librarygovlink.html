@@ -59,18 +59,17 @@
   }
 </style>
 
-<script type="module">
+<script>
 (() => {
-  const { createClient } = supabase
   const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co'
   const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI3Njg5MDcsImV4cCI6MjAyODMyNDkwN30.9vAOfF90jKVA0G5eNeEHKZOLLCcnJnmVWr32K8uyBy8'
-  const supabaseClient = createClient(supabaseUrl, supabaseKey)
+  const supabase = window.supabase.createClient(supabaseUrl, supabaseKey)
 
   const userId = localStorage.getItem("carelay_user_id")
   let isAdmin = false
 
   async function checkAdmin() {
-    const { data } = await supabaseClient
+    const { data } = await supabase
       .from("applications")
       .select("is_admin")
       .eq("user_id", userId)
@@ -126,7 +125,7 @@
 
   async function loadData() {
     await checkAdmin()
-    const { data } = await supabaseClient
+    const { data } = await supabase
       .from("librarygovlink")
       .select("*")
       .order("municipality_code", { ascending: true })
@@ -156,11 +155,11 @@
       link_url_3: document.getElementById(`url3-${code}`).value,
       updated_at: new Date().toISOString(),
     }
-    await supabaseClient.from("librarygovlink").upsert(updates)
+    await supabase.from("librarygovlink").upsert(updates)
     await loadData()
   }
 
   document.getElementById("search").addEventListener("input", loadData)
   loadData()
-})();
+})()
 </script>
