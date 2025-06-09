@@ -1,0 +1,154 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>要望掲示板</title>
+  <style>
+    #requests-app { font-family: 'Noto Sans JP', sans-serif; padding: 20px; max-width: 800px; margin: auto; }
+    #requests-app h1 { font-size: 24px; color: #2a6ebb; margin-bottom: 20px; }
+    #requests-app textarea { width: 100%; padding: 10px; font-size: 14px; border-radius: 6px; border: 1px solid #ccc; resize: vertical; min-height: 80px; }
+    #requests-app button { margin-top: 10px; padding: 8px 16px; background-color: #2a6ebb; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    #requests-app button:hover { background-color: #1f5aa0; }
+    .card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-top: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    .card .meta { font-size: 12px; color: #555; margin-bottom: 8px; }
+    .card .content { white-space: pre-wrap; font-size: 14px; margin-bottom: 10px; }
+    .card .answer-label { font-weight: bold; margin-top: 10px; }
+    .card textarea.answer-box { width: 100%; min-height: 60px; margin-top: 8px; }
+    .card .admin-actions { margin-top: 10px; display: flex; gap: 10px; }
+    .card .status { font-size: 12px; font-weight: bold; color: #999; margin-left: auto; }
+  </style>
+</head>
+<body>
+<div id="requests-app">
+  <h1>要望掲示板</h1>
+  <textarea id="new-request" placeholder="改善要望・不具合報告などをご自由に記入してください"></textarea>
+  <button id="submit-request">投稿する</button>
+  <div id="request-list"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.6/dist/umd/supabase.min.js"></script>
+<script>
+(() => {
+  const app = document.getElementById("requests-app");
+  const supabase = window.supabase.createClient(
+    "https://viihcgkjzzhkdiwdzdex.supabase.co",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
+  );
+
+  const textarea = document.getElementById("new-request");
+  const submitBtn = document.getElementById("submit-request");
+  const list = document.getElementById("request-list");
+
+  let session = null;
+  let isAdmin = false;
+
+  async function init() {
+    const sessionRes = await supabase.auth.getSession();
+    session = sessionRes.data.session;
+    if (!session) return;
+
+    const { data: userData } = await supabase
+      .from("applications")
+      .select("org_name, is_admin")
+      .eq("user_id", session.user.id)
+      .single();
+
+    const orgName = userData?.org_name || "（不明な事業所）";
+    isAdmin = userData?.is_admin === true;
+
+    submitBtn.onclick = async () => {
+      const content = textarea.value.trim();
+      if (!content) return;
+      await supabase.from("requests").insert({
+        content,
+        org_name: orgName,
+        user_id: session.user.id
+      });
+      textarea.value = "";
+      loadRequests();
+    };
+
+    loadRequests();
+  }
+
+  async function loadRequests() {
+    list.innerHTML = "";
+    const { data, error } = await supabase
+      .from("requests")
+      .select("*")
+      .order("updated_at", { ascending: false });
+
+    if (error) {
+      list.innerText = "読み込みに失敗しました。";
+      return;
+    }
+
+    data.forEach(row => {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.innerText = `${row.org_name}（${new Date(row.created_at).toLocaleString()}）`;
+
+      const content = document.createElement("div");
+      content.className = "content";
+      content.innerText = row.content;
+
+      card.appendChild(meta);
+      card.appendChild(content);
+
+      if (isAdmin) {
+        const answerBox = document.createElement("textarea");
+        answerBox.className = "answer-box";
+        answerBox.value = row.answer || "";
+
+        const actions = document.createElement("div");
+        actions.className = "admin-actions";
+
+        const saveBtn = document.createElement("button");
+        saveBtn.innerText = "保存";
+        saveBtn.onclick = async () => {
+          await supabase.from("requests").update({ answer: answerBox.value }).eq("id", row.id);
+          loadRequests();
+        };
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.innerText = "削除";
+        deleteBtn.onclick = async () => {
+          if (confirm("本当に削除しますか？")) {
+            await supabase.from("requests").delete().eq("id", row.id);
+            loadRequests();
+          }
+        };
+
+        actions.appendChild(saveBtn);
+        actions.appendChild(deleteBtn);
+
+        card.appendChild(document.createElement("hr"));
+        card.appendChild(answerBox);
+        card.appendChild(actions);
+      } else if (row.answer) {
+        const answerLabel = document.createElement("div");
+        answerLabel.className = "answer-label";
+        answerLabel.innerText = "【管理者からの回答】";
+
+        const answer = document.createElement("div");
+        answer.className = "content";
+        answer.innerText = row.answer;
+
+        card.appendChild(answerLabel);
+        card.appendChild(answer);
+      }
+
+      list.appendChild(card);
+    });
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
