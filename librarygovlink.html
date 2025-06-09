@@ -2,7 +2,10 @@
 <div id="librarygovlink-app">
   <h1>行政・自治体リンク集 🏛️</h1>
   <div class="search">
-    <input type="text" id="search" placeholder="都道府県名・市区町村名で検索...">
+    <select id="pref-select">
+      <option value="">都道府県を選択</option>
+    </select>
+    <button id="search-button">検索</button>
   </div>
   <div id="link-list"></div>
 </div>
@@ -10,53 +13,39 @@
 <style>
   #librarygovlink-app {
     font-family: 'Segoe UI', sans-serif;
-    background-color: #f7f7f7;
     padding: 1rem;
   }
   #librarygovlink-app h1 {
     text-align: center;
-    margin-bottom: 1rem;
   }
   #librarygovlink-app .search {
-    max-width: 600px;
-    margin: 0 auto 1rem;
     display: flex;
     gap: 0.5rem;
+    justify-content: center;
+    margin: 1rem 0;
   }
-  #librarygovlink-app .search input {
-    flex: 1;
+  #librarygovlink-app select,
+  #librarygovlink-app button {
     padding: 0.5rem;
     font-size: 1rem;
   }
   #librarygovlink-app .card {
-    background-color: white;
-    border-radius: 1rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    margin: 1rem auto;
-    padding: 1rem;
-    max-width: 700px;
+    border: 1px solid #ccc;
     border-left: 10px solid var(--region-color);
+    border-radius: 1rem;
+    padding: 1rem;
+    margin: 1rem auto;
+    max-width: 700px;
+    background: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
   }
-  #librarygovlink-app .card h3 {
-    margin: 0 0 0.5rem;
-  }
-  #librarygovlink-app .card a {
-    display: block;
-    margin: 0.25rem 0;
-    color: #0366d6;
-    text-decoration: none;
-  }
-  #librarygovlink-app .admin-form {
-    margin-top: 0.5rem;
-  }
-  #librarygovlink-app .admin-form input {
-    width: 100%;
-    margin: 0.25rem 0;
-    padding: 0.5rem;
-  }
-  #librarygovlink-app .admin-form button {
-    margin-top: 0.5rem;
-    padding: 0.5rem 1rem;
+  #librarygovlink-app .favorite {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    cursor: pointer;
   }
 </style>
 
@@ -65,9 +54,10 @@
   const supabaseUrl = "https://viihcgkjzzhkdiwdzdex.supabase.co";
   const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM";
   const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
-
   const userId = localStorage.getItem("carelay_user_id");
   let isAdmin = false;
+  let allData = [];
+  let favorites = JSON.parse(localStorage.getItem("favorites") || "[]");
 
   async function checkAdmin() {
     const { data } = await supabase
@@ -91,81 +81,76 @@
   };
 
   function renderCard(record) {
-    const card = document.createElement('div');
-    card.className = 'card';
-    card.style.setProperty('--region-color', regionColorMap(record.municipality_code));
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.setProperty("--region-color", regionColorMap(record.municipality_code));
     card.innerHTML = `<h3>${record.pref_name} ${record.city_name}</h3>`;
+
+    const fav = document.createElement("div");
+    fav.className = "favorite";
+    fav.textContent = favorites.includes(record.municipality_code) ? "★" : "☆";
+    fav.onclick = () => toggleFavorite(record.municipality_code);
+    card.appendChild(fav);
 
     for (let i = 1; i <= 3; i++) {
       if (record[`link_url_${i}`]) {
-        const a = document.createElement('a');
+        const a = document.createElement("a");
         a.href = record[`link_url_${i}`];
         a.textContent = record[`link_title_${i}`] || record[`link_url_${i}`];
-        a.target = '_blank';
+        a.target = "_blank";
         card.appendChild(a);
       }
-    }
-
-    if (isAdmin) {
-      const form = document.createElement('div');
-      form.className = 'admin-form';
-      form.innerHTML = `
-        <input placeholder="タイトル1" value="${record.link_title_1 || ''}" id="title1-${record.municipality_code}">
-        <input placeholder="URL1" value="${record.link_url_1 || ''}" id="url1-${record.municipality_code}">
-        <input placeholder="タイトル2" value="${record.link_title_2 || ''}" id="title2-${record.municipality_code}">
-        <input placeholder="URL2" value="${record.link_url_2 || ''}" id="url2-${record.municipality_code}">
-        <input placeholder="タイトル3" value="${record.link_title_3 || ''}" id="title3-${record.municipality_code}">
-        <input placeholder="URL3" value="${record.link_url_3 || ''}" id="url3-${record.municipality_code}">
-        <button onclick="window.updateLink('${record.municipality_code}')">保存</button>
-      `;
-      card.appendChild(form);
     }
 
     return card;
   }
 
+  function toggleFavorite(code) {
+    if (favorites.includes(code)) {
+      favorites = favorites.filter(c => c !== code);
+    } else {
+      favorites.push(code);
+    }
+    localStorage.setItem("favorites", JSON.stringify(favorites));
+    render();
+  }
+
+  function render() {
+    const list = document.getElementById("link-list");
+    list.innerHTML = "";
+
+    const selectedPref = document.getElementById("pref-select").value;
+
+    // 常時表示（厚労省＋お気に入り）
+    const special = allData.filter(d => d.municipality_code === "00000" || favorites.includes(d.municipality_code));
+    special.forEach(d => list.appendChild(renderCard(d)));
+
+    // 検索結果表示
+    const filtered = allData.filter(d =>
+      d.pref_name === selectedPref && !favorites.includes(d.municipality_code) && d.municipality_code !== "00000"
+    );
+    filtered.forEach(d => list.appendChild(renderCard(d)));
+  }
+
   async function loadData() {
     await checkAdmin();
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("librarygovlink")
       .select("*")
       .order("municipality_code", { ascending: true });
-
-    if (error) {
-      document.getElementById("link-list").innerHTML = "<p>読み込みエラー</p>";
-      console.error(error);
-      return;
-    }
-
-    const list = document.getElementById("link-list");
-    list.innerHTML = '';
-    const query = document.getElementById("search").value.trim();
-
-    data.forEach(record => {
-      if (record.municipality_code === '00000' ||
-          record.pref_name.includes(query) ||
-          record.city_name.includes(query)) {
-        list.appendChild(renderCard(record));
-      }
+    allData = data;
+    const prefs = [...new Set(data.map(r => r.pref_name).filter(Boolean))];
+    const sel = document.getElementById("pref-select");
+    prefs.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p;
+      opt.textContent = p;
+      sel.appendChild(opt);
     });
+    render();
   }
 
-  window.updateLink = async (code) => {
-    const updates = {
-      municipality_code: code,
-      link_title_1: document.getElementById(`title1-${code}`).value,
-      link_url_1: document.getElementById(`url1-${code}`).value,
-      link_title_2: document.getElementById(`title2-${code}`).value,
-      link_url_2: document.getElementById(`url2-${code}`).value,
-      link_title_3: document.getElementById(`title3-${code}`).value,
-      link_url_3: document.getElementById(`url3-${code}`).value,
-      updated_at: new Date().toISOString(),
-    };
-    await supabase.from("librarygovlink").upsert(updates);
-    await loadData();
-  };
-
-  document.getElementById("search").addEventListener("input", loadData);
+  document.getElementById("search-button").onclick = render;
   loadData();
 })();
 </script>
