@@ -231,7 +231,8 @@ function handleGoogleAuth(isRetry = false) {
       if (res?.access_token) {
         localStorage.setItem(tokenKey, res.access_token);
         fetchGoogleAccountEmail(res.access_token);
-      } else if (isRetry) {
+      setTimeout(() => createCarelayFolder(res.access_token), 1500);
+} else if (isRetry) {
         showModal("自動再連携に失敗しました。手動で再接続してください。");
       }
     }
