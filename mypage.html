@@ -1,12 +1,14 @@
-
+<!-- CARELAYタウン マイページ v1 -->
 <div id="mypage-app">
   <div class="mypage-container">
+    <!-- ① ログイン中のアカウント表示 -->
     <div class="box highlight">
       <strong>ログイン中のアカウント</strong><br>
       <div class="org" id="orgOutput">(取得中…)</div>
       <div class="email" id="emailOutput">-</div>
     </div>
 
+    <!-- ② アカウント追加・切替 -->
     <div class="box input-area">
       <strong>アカウント切替・追加</strong>
       <input type="email" id="newAccount" placeholder="メールアドレスを入力" />
@@ -14,7 +16,7 @@
       <div class="account-list" id="accountList"></div>
     </div>
 
-    
+    <!-- ③ Google連携 -->
     <div class="box google-connect" id="googleBox">
       <strong>Google連携</strong><br>
       <div id="googleStatus">Googleアカウントとまだ連携されていません。</div>
@@ -24,13 +26,14 @@
       </div>
     </div>
 
-
+    <!-- ④ ログアウト -->
     <div class="box warning">
       <button id="logoutBtn" style="background-color:#d9534f;">⛔ ログアウト</button>
     </div>
   </div>
 </div>
 
+<!-- モーダル -->
 <div id="mypage-modal" class="modal-bg" style="display:none;">
   <div class="modal-box">
     <p id="modalMessage">メッセージ</p>
@@ -86,25 +89,6 @@
   #mypage-app .email { font-size: 14px; color: #555; }
   #mypage-app .org { font-weight: bold; }
 
-  .modal-bg {
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.4);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-  }
-  .modal-box {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 300px;
-    text-align: center;
-  }
-
-<style>
   .modal-bg {
     position: fixed;
     top: 0; left: 0;
@@ -173,229 +157,137 @@
     background-color: #1e5393;
   }
 
-#mypage-app .account-list button span {
-  color: #333 !important;
-}
-</style>
-
+  #mypage-app .account-list button span {
+    color: #333 !important;
+  }
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
-window.modalState = "";
-
-function showModal(message, state = "") {
-  window.modalState = state;
-  const modal = document.getElementById("mypage-modal");
-  const modalMessage = document.getElementById("modalMessage");
-  if (modal && modalMessage) {
-    modalMessage.textContent = message;
-    modal.style.display = "flex";
-  }
-}
-
-async function checkTokenValidity(token) {
-  const userKey = localStorage.getItem("carelayUser");
-  const tokenKey = userKey ? "carelayGoogleToken_" + userKey : null;
-  const savedToken = tokenKey ? localStorage.getItem(tokenKey) : null;
-  const wasLinked = !!(userKey && savedToken);
-  if (!token || !wasLinked) return true;
-
-  const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  if (res.status === 401 && wasLinked) {
-    showModal("Google連携が切れています。再連携してください", "reconnect");
-    return false;
-  }
-  return true;
-}
-
-
-
-async function createCarelayFolder(token) {
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
-
-  if (data.files?.[0]?.id) {
-    localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-    showModal("CARELAYTOWN フォルダは既に作成されています。");
-    return;
-  }
-
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: "CARELAYTOWN",
-      mimeType: "application/vnd.google-apps.folder"
-    })
-  });
-  const newData = await createRes.json();
-  if (newData.id) {
-    localStorage.setItem("carelayDriveFolderId", newData.id);
-    showModal("CARELAYTOWN フォルダを新しく作成しました。");
-  }
-}
-
-
-  let driveFolderIdTemp = localStorage.getItem("carelayDriveFolderId");
-  if (existing) return;
-  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=name='CARELAYTOWN'+and+mimeType='application/vnd.google-apps.folder'+and+trashed=false", {
-    headers: { Authorization: "Bearer " + token }
-  });
-  const data = await res.json();
-  if (data.files?.[0]?.id) {
-    localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-    return;
-  }
-  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-    method: "POST",
-    headers: {
-      Authorization: "Bearer " + token,
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      name: "CARELAYTOWN",
-      mimeType: "application/vnd.google-apps.folder"
-    })
-  });
-  const newData = await createRes.json();
-  if (newData.id) {
-    localStorage.setItem("carelayDriveFolderId", newData.id);
-  }
-}
-</script>
-
-<script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
-  let googleToken = localStorage.getItem("carelayGoogleToken") || "";
-  let modalAction = "", modalTarget = "";
-      // アカウントごとにトークン保存・表示
-      const carelayUser = localStorage.getItem("carelayUser") || "";
-      const tokenKey = "carelayGoogleToken_" + carelayUser;
-      googleToken = localStorage.getItem(tokenKey) || "";
+  let googleToken = "";
+  let modalAction = "", modalTarget = "", modalState = "";
 
-      function fetchGoogleAccountEmail() {
-  if (!googleToken) {
-    showModal("Google連携が切れています。再連携してください", "reconnect");
-    return;
+  function showModal(message, state = "") {
+    modalState = state;
+    document.getElementById("modalMessage").textContent = message;
+    document.getElementById("mypage-modal").style.display = "flex";
   }
-        if (!googleToken) return;
-        fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-          headers: { Authorization: "Bearer " + googleToken }
-        })
-        .then(res => res.json())
-        .then(user => {
-          if (user && user.email) {
-            const emailTag = document.createElement("div");
-            emailTag.style.fontSize = "13px";
-            emailTag.style.color = "#555";
-            emailTag.textContent = "連携中: " + user.email;
-            googleStatus.textContent = "Google連携が完了しています（" + user.email + "）";
-          }
-        });
-      }
 
+  function hideModal() {
+    document.getElementById("mypage-modal").style.display = "none";
+    modalAction = modalTarget = modalState = "";
+  }
+
+  async function checkTokenValidity(token, onInvalid) {
+    if (!token) return false;
+    const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+      headers: { Authorization: "Bearer " + token }
+    });
+    if (res.status === 401) {
+      showModal("Google連携が切れています。再連携してください", "reconnect");
+      if (onInvalid) onInvalid();
+      return false;
+    }
+    return true;
+  }
+
+  async function createCarelayFolder(token) {
+    const q = encodeURIComponent("name='CARELAYTOWN' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+    const res = await fetch("https://www.googleapis.com/drive/v3/files?q=" + q, {
+      headers: { Authorization: "Bearer " + token }
+    });
+    const data = await res.json();
+    if (data?.files?.[0]?.id) {
+      localStorage.setItem("carelayDriveFolderId", data.files[0].id);
+      showModal("CARELAYTOWN フォルダは既に存在します。");
+      return;
+    }
+    const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+      method: "POST",
+      headers: {
+        Authorization: "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ name: "CARELAYTOWN", mimeType: "application/vnd.google-apps.folder" })
+    });
+    const newData = await createRes.json();
+    if (newData?.id) {
+      localStorage.setItem("carelayDriveFolderId", newData.id);
+      showModal("CARELAYTOWN フォルダを作成しました。");
+    }
+  }
+
+  function fetchGoogleAccountEmail(token) {
+    fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+      headers: { Authorization: "Bearer " + token }
+    })
+    .then(res => res.json())
+    .then(user => {
+      if (user?.email) {
+        document.getElementById("googleStatus").textContent = "Google連携中：" + user.email;
+      }
+    });
+  }
 
   function initMypage() {
     const supabase = window.supabaseClient;
-    if (!supabase) return;
-
     const orgOutput = document.getElementById("orgOutput");
     const emailOutput = document.getElementById("emailOutput");
     const accountList = document.getElementById("accountList");
     const googleStatus = document.getElementById("googleStatus");
     const googleBtn = document.getElementById("googleConnectBtn");
 
-    const modal = document.getElementById("mypage-modal");
-    const modalMessage = document.getElementById("modalMessage");
+    const user = localStorage.getItem("carelayUser") || "-";
+    const tokenKey = "carelayGoogleToken_" + user;
+    googleToken = localStorage.getItem(tokenKey) || "";
 
     function fetchCurrentOrg() {
-      const email = localStorage.getItem("carelayUser") || "-";
-      emailOutput.textContent = email;
-      orgOutput.textContent = email === "-" ? "(未ログイン)" : localStorage.getItem("carelayOrgName") || "(未取得)";
+      emailOutput.textContent = user;
+      orgOutput.textContent = user === "-" ? "(未ログイン)" : localStorage.getItem("carelayOrgName") || "(未取得)";
     }
 
     function renderAccountList() {
       const list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-      const current = localStorage.getItem("carelayUser");
       accountList.innerHTML = "";
       list.forEach(email => {
-        if (email === current) return;
+        if (email === user) return;
         const btn = document.createElement("button");
-        const span = document.createElement("span");
-        span.textContent = email;
-        const del = document.createElement("i");
-        del.textContent = "🗑️";
-        del.onclick = e => { e.stopPropagation(); confirmDelete(email); };
-        btn.append(span, del);
+        btn.innerHTML = `<span>${email}</span><i>🗑️</i>`;
         btn.onclick = () => {
           localStorage.setItem("carelayUser", email);
           localStorage.setItem("carelayApproved", "ok");
           location.reload();
         };
+        btn.querySelector("i").onclick = e => {
+          e.stopPropagation();
+          modalAction = "delete"; modalTarget = email;
+          showModal(`${email} を削除しますか？`);
+        };
         accountList.appendChild(btn);
       });
     }
 
-    function confirmDelete(email) {
-      modalAction = "delete";
-      modalTarget = email;
-      modalMessage.textContent = `${email} を削除しますか？`;
-      modal.style.display = "flex";
-    }
-
-    function confirmAdd() {
-      const input = document.getElementById("newAccount").value.trim().toLowerCase();
-      if (!input) {
-        modalAction = "alert";
-        modalMessage.textContent = "メールアドレスを入力してください。";
-        modal.style.display = "flex";
-        return;
-      }
-      modalAction = "add";
-      modalTarget = input;
-      modalMessage.textContent = `${input} を追加して切り替えますか？`;
-      modal.style.display = "flex";
-    }
-
-    function confirmLogout() {
-      modalAction = "logout";
-      modalMessage.textContent = "本当にログアウトしますか？";
-      modal.style.display = "flex";
-    }
-
     async function modalOk() {
-  if (modalState === "reconnect") {
-    hideModal();
-    handleGoogleAuth();
-    return;
-  }
-      modal.style.display = "none";
-      const target = modalTarget.trim().toLowerCase();
+      hideModal();
+      if (modalState === "reconnect") return handleGoogleAuth();
+
       if (modalAction === "add") {
-        const { data, error } = await supabase.from("applications").select("org_name, status").eq("email", target);
+        const input = modalTarget;
+        const { data, error } = await supabase.from("applications").select("org_name, status").eq("email", input);
         if (!error && data.length > 0 && data[0].status === "approved") {
-          localStorage.setItem("carelayUser", target);
+          localStorage.setItem("carelayUser", input);
           localStorage.setItem("carelayApproved", "ok");
           localStorage.setItem("carelayOrgName", data[0].org_name || "(不明)");
           let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
-          if (!list.includes(target)) {
-            list.push(target);
+          if (!list.includes(input)) {
+            list.push(input);
             localStorage.setItem("carelayList", JSON.stringify(list));
           }
           location.reload();
         } else {
-          modalAction = "alert";
-          modalMessage.textContent = "承認されていないアカウントです。";
-          modal.style.display = "flex";
+          showModal("承認されていないアカウントです。");
         }
       } else if (modalAction === "delete") {
         let list = JSON.parse(localStorage.getItem("carelayList") || "[]");
@@ -408,9 +300,16 @@ async function createCarelayFolder(token) {
       }
     }
 
-    function modalCancel() {
-      modal.style.display = "none";
-      modalAction = "";
+    function confirmAdd() {
+      const input = document.getElementById("newAccount").value.trim().toLowerCase();
+      if (!input) return showModal("メールアドレスを入力してください。");
+      modalAction = "add"; modalTarget = input;
+      showModal(`${input} を追加して切り替えますか？`);
+    }
+
+    function confirmLogout() {
+      modalAction = "logout";
+      showModal("本当にログアウトしますか？");
     }
 
     function handleGoogleAuth() {
@@ -421,39 +320,39 @@ async function createCarelayFolder(token) {
         googleToken = "";
         return;
       }
+
       const tokenClient = google.accounts.oauth2.initTokenClient({
-  client_id: clientId,
-  scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/userinfo.email",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  prompt: localStorage.getItem("carelayGoogleConnected") === "true" ? "select_account" : "consent",
-  callback: res => {
-    if (res && res.access_token) {
-      googleToken = res.access_token;
-      localStorage.setItem(tokenKey, googleToken);
-      googleStatus.textContent = "Google連携が完了しています。";
-      googleBtn.textContent = "🔓 連携解除";
-    }
-  }
-});
-tokenClient.requestAccessToken();
+        client_id: clientId,
+        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
+        prompt: "consent",
+        callback: res => {
+          if (res?.access_token) {
+            googleToken = res.access_token;
+            localStorage.setItem(tokenKey, googleToken);
+            googleStatus.textContent = "Google連携が完了しています。";
+            googleBtn.textContent = "🔓 連携解除";
+            fetchGoogleAccountEmail(googleToken);
+          }
+        }
+      });
+      tokenClient.requestAccessToken();
     }
 
-    // 初期表示
     fetchCurrentOrg();
     renderAccountList();
-    if (googleToken) {googleStatus.textContent = "Google連携が完了しています。";
-    googleBtn.textContent = "🔓 連携解除";
+    if (googleToken) {
+      checkTokenValidity(googleToken);
+      googleStatus.textContent = "Google連携が完了しています。";
+      googleBtn.textContent = "🔓 連携解除";
+      fetchGoogleAccountEmail(googleToken);
     }
 
-    // イベント登録
     document.getElementById("addAccountBtn").onclick = confirmAdd;
     document.getElementById("logoutBtn").onclick = confirmLogout;
     document.getElementById("modalOk").onclick = modalOk;
-    document.getElementById("modalCancel").onclick = modalCancel;
+    document.getElementById("modalCancel").onclick = hideModal;
     googleBtn.onclick = handleGoogleAuth;
-    if (googleToken) {
-    fetchGoogleAccountEmail();
-  }
+    document.getElementById("createDriveFolderBtn").onclick = () => createCarelayFolder(googleToken);
   }
 
   if (window.waitForSupabaseReady) {
