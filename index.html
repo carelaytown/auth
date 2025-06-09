@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -49,17 +50,13 @@ const supabase = window.supabase.createClient(
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDYwNzE4MDksImV4cCI6MjA2MTY0NzgwOX0.3SMdVvDEp103fwnLvgtsec7J7ly4A_SEJlrEb0BZ9YM"
 );
 
-window.onload = () => {
-  supabase.auth.getSession().then(({ data }) => {
-    const session = data.session;
-    const approved = localStorage.getItem("carelayApproved");
-    const email = localStorage.getItem("carelayUser");
-    if (session && approved === "ok" && email) {
-      window.location.href = "top.html";
-    }
-  }).catch(err => {
-    console.error("セッション取得エラー:", err);
-  });
+window.onload = async () => {
+  const session = await supabase.auth.getSession();
+  const approved = localStorage.getItem("carelayApproved");
+  const email = localStorage.getItem("carelayUser");
+  if (session.data.session && approved === "ok" && email) {
+    window.location.href = "top.html";
+  }
 };
 
 async function submitApplication(e) {
@@ -83,7 +80,16 @@ async function submitApplication(e) {
     statusDiv.classList.add("error"); button.disabled = false; button.innerText = "申請する"; return;
   }
 
-  const { error: insertError } = await supabase.from("applications").insert({ email, org_name: orgName, status: "pending" });
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const user_id = sessionData?.session?.user?.id;
+
+  const { error: insertError } = await supabase.from("applications").insert({
+    email,
+    org_name: orgName,
+    status: "pending",
+    user_id
+  });
+
   if (insertError) {
     statusDiv.innerText = "❌ 申請データ登録失敗。";
     statusDiv.classList.add("error"); button.disabled = false; button.innerText = "申請する"; return;
@@ -113,7 +119,7 @@ async function login() {
     statusDiv.classList.add("error"); return;
   }
 
-  const { data, error } = await supabase.from("applications").select().eq("email", email).eq("status", "approved");
+  const { data, error } = await supabase.from("applications").select().eq("email", email);
   if (error || !data || data.length === 0) {
     statusDiv.innerText = "❌ アカウント情報が見つかりません。";
     statusDiv.classList.add("error"); return;
