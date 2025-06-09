@@ -1,174 +1,166 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>行政・自治体リンク集</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f7f7f7;
-      margin: 0;
-      padding: 1rem;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-    .search {
-      max-width: 600px;
-      margin: 0 auto 1rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-    .search input {
-      flex: 1;
-      padding: 0.5rem;
-      font-size: 1rem;
-    }
-    .card {
-      background-color: white;
-      border-radius: 1rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin: 1rem auto;
-      padding: 1rem;
-      max-width: 700px;
-      border-left: 10px solid var(--region-color);
-    }
-    .card h3 {
-      margin: 0 0 0.5rem;
-    }
-    .card a {
-      display: block;
-      margin: 0.25rem 0;
-      color: #0366d6;
-      text-decoration: none;
-    }
-    .admin-form {
-      margin-top: 0.5rem;
-    }
-    .admin-form input {
-      width: 100%;
-      margin: 0.25rem 0;
-      padding: 0.5rem;
-    }
-    .admin-form button {
-      margin-top: 0.5rem;
-      padding: 0.5rem 1rem;
-    }
-  </style>
-</head>
-<body>
+<div id="librarygovlink-app">
   <h1>行政・自治体リンク集 🏛️</h1>
   <div class="search">
     <input type="text" id="search" placeholder="都道府県名・市区町村名で検索...">
   </div>
   <div id="link-list"></div>
+</div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    const supabase = createClient(
-      'https://viihcgkjzzhkdiwdzdex.supabase.co',
-      'public-anon-key-ここに入れる'
-    )
+<style>
+  #librarygovlink-app {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #f7f7f7;
+    padding: 1rem;
+  }
+  #librarygovlink-app h1 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  #librarygovlink-app .search {
+    max-width: 600px;
+    margin: 0 auto 1rem;
+    display: flex;
+    gap: 0.5rem;
+  }
+  #librarygovlink-app .search input {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  #librarygovlink-app .card {
+    background-color: white;
+    border-radius: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin: 1rem auto;
+    padding: 1rem;
+    max-width: 700px;
+    border-left: 10px solid var(--region-color);
+  }
+  #librarygovlink-app .card h3 {
+    margin: 0 0 0.5rem;
+  }
+  #librarygovlink-app .card a {
+    display: block;
+    margin: 0.25rem 0;
+    color: #0366d6;
+    text-decoration: none;
+  }
+  #librarygovlink-app .admin-form {
+    margin-top: 0.5rem;
+  }
+  #librarygovlink-app .admin-form input {
+    width: 100%;
+    margin: 0.25rem 0;
+    padding: 0.5rem;
+  }
+  #librarygovlink-app .admin-form button {
+    margin-top: 0.5rem;
+    padding: 0.5rem 1rem;
+  }
+</style>
 
-    const userId = localStorage.getItem("carelay_user_id")
-    let isAdmin = false
+<script type="module">
+(() => {
+  const { createClient } = supabase
+  const supabaseUrl = 'https://viihcgkjzzhkdiwdzdex.supabase.co'
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZpaWhjZ2tqenpoa2Rpd2R6ZGV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTI3Njg5MDcsImV4cCI6MjAyODMyNDkwN30.9vAOfF90jKVA0G5eNeEHKZOLLCcnJnmVWr32K8uyBy8'
+  const supabaseClient = createClient(supabaseUrl, supabaseKey)
 
-    async function checkAdmin() {
-      const { data } = await supabase
-        .from("applications")
-        .select("is_admin")
-        .eq("user_id", userId)
-        .single()
-      isAdmin = data?.is_admin || false
-    }
+  const userId = localStorage.getItem("carelay_user_id")
+  let isAdmin = false
 
-    const regionColorMap = code => {
-      const n = parseInt(code.slice(0, 2))
-      if (n === 1) return '#AEDFF7'
-      if (n <= 7) return '#D0F0C0'
-      if (n <= 14) return '#CCE5FF'
-      if (n <= 23) return '#FFE5B4'
-      if (n <= 30) return '#D1FFD6'
-      if (n <= 35) return '#F0D9FF'
-      if (n <= 39) return '#FFFACD'
-      return '#FFC9DE'
-    }
+  async function checkAdmin() {
+    const { data } = await supabaseClient
+      .from("applications")
+      .select("is_admin")
+      .eq("user_id", userId)
+      .single()
+    isAdmin = data?.is_admin || false
+  }
 
-    function renderCard(record) {
-      const card = document.createElement('div')
-      card.className = 'card'
-      card.style.setProperty('--region-color', regionColorMap(record.municipality_code))
-      card.innerHTML = `<h3>${record.pref_name} ${record.city_name}</h3>`
+  const regionColorMap = code => {
+    const n = parseInt(code.slice(0, 2))
+    if (n === 1) return '#AEDFF7'
+    if (n <= 7) return '#D0F0C0'
+    if (n <= 14) return '#CCE5FF'
+    if (n <= 23) return '#FFE5B4'
+    if (n <= 30) return '#D1FFD6'
+    if (n <= 35) return '#F0D9FF'
+    if (n <= 39) return '#FFFACD'
+    return '#FFC9DE'
+  }
 
-      for (let i = 1; i <= 3; i++) {
-        if (record[`link_url_${i}`]) {
-          const a = document.createElement('a')
-          a.href = record[`link_url_${i}`]
-          a.textContent = record[`link_title_${i}`] || record[`link_url_${i}`]
-          a.target = '_blank'
-          card.appendChild(a)
-        }
+  function renderCard(record) {
+    const card = document.createElement('div')
+    card.className = 'card'
+    card.style.setProperty('--region-color', regionColorMap(record.municipality_code))
+    card.innerHTML = `<h3>${record.pref_name} ${record.city_name}</h3>`
+
+    for (let i = 1; i <= 3; i++) {
+      if (record[`link_url_${i}`]) {
+        const a = document.createElement('a')
+        a.href = record[`link_url_${i}`]
+        a.textContent = record[`link_title_${i}`] || record[`link_url_${i}`]
+        a.target = '_blank'
+        card.appendChild(a)
       }
+    }
 
-      if (isAdmin) {
-        const form = document.createElement('div')
-        form.className = 'admin-form'
-        form.innerHTML = `
-          <input placeholder="タイトル1" value="${record.link_title_1 || ''}" id="title1-${record.municipality_code}">
-          <input placeholder="URL1" value="${record.link_url_1 || ''}" id="url1-${record.municipality_code}">
-          <input placeholder="タイトル2" value="${record.link_title_2 || ''}" id="title2-${record.municipality_code}">
-          <input placeholder="URL2" value="${record.link_url_2 || ''}" id="url2-${record.municipality_code}">
-          <input placeholder="タイトル3" value="${record.link_title_3 || ''}" id="title3-${record.municipality_code}">
-          <input placeholder="URL3" value="${record.link_url_3 || ''}" id="url3-${record.municipality_code}">
-          <button onclick="updateLink('${record.municipality_code}')">保存</button>
-        `
-        card.appendChild(form)
+    if (isAdmin) {
+      const form = document.createElement('div')
+      form.className = 'admin-form'
+      form.innerHTML = `
+        <input placeholder="タイトル1" value="${record.link_title_1 || ''}" id="title1-${record.municipality_code}">
+        <input placeholder="URL1" value="${record.link_url_1 || ''}" id="url1-${record.municipality_code}">
+        <input placeholder="タイトル2" value="${record.link_title_2 || ''}" id="title2-${record.municipality_code}">
+        <input placeholder="URL2" value="${record.link_url_2 || ''}" id="url2-${record.municipality_code}">
+        <input placeholder="タイトル3" value="${record.link_title_3 || ''}" id="title3-${record.municipality_code}">
+        <input placeholder="URL3" value="${record.link_url_3 || ''}" id="url3-${record.municipality_code}">
+        <button onclick="window.updateLink('${record.municipality_code}')">保存</button>
+      `
+      card.appendChild(form)
+    }
+
+    return card
+  }
+
+  async function loadData() {
+    await checkAdmin()
+    const { data } = await supabaseClient
+      .from("librarygovlink")
+      .select("*")
+      .order("municipality_code", { ascending: true })
+
+    const list = document.getElementById("link-list")
+    list.innerHTML = ''
+
+    const query = document.getElementById("search").value.trim()
+
+    data.forEach(record => {
+      if (record.municipality_code === '00000' ||
+        record.pref_name.includes(query) ||
+        record.city_name.includes(query)) {
+        list.appendChild(renderCard(record))
       }
+    })
+  }
 
-      return card
+  window.updateLink = async (code) => {
+    const updates = {
+      municipality_code: code,
+      link_title_1: document.getElementById(`title1-${code}`).value,
+      link_url_1: document.getElementById(`url1-${code}`).value,
+      link_title_2: document.getElementById(`title2-${code}`).value,
+      link_url_2: document.getElementById(`url2-${code}`).value,
+      link_title_3: document.getElementById(`title3-${code}`).value,
+      link_url_3: document.getElementById(`url3-${code}`).value,
+      updated_at: new Date().toISOString(),
     }
+    await supabaseClient.from("librarygovlink").upsert(updates)
+    await loadData()
+  }
 
-    async function loadData() {
-      await checkAdmin()
-      const { data } = await supabase
-        .from("librarygovlink")
-        .select("*")
-        .order("municipality_code", { ascending: true })
-
-      const list = document.getElementById("link-list")
-      list.innerHTML = ''
-
-      const query = document.getElementById("search").value.trim()
-
-      data.forEach(record => {
-        if (record.municipality_code === '00000' ||
-          record.pref_name.includes(query) ||
-          record.city_name.includes(query)) {
-          list.appendChild(renderCard(record))
-        }
-      })
-    }
-
-    window.updateLink = async (code) => {
-      const updates = {
-        municipality_code: code,
-        link_title_1: document.getElementById(`title1-${code}`).value,
-        link_url_1: document.getElementById(`url1-${code}`).value,
-        link_title_2: document.getElementById(`title2-${code}`).value,
-        link_url_2: document.getElementById(`url2-${code}`).value,
-        link_title_3: document.getElementById(`title3-${code}`).value,
-        link_url_3: document.getElementById(`url3-${code}`).value,
-        updated_at: new Date().toISOString(),
-      }
-      await supabase.from("librarygovlink").upsert(updates)
-      await loadData()
-    }
-
-    document.getElementById("search").addEventListener("input", loadData)
-    loadData()
-  </script>
-</body>
-</html>
-
+  document.getElementById("search").addEventListener("input", loadData)
+  loadData()
+})();
+</script>
