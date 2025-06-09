@@ -163,6 +163,7 @@
 </style>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 (() => {
   const clientId = "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com";
@@ -180,64 +181,109 @@
     modalAction = modalTarget = modalState = "";
   }
 
-  async function checkTokenValidity(token, onInvalid) {
-    if (!token) return false;
-    const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-      headers: { Authorization: "Bearer " + token }
-    });
-    if (res.status === 401) {
-      showModal("Google連携が切れています。再連携してください", "reconnect");
-      if (onInvalid) onInvalid();
-      return false;
-    }
+// --- Google連携の状態を管理 ---
+function updateGoogleUI(status, email = "") {
+  const statusText = document.getElementById("googleStatus");
+  const connectBtn = document.getElementById("googleConnectBtn");
+  const folderBtn = document.getElementById("createDriveFolderBtn");
+
+  if (status === "unlinked") {
+    statusText.textContent = "Googleアカウントとまだ連携されていません。";
+    connectBtn.textContent = "🔗 Googleで連携";
+    folderBtn.disabled = true;
+  } else if (status === "linked") {
+    statusText.textContent = `Googleアカウントと連携済（${email}）`;
+    connectBtn.textContent = "🔓 連携解除";
+    folderBtn.disabled = false;
+  } else if (status === "expired") {
+    statusText.textContent = "Googleアカウントとの連携が切れています。";
+    connectBtn.textContent = "🔁 Googleに再連携";
+    folderBtn.disabled = true;
+  }
+}
+
+// --- トークン有効性確認と再連携処理 ---
+async function checkTokenValidity(token, onSuccess, onExpired) {
+  const res = await fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+    headers: { Authorization: "Bearer " + token }
+  });
+  if (res.status === 401) {
+    updateGoogleUI("expired");
+    handleGoogleAuth(true); // 再連携を試行
+    return false;
+  } else {
+    const user = await res.json();
+    if (user?.email) onSuccess(user.email);
     return true;
   }
+}
 
-  async function createCarelayFolder(token) {
-    const q = encodeURIComponent("name='CARELAYTOWN' and mimeType='application/vnd.google-apps.folder' and trashed=false");
-    const res = await fetch("https://www.googleapis.com/drive/v3/files?q=" + q, {
-      headers: { Authorization: "Bearer " + token }
-    });
-    const data = await res.json();
-    if (data?.files?.[0]?.id) {
-      localStorage.setItem("carelayDriveFolderId", data.files[0].id);
-      showModal("CARELAYTOWN フォルダは既に存在します。");
-      return;
-    }
-    const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
-      method: "POST",
-      headers: {
-        Authorization: "Bearer " + token,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ name: "CARELAYTOWN", mimeType: "application/vnd.google-apps.folder" })
-    });
-    const newData = await createRes.json();
-    if (newData?.id) {
-      localStorage.setItem("carelayDriveFolderId", newData.id);
-      showModal("CARELAYTOWN フォルダを作成しました。");
-    }
-  }
+// --- Google連携処理（初回・再連携共通） ---
+function handleGoogleAuth(isRetry = false) {
+  const user = localStorage.getItem("carelayUser") || "";
+  const tokenKey = "carelayGoogleToken_" + user;
 
-  function fetchGoogleAccountEmail(token) {
-    fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
-      headers: { Authorization: "Bearer " + token }
-    })
-    .then(res => res.json())
-    .then(user => {
-      if (user?.email) {
-        document.getElementById("googleStatus").textContent = "Google連携中：" + user.email;
+  const tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: "589685294211-runfps2fdtqi9la02k4a4eh7lc1fndco.apps.googleusercontent.com",
+    scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
+    prompt: isRetry ? "" : "consent",
+    callback: res => {
+      if (res?.access_token) {
+        localStorage.setItem(tokenKey, res.access_token);
+        fetchGoogleAccountEmail(res.access_token);
+      } else if (isRetry) {
+        showModal("自動再連携に失敗しました。手動で再接続してください。");
       }
-    });
+    }
+  });
+  tokenClient.requestAccessToken();
+}
+
+// --- メールアドレス取得とUI更新 ---
+function fetchGoogleAccountEmail(token) {
+  fetch("https://www.googleapis.com/oauth2/v1/userinfo?alt=json", {
+    headers: { Authorization: "Bearer " + token }
+  })
+  .then(res => res.json())
+  .then(user => {
+    if (user?.email) {
+      updateGoogleUI("linked", user.email);
+    }
+  });
+}
+
+// --- Driveフォルダ作成（常にAPI確認） ---
+async function createCarelayFolder(token) {
+  const q = encodeURIComponent("name='CARELAYTOWN' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+  const res = await fetch("https://www.googleapis.com/drive/v3/files?q=" + q, {
+    headers: { Authorization: "Bearer " + token }
+  });
+  const data = await res.json();
+  if (data?.files?.[0]?.id) {
+    showModal("CARELAYTOWN フォルダは既に作成済です。");
+    return;
   }
+  const createRes = await fetch("https://www.googleapis.com/drive/v3/files", {
+    method: "POST",
+    headers: {
+      Authorization: "Bearer " + token,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ name: "CARELAYTOWN", mimeType: "application/vnd.google-apps.folder" })
+  });
+  const newData = await createRes.json();
+  if (newData?.id) {
+    showModal("CARELAYTOWN フォルダを作成しました。");
+  }
+}
 
   function initMypage() {
     const supabase = window.supabaseClient;
     const orgOutput = document.getElementById("orgOutput");
     const emailOutput = document.getElementById("emailOutput");
     const accountList = document.getElementById("accountList");
-    const googleStatus = document.getElementById("googleStatus");
-    const googleBtn = document.getElementById("googleConnectBtn");
+    const connectBtn = document.getElementById("googleConnectBtn");
+    const folderBtn = document.getElementById("createDriveFolderBtn");
 
     const user = localStorage.getItem("carelayUser") || "-";
     const tokenKey = "carelayGoogleToken_" + user;
@@ -271,7 +317,7 @@
 
     async function modalOk() {
       hideModal();
-      if (modalState === "reconnect") return handleGoogleAuth();
+      if (modalState === "reconnect") return handleGoogleAuth(true);
 
       if (modalAction === "add") {
         const input = modalTarget;
@@ -312,47 +358,32 @@
       showModal("本当にログアウトしますか？");
     }
 
-    function handleGoogleAuth() {
-      if (googleToken) {
-        localStorage.removeItem(tokenKey);
-        googleStatus.textContent = "Googleアカウントとまだ連携されていません。";
-        googleBtn.textContent = "🔗 Googleで連携";
-        googleToken = "";
-        return;
-      }
-
-      const tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: clientId,
-        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
-        prompt: "consent",
-        callback: res => {
-          if (res?.access_token) {
-            googleToken = res.access_token;
-            localStorage.setItem(tokenKey, googleToken);
-            googleStatus.textContent = "Google連携が完了しています。";
-            googleBtn.textContent = "🔓 連携解除";
-            fetchGoogleAccountEmail(googleToken);
-          }
-        }
-      });
-      tokenClient.requestAccessToken();
-    }
-
     fetchCurrentOrg();
     renderAccountList();
+
     if (googleToken) {
-      checkTokenValidity(googleToken);
-      googleStatus.textContent = "Google連携が完了しています。";
-      googleBtn.textContent = "🔓 連携解除";
-      fetchGoogleAccountEmail(googleToken);
+      checkTokenValidity(googleToken, email => {
+        updateGoogleUI("linked", email);
+        fetchGoogleAccountEmail(googleToken);
+      });
+    } else {
+      updateGoogleUI("unlinked");
     }
 
     document.getElementById("addAccountBtn").onclick = confirmAdd;
     document.getElementById("logoutBtn").onclick = confirmLogout;
     document.getElementById("modalOk").onclick = modalOk;
     document.getElementById("modalCancel").onclick = hideModal;
-    googleBtn.onclick = handleGoogleAuth;
-    document.getElementById("createDriveFolderBtn").onclick = () => createCarelayFolder(googleToken);
+    connectBtn.onclick = () => {
+      if (googleToken) {
+        localStorage.removeItem(tokenKey);
+        googleToken = "";
+        updateGoogleUI("unlinked");
+      } else {
+        handleGoogleAuth(false);
+      }
+    };
+    folderBtn.onclick = () => createCarelayFolder(googleToken);
   }
 
   if (window.waitForSupabaseReady) {
@@ -360,5 +391,6 @@
   } else {
     window.addEventListener("DOMContentLoaded", initMypage);
   }
+
 })();
 </script>
