@@ -285,6 +285,7 @@ window.appendCalc = val => {
         computeCalc();
       };
       
+      
       window.saveHistory = () => {
         if (!calcFormula) return;
         const memoInput = document.querySelector('#history-list textarea');
@@ -293,6 +294,12 @@ window.appendCalc = val => {
           result: calcResult,
           memo: memoInput ? memoInput.value : ""
         };
+        historyData.unshift(entry);
+        historyData = historyData.slice(0, 5);
+        localStorage.setItem("calc_history", JSON.stringify(historyData));
+        renderHistory();
+      };
+
         historyData.unshift(entry);
         historyData = historyData.slice(0, 5);
         localStorage.setItem("calc_history", JSON.stringify(historyData));
