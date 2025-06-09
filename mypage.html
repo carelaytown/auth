@@ -365,7 +365,8 @@ async function createCarelayFolder(token) {
     if (googleToken) {
       checkTokenValidity(googleToken, email => {
         updateGoogleUI("linked", email);
-        fetchGoogleAccountEmail(googleToken);
+        setTimeout(() => createCarelayFolder(googleToken), 1500);
+fetchGoogleAccountEmail(googleToken);
       });
     } else {
       updateGoogleUI("unlinked");
