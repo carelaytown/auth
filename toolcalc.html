@@ -243,9 +243,15 @@ body {
 
       
 window.appendCalc = val => {
-  if (calcResult !== "" && calcResult !== 'Error') {
-    calcFormula = "";  // 直前が答えだったら式をクリア
-  }
+  
+    if (calcResult !== "" && calcResult !== 'Error') {
+      if (["+", "-", "*", "/"].includes(value)) {
+        calcFormula = calcResult;
+      } else {
+        calcFormula = "";
+      }
+    }
+
   calcFormula += val;
   updateDisplay();
 };
