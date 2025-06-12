@@ -35,6 +35,20 @@
       border-radius: 0.5rem;
       border: 1px solid #ccc;
     }
+    #toolqr-app .form-block {
+      margin-top: 1rem;
+    }
+    #toolqr-app .form-block label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+    #toolqr-app .form-block input[type="text"] {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
     #qr-preview {
       text-align: center;
       margin-top: 2rem;
@@ -63,8 +77,10 @@
 
   <h1>QRコード作成</h1>
 
-  <label>テキストまたはURL</label>
-  <input type="text" id="qr-text" placeholder="https://example.com">
+  <div class="form-block">
+    <label for="qr-text">テキストまたはURL</label>
+    <input type="text" id="qr-text" placeholder="https://example.com">
+  </div>
 
   <div class="form-row">
     <label for="qr-size">サイズ（px）</label>
@@ -99,7 +115,6 @@
 
   <button id="download-btn">画像をダウンロード</button>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script>
     (() => {
       const textInput = document.getElementById("qr-text");
@@ -112,6 +127,7 @@
       const downloadBtn = document.getElementById("download-btn");
 
       function updateQRCode() {
+        if (!window.QRCode) return;  // QRCode未読み込みならスキップ
         const opts = {
           errorCorrectionLevel: correctInput.value,
           type: 'image/png',
@@ -139,7 +155,11 @@
       });
       downloadBtn.addEventListener("click", downloadImage);
 
-      updateQRCode(); // 初期表示
+      // QRコードライブラリを動的読み込み
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js";
+      script.onload = () => updateQRCode();
+      document.body.appendChild(script);
     })();
   </script>
 </div>
