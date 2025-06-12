@@ -35,6 +35,9 @@
       border-radius: 0.5rem;
       border: 1px solid #ccc;
     }
+    input[type="color"] {
+      height: 40px;
+    }
     #toolqr-app .form-block {
       margin-top: 1rem;
     }
@@ -127,7 +130,13 @@
       const downloadBtn = document.getElementById("download-btn");
 
       function updateQRCode() {
-        if (!window.QRCode) return;  // QRCode未読み込みならスキップ
+        if (!window.QRCode) return;
+        const text = textInput.value.trim();
+        if (text === "") {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          return;
+        }
         const opts = {
           errorCorrectionLevel: correctInput.value,
           type: 'image/png',
@@ -138,7 +147,7 @@
             light: bgColorInput.value
           }
         };
-        QRCode.toCanvas(canvas, textInput.value || "https://carelay.net", opts, function (error) {
+        QRCode.toCanvas(canvas, text, opts, function (error) {
           if (error) console.error(error);
         });
       }
@@ -155,7 +164,7 @@
       });
       downloadBtn.addEventListener("click", downloadImage);
 
-      // QRコードライブラリを動的読み込み
+      // 外部ライブラリ読み込み
       const script = document.createElement("script");
       script.src = "https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js";
       script.onload = () => updateQRCode();
