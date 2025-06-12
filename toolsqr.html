@@ -1,10 +1,5 @@
 
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>QRコード作成アプリ</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div id="toolqr-app">
   <style>
     #toolqr-app {
       max-width: 600px;
@@ -58,39 +53,36 @@
       background: #005fa3;
     }
   </style>
-</head>
-<body>
-  <div id="toolqr-app">
-    <h1>QRコード作成</h1>
-    <label>テキストまたはURL</label>
-    <input type="text" id="qr-text" placeholder="https://example.com">
 
-    <label>サイズ（px）</label>
-    <input type="number" id="qr-size" min="100" max="500" value="200">
+  <h1>QRコード作成</h1>
+  <label>テキストまたはURL</label>
+  <input type="text" id="qr-text" placeholder="https://example.com">
 
-    <label>誤り訂正レベル</label>
-    <select id="qr-correct">
-      <option value="L">L（7%）</option>
-      <option value="M" selected>M（15%）</option>
-      <option value="Q">Q（25%）</option>
-      <option value="H">H（30%）</option>
-    </select>
+  <label>サイズ（px）</label>
+  <input type="number" id="qr-size" min="100" max="500" value="200">
 
-    <label>マージン（余白）</label>
-    <input type="number" id="qr-margin" min="0" max="20" value="4">
+  <label>誤り訂正レベル</label>
+  <select id="qr-correct">
+    <option value="L">L（7%）</option>
+    <option value="M" selected>M（15%）</option>
+    <option value="Q">Q（25%）</option>
+    <option value="H">H（30%）</option>
+  </select>
 
-    <label>前景色</label>
-    <input type="color" id="qr-color" value="#000000">
+  <label>マージン（余白）</label>
+  <input type="number" id="qr-margin" min="0" max="20" value="4">
 
-    <label>背景色</label>
-    <input type="color" id="qr-bgcolor" value="#ffffff">
+  <label>前景色</label>
+  <input type="color" id="qr-color" value="#000000">
 
-    <div id="qr-preview">
-      <canvas id="qr-canvas"></canvas>
-    </div>
+  <label>背景色</label>
+  <input type="color" id="qr-bgcolor" value="#ffffff">
 
-    <button id="download-btn">画像をダウンロード</button>
+  <div id="qr-preview">
+    <canvas id="qr-canvas"></canvas>
   </div>
+
+  <button id="download-btn">画像をダウンロード</button>
 
   <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
   <script>
@@ -135,5 +127,4 @@
       updateQRCode(); // 初期表示
     })();
   </script>
-</body>
-</html>
+</div>
