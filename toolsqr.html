@@ -1,0 +1,139 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>QRコード作成アプリ</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    #toolqr-app {
+      max-width: 600px;
+      margin: auto;
+      padding: 2rem;
+      font-family: 'Segoe UI', sans-serif;
+      background: #fff;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    #toolqr-app h1 {
+      font-size: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    #toolqr-app label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    #toolqr-app input[type="text"], #toolqr-app select, #toolqr-app input[type="number"] {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      border-radius: 0.5rem;
+      border: 1px solid #ccc;
+    }
+    #toolqr-app input[type="color"] {
+      width: 100%;
+      height: 3rem;
+      padding: 0;
+      border: none;
+      margin-top: 0.3rem;
+    }
+    #qr-preview {
+      text-align: center;
+      margin-top: 2rem;
+    }
+    #toolqr-app button {
+      margin-top: 1.5rem;
+      width: 100%;
+      padding: 0.8rem;
+      font-size: 1rem;
+      background: #0078d7;
+      color: #fff;
+      border: none;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    #toolqr-app button:hover {
+      background: #005fa3;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolqr-app">
+    <h1>QRコード作成</h1>
+    <label>テキストまたはURL</label>
+    <input type="text" id="qr-text" placeholder="https://example.com">
+
+    <label>サイズ（px）</label>
+    <input type="number" id="qr-size" min="100" max="500" value="200">
+
+    <label>誤り訂正レベル</label>
+    <select id="qr-correct">
+      <option value="L">L（7%）</option>
+      <option value="M" selected>M（15%）</option>
+      <option value="Q">Q（25%）</option>
+      <option value="H">H（30%）</option>
+    </select>
+
+    <label>マージン（余白）</label>
+    <input type="number" id="qr-margin" min="0" max="20" value="4">
+
+    <label>前景色</label>
+    <input type="color" id="qr-color" value="#000000">
+
+    <label>背景色</label>
+    <input type="color" id="qr-bgcolor" value="#ffffff">
+
+    <div id="qr-preview">
+      <canvas id="qr-canvas"></canvas>
+    </div>
+
+    <button id="download-btn">画像をダウンロード</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.1/build/qrcode.min.js"></script>
+  <script>
+    (() => {
+      const textInput = document.getElementById("qr-text");
+      const sizeInput = document.getElementById("qr-size");
+      const correctInput = document.getElementById("qr-correct");
+      const marginInput = document.getElementById("qr-margin");
+      const colorInput = document.getElementById("qr-color");
+      const bgColorInput = document.getElementById("qr-bgcolor");
+      const canvas = document.getElementById("qr-canvas");
+      const downloadBtn = document.getElementById("download-btn");
+
+      function updateQRCode() {
+        const opts = {
+          errorCorrectionLevel: correctInput.value,
+          type: 'image/png',
+          width: parseInt(sizeInput.value),
+          margin: parseInt(marginInput.value),
+          color: {
+            dark: colorInput.value,
+            light: bgColorInput.value
+          }
+        };
+        QRCode.toCanvas(canvas, textInput.value || "https://carelay.net", opts, function (error) {
+          if (error) console.error(error);
+        });
+      }
+
+      function downloadImage() {
+        const link = document.createElement("a");
+        link.download = "qrcode.png";
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+      }
+
+      [textInput, sizeInput, correctInput, marginInput, colorInput, bgColorInput].forEach(el => {
+        el.addEventListener("input", updateQRCode);
+      });
+      downloadBtn.addEventListener("click", downloadImage);
+
+      updateQRCode(); // 初期表示
+    })();
+  </script>
+</body>
+</html>
